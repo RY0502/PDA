@@ -90,7 +90,7 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
   try {
     // 1. Find the latest email from Medium
     const listRes = await gmail.users.messages.list({
-      userId: 'ravi.y0102@gmail.com',
+      userId: 'me',
       q: 'from:noreply@medium.com',
       maxResults: 1,
     });
@@ -109,7 +109,7 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
 
     // 2. Fetch the full message content
     const messageRes = await gmail.users.messages.get({
-      userId: 'ravi.y0102@gmail.com',
+      userId: 'me',
       id: latestMessageId,
       format: 'full', // We need 'full' to get the payload and parts
     });
