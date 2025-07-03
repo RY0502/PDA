@@ -35,7 +35,6 @@ export default async function Home() {
             <Card key={article.id} className="flex flex-col">
               <CardHeader>
                 <CardTitle className="text-lg font-semibold leading-snug">{article.title}</CardTitle>
-                <CardDescription>From: {article.source}</CardDescription>
               </CardHeader>
               <CardContent className="flex-grow">
                 <p className="text-sm text-muted-foreground">{article.description}</p>
