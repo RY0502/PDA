@@ -63,7 +63,7 @@ function findHtmlPart(parts: any[]): any | null {
   return null;
 }
 
-// Helper to extract a readable title from a URL slug
+// Helper to extract a readable title from a URL slug, used as a fallback.
 function createTitleFromUrl(url: string): string {
   try {
     const path = new URL(url).pathname;
@@ -71,10 +71,8 @@ function createTitleFromUrl(url: string): string {
     const cleanSlug = slug.split('?')[0].split('#')[0];
 
     const lastDashIndex = cleanSlug.lastIndexOf('-');
-    // Check if the slug likely ends with a Medium ID (e.g., -a1b2c3d4e5f6)
     if (lastDashIndex > -1) {
       const potentialId = cleanSlug.substring(lastDashIndex + 1);
-      // A simple check for hex characters
       if (potentialId.length > 8 && /^[a-f0-9]+$/.test(potentialId)) {
         const titleSlug = cleanSlug.substring(0, lastDashIndex);
         const title = titleSlug.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
@@ -82,7 +80,6 @@ function createTitleFromUrl(url: string): string {
       }
     }
 
-    // If no ID is found, just use the whole slug
     const title = cleanSlug.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
     return title.length > 3 ? title : 'Medium Article';
   } catch {
@@ -97,7 +94,6 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
   }
 
   try {
-    // 1. Find the latest email from Medium
     const listRes = await gmail.users.messages.list({
       userId: 'me',
       q: 'from:noreply@medium.com',
@@ -116,18 +112,16 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
       return { articles: [], isMock: false };
     }
 
-    // 2. Fetch the full message content
     const messageRes = await gmail.users.messages.get({
       userId: 'me',
       id: latestMessageId,
-      format: 'full', // We need 'full' to get the payload and parts
+      format: 'full',
     });
 
     const { payload } = messageRes.data;
     const subjectHeader = payload?.headers?.find((h) => h.name === 'Subject');
     const source = subjectHeader?.value || 'Medium';
 
-    // 3. Find and decode the HTML body
     const htmlPart = payload?.parts
       ? findHtmlPart(payload.parts)
       : payload?.body?.data
@@ -139,23 +133,65 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
     }
     const emailBodyHtml = base64UrlDecode(htmlPart.body.data);
 
-    // 4. Extract all Medium article URLs from the HTML
-    const urlRegex = /href="(https?:\/\/[^"]*medium\.com\/[^"]*)"/g;
-    let matches;
-    const urls = new Set<string>();
-    while ((matches = urlRegex.exec(emailBodyHtml)) !== null) {
-      urls.add(matches[1]);
+    const articleMap = new Map<string, string>();
+    const linkRegex = /<a[^>]+href="([^"]+medium\.com[^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
+
+    let match;
+    while ((match = linkRegex.exec(emailBodyHtml)) !== null) {
+      const rawUrl = match[1];
+      const innerHtml = match[2];
+
+      const url = rawUrl.replace(/&amp;/g, '&');
+
+      if (url.includes('unsubscribe') || url.includes('/source/')) {
+        continue;
+      }
+
+      try {
+        const path = new URL(url).pathname;
+        if (path.length < 15 && path.split('/').length < 3) {
+          continue;
+        }
+      } catch (e) {
+        continue;
+      }
+
+      const cleanUrl = url.split('?')[0].split('#')[0];
+
+      let title = '';
+      const titleRegex = /<(h[1-4]|p|div)[^>]*>([\s\S]+?)<\/\1>/;
+      const titleMatch = innerHtml.match(titleRegex);
+
+      if (titleMatch && titleMatch[2]) {
+        title = titleMatch[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      } else {
+        title = innerHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      }
+
+      title = title
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&nbsp;/g, ' ')
+        .replace(/—/g, '—')
+        .trim();
+
+      if (title && cleanUrl) {
+        const existingTitle = articleMap.get(cleanUrl);
+        if (!existingTitle || title.length > existingTitle.length) {
+          articleMap.set(cleanUrl, title);
+        }
+      }
     }
 
-    // 5. Format into Article objects
-    const articles: MediumArticle[] = Array.from(urls)
-      .filter((url) => !url.includes('source=email') && !url.includes('unsubscribe'))
-      .map((url, index) => ({
-        id: `${latestMessageId}-${index}`,
-        title: createTitleFromUrl(url),
-        url: url,
-        source: source,
-      }));
+    const articles: MediumArticle[] = Array.from(articleMap.entries()).map(([url, title], index) => ({
+      id: `${latestMessageId}-${index}`,
+      title: title || createTitleFromUrl(url),
+      url: url,
+      source: source,
+    }));
 
     if (articles.length === 0) {
       console.log('No article links found in the latest Medium email.');
@@ -178,7 +214,6 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
   }
 }
 
-// Keep mock function as a fallback for missing credentials or API errors
 function getMockMediumArticles(): MediumArticle[] {
   console.log(
     'Using mock Medium articles. To use the Gmail API, set GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, and GMAIL_REFRESH_TOKEN in your .env file.'
