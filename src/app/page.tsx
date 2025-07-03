@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { getMediumArticles, MediumArticle, MediumArticleResponse } from '@/services/email-service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,15 +12,6 @@ import { Terminal } from 'lucide-react';
 function ArticleCard({ article }: { article: MediumArticle }) {
   return (
     <Card className="flex h-full flex-col overflow-hidden rounded-lg transition-shadow duration-300 hover:shadow-xl">
-      <div className="relative h-48 w-full">
-        <Image
-          src={`https://placehold.co/600x400.png`}
-          alt={article.title}
-          fill
-          style={{ objectFit: 'cover' }}
-          data-ai-hint="tech abstract"
-        />
-      </div>
       <CardHeader>
         <CardTitle className="line-clamp-2 text-xl">{article.title}</CardTitle>
       </CardHeader>
@@ -40,7 +30,6 @@ function ArticleCard({ article }: { article: MediumArticle }) {
 function ArticleSkeleton() {
   return (
     <Card className="flex h-full flex-col overflow-hidden rounded-lg">
-      <Skeleton className="h-48 w-full" />
       <CardHeader>
         <Skeleton className="h-7 w-3/4" />
       </CardHeader>
