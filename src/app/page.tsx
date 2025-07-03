@@ -2,37 +2,7 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { Card, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-
-// Mock function to simulate fetching Medium articles.
-// In a real app, this would involve a backend service to parse emails or an RSS feed.
-async function getMediumArticles() {
-  return [
-    {
-      id: '1',
-      title: 'The Generative AI Revolution Is Just Getting Started',
-      url: 'https://medium.com/towards-data-science/the-generative-ai-revolution-is-just-getting-started-b16f2434411def',
-      source: 'Towards Data Science',
-    },
-    {
-      id: '2',
-      title: 'How to Build a Design System in 2024',
-      url: 'https://medium.com/ux-design-weekly/how-to-build-a-design-system-in-2024-b0a3c20c0a9e',
-      source: 'UX Design Weekly',
-    },
-    {
-      id: '3',
-      title: 'The Art of Clean Code',
-      url: 'https://medium.com/swlh/the-art-of-clean-code-8b67548239c5',
-      source: 'The Startup',
-    },
-    {
-      id: '4',
-      title: 'Mastering React Hooks: A Deep Dive into useEffect',
-      url: 'https://medium.com/javascript-in-plain-english/mastering-react-hooks-a-deep-dive-into-useeffect-3453b3424692',
-      source: 'JavaScript in Plain English',
-    },
-  ];
-}
+import { getMediumArticles } from '@/services/email-service';
 
 export default async function Home() {
   const articles = await getMediumArticles();
