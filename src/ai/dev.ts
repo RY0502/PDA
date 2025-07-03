@@ -1,1 +1,6 @@
-// Flows will be imported for their side effects in this file.
+import { config } from 'dotenv';
+config();
+
+import '@/ai/flows/summarize-trend.ts';
+import '@/ai/flows/get-latest-football-news.ts';
+import '@/ai/flows/fetch-trending-searches.ts';
