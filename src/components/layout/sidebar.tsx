@@ -17,9 +17,9 @@ export function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-60 flex-col border-r bg-background">
       <div className="flex h-full flex-col p-4">
-        <div className="mb-8 flex items-center gap-2 px-3 py-2">
+        <div className="mb-8 flex flex-col items-center gap-2 px-3 py-2">
           <Sparkles className="h-8 w-8 text-primary" />
-          <span className="text-lg font-bold">PersonalDigitalAssistant</span>
+          <span className="text-lg font-bold text-center">PersonalDigitalAssistant</span>
         </div>
 
         <nav className="flex flex-col gap-2">
