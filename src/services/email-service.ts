@@ -90,7 +90,7 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
   try {
     // 1. Find the latest email from Medium
     const listRes = await gmail.users.messages.list({
-      userId: 'me',
+      userId: 'ravi.y0102@gmail.com',
       q: 'from:noreply@medium.com',
       maxResults: 1,
     });
@@ -109,7 +109,7 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
 
     // 2. Fetch the full message content
     const messageRes = await gmail.users.messages.get({
-      userId: 'me',
+      userId: 'ravi.y0102@gmail.com',
       id: latestMessageId,
       format: 'full', // We need 'full' to get the payload and parts
     });
@@ -154,9 +154,18 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
     }
 
     return { articles, isMock: false };
-  } catch (error) {
-    console.error('Error fetching from Gmail API:', error);
-    console.log('Falling back to mock data.');
+  } catch (error: any) {
+    if (error.message && error.message.includes('invalid_grant')) {
+      console.log(
+        'Gmail API Error: The refresh token is invalid or has been revoked. ' +
+        'Please generate a new one by running `npm run get-token` and update your .env file. ' +
+        'You may need to revoke app access in your Google Account settings first. ' +
+        'Falling back to mock data.'
+      );
+    } else {
+      console.log('An error occurred while fetching from Gmail API:', error.message || error);
+      console.log('Falling back to mock data.');
+    }
     return { articles: getMockMediumArticles(), isMock: true };
   }
 }
