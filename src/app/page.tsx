@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight, Info } from 'lucide-react';
-import { Card, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { getMediumArticles } from '@/services/email-service';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -33,10 +33,13 @@ export default async function Home() {
         <div className="grid gap-6 py-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {articles.map((article) => (
             <Card key={article.id} className="flex flex-col">
-              <CardHeader className="flex-grow">
-                <CardTitle className="text-lg leading-snug">{article.title}</CardTitle>
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold leading-snug">{article.title}</CardTitle>
                 <CardDescription>From: {article.source}</CardDescription>
               </CardHeader>
+              <CardContent className="flex-grow">
+                <p className="text-sm text-muted-foreground">{article.description}</p>
+              </CardContent>
               <CardFooter>
                 <Button asChild className="w-full">
                   <Link href={`/view?url=${encodeURIComponent(article.url)}`}>
