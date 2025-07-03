@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
+import { Header } from '@/components/layout/header';
 
 export const metadata: Metadata = {
   title: 'YourDailyBrief',
@@ -22,6 +23,7 @@ export default function RootLayout({
       </head>
       <body className={cn('min-h-screen bg-background font-body antialiased')}>
         <div className="relative flex min-h-screen flex-col">
+          <Header />
           <main className="flex-1">{children}</main>
         </div>
         <Toaster />
