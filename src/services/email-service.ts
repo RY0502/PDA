@@ -144,6 +144,7 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
     while ((match = linkRegex.exec(emailBodyHtml)) !== null) {
       const rawUrl = match[1];
       const innerHtml = match[2];
+      console.log('innerHtml:', innerHtml);
 
       const url = rawUrl.replace(/&amp;/g, '&');
 
