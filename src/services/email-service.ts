@@ -1,3 +1,5 @@
+'use server';
+
 /**
  * @fileoverview Service for fetching Medium articles from a Gmail account.
  * This service uses the Gmail API to find the latest email from Medium
@@ -128,9 +130,6 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
       if (h2Match && h2Match[1] && h3Match && h3Match[1]) {
         let title = h2Match[1].replace(/<[^>]+>/g, ' ').trim();
         let description = h3Match[1].replace(/<[^>]+>/g, ' ').trim();
-        
-        console.log('Found Title:', title);
-        console.log('Found Description:', description);
 
         let url = rawUrl.replace(/&amp;/g, '&');
         if (url.startsWith('https://medium.r.axd.email/')) {

@@ -1,72 +1,126 @@
+'use client';
+
+import { Suspense, useEffect, useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { getMediumArticles, MediumArticle, MediumArticleResponse } from '@/services/email-service';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Search,
-  Paperclip,
-  Mic,
-  ArrowUp,
-  Users,
-  Scale,
-  GraduationCap,
-  HeartPulse,
-  ClipboardCheck,
-  ImageIcon,
-} from 'lucide-react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Terminal } from 'lucide-react';
+
+function ArticleCard({ article }: { article: MediumArticle }) {
+  return (
+    <Card className="flex h-full flex-col overflow-hidden rounded-lg transition-shadow duration-300 hover:shadow-xl">
+      <div className="relative h-48 w-full">
+        <Image
+          src={`https://placehold.co/600x400.png`}
+          alt={article.title}
+          fill
+          style={{ objectFit: 'cover' }}
+          data-ai-hint="tech abstract"
+        />
+      </div>
+      <CardHeader>
+        <CardTitle className="line-clamp-2 text-xl">{article.title}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex-grow">
+        <CardDescription className="line-clamp-3">{article.description}</CardDescription>
+      </CardContent>
+      <CardFooter>
+        <Button asChild className="w-full">
+          <Link href={`/view?url=${encodeURIComponent(article.url)}`}>Read More</Link>
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+function ArticleSkeleton() {
+  return (
+    <Card className="flex h-full flex-col overflow-hidden rounded-lg">
+      <Skeleton className="h-48 w-full" />
+      <CardHeader>
+        <Skeleton className="h-7 w-3/4" />
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="mb-2 h-4 w-full" />
+        <Skeleton className="h-4 w-5/6" />
+      </CardContent>
+      <CardFooter>
+        <Skeleton className="h-10 w-full" />
+      </CardFooter>
+    </Card>
+  );
+}
+
+function HomePageContent() {
+  const [response, setResponse] = useState<MediumArticleResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchArticles() {
+      try {
+        const res = await getMediumArticles();
+        setResponse(res);
+      } catch (e: any) {
+        console.error('Failed to fetch articles:', e);
+        setError('An unexpected error occurred while fetching articles.');
+      }
+    }
+    fetchArticles();
+  }, []);
+
+  const articles = response?.articles;
+  const isMock = response?.isMock;
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <header className="mb-8 text-center">
+        <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">Your Daily Brief</h1>
+        <p className="mt-4 text-lg text-muted-foreground">
+          The latest articles from your Medium digest, powered by AI.
+        </p>
+      </header>
+
+      {isMock && (
+        <Alert className="mb-8">
+          <Terminal className="h-4 w-4" />
+          <AlertTitle>Displaying Mock Data</AlertTitle>
+          <AlertDescription>
+            The Gmail API is not configured. To see your latest Medium articles, please follow the setup instructions.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {error && (
+        <Alert variant="destructive" className="mb-8">
+          <Terminal className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {!response && !error
+          ? Array.from({ length: 8 }).map((_, i) => <ArticleSkeleton key={i} />)
+          : articles?.map((article) => <ArticleCard key={article.id} article={article} />)}
+      </div>
+
+      {!error && response && articles?.length === 0 && (
+        <div className="py-12 text-center">
+          <p className="text-muted-foreground">No articles found in your latest Medium email.</p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Home() {
   return (
-    <div className="flex h-screen w-full items-center justify-center">
-      <div className="mx-auto w-full max-w-2xl px-4">
-        <div className="mb-8 text-center">
-          <h1 className="text-5xl font-bold tracking-tight text-foreground">perplexity</h1>
-        </div>
-        <div className="relative mb-4">
-           <div className="flex h-16 items-center rounded-2xl border-2 border-border bg-card px-3">
-            <Search className="h-5 w-5 text-muted-foreground" />
-            <Input
-                type="text"
-                placeholder="Ask anything..."
-                className="h-full flex-1 border-0 bg-transparent pl-2 text-lg focus-visible:ring-0 focus-visible:ring-offset-0"
-            />
-            <div className="flex items-center">
-                <Button variant="ghost" size="icon">
-                  <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                </Button>
-                <Button variant="ghost" size="icon">
-                  <Paperclip className="h-5 w-5 text-muted-foreground" />
-                </Button>
-                <Button variant="ghost" size="icon">
-                  <Mic className="h-5 w-5 text-muted-foreground" />
-                </Button>
-                <Button size="icon" className="ml-2 rounded-lg bg-primary/90 hover:bg-primary">
-                  <ArrowUp className="h-5 w-5" />
-                </Button>
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <Button variant="outline" className="rounded-lg bg-card">
-            <Users className="mr-2 h-4 w-4" />
-            Parenting
-          </Button>
-          <Button variant="outline" className="rounded-lg bg-card">
-            <Scale className="mr-2 h-4 w-4" />
-            Compare
-          </Button>
-          <Button variant="outline" className="rounded-lg bg-card">
-            <GraduationCap className="mr-2 h-4 w-4" />
-            Perplexity 101
-          </Button>
-          <Button variant="outline" className="rounded-lg bg-card">
-            <HeartPulse className="mr-2 h-4 w-4" />
-            Health
-          </Button>
-          <Button variant="outline" className="rounded-lg bg-card">
-            <ClipboardCheck className="mr-2 h-4 w-4" />
-            Fact Check
-          </Button>
-        </div>
-      </div>
-    </div>
+    <Suspense fallback={<div>Loading...</div>}>
+      <HomePageContent />
+    </Suspense>
   );
 }
