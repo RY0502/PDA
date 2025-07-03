@@ -22,6 +22,11 @@ export type MediumArticle = {
   source: string;
 };
 
+export type MediumArticleResponse = {
+  articles: MediumArticle[];
+  isMock: boolean;
+};
+
 const oAuth2Client = new OAuth2Client(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
 if (REFRESH_TOKEN) {
   oAuth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
@@ -76,10 +81,10 @@ function createTitleFromUrl(url: string): string {
   }
 }
 
-export async function getMediumArticles(): Promise<MediumArticle[]> {
+export async function getMediumArticles(): Promise<MediumArticleResponse> {
   if (!REFRESH_TOKEN || !CLIENT_ID || !CLIENT_SECRET) {
     console.log('Gmail API credentials are not set in .env file. Returning mock data.');
-    return getMockMediumArticles();
+    return { articles: getMockMediumArticles(), isMock: true };
   }
 
   try {
@@ -93,13 +98,13 @@ export async function getMediumArticles(): Promise<MediumArticle[]> {
     const messages = listRes.data.messages;
     if (!messages || messages.length === 0) {
       console.log('No Medium emails found.');
-      return [];
+      return { articles: [], isMock: false };
     }
 
     const latestMessageId = messages[0].id;
     if (!latestMessageId) {
       console.log('Could not retrieve message ID.');
-      return [];
+      return { articles: [], isMock: false };
     }
 
     // 2. Fetch the full message content
@@ -121,7 +126,7 @@ export async function getMediumArticles(): Promise<MediumArticle[]> {
       : null;
     if (!htmlPart || !htmlPart.body?.data) {
       console.log('No HTML part found in the email.');
-      return [];
+      return { articles: [], isMock: false };
     }
     const emailBodyHtml = base64UrlDecode(htmlPart.body.data);
 
@@ -146,14 +151,13 @@ export async function getMediumArticles(): Promise<MediumArticle[]> {
 
     if (articles.length === 0) {
       console.log('No article links found in the latest Medium email.');
-      return getMockMediumArticles(); // Fallback if parsing fails
     }
 
-    return articles;
+    return { articles, isMock: false };
   } catch (error) {
     console.error('Error fetching from Gmail API:', error);
     console.log('Falling back to mock data.');
-    return getMockMediumArticles();
+    return { articles: getMockMediumArticles(), isMock: true };
   }
 }
 
