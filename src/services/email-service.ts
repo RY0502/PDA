@@ -133,6 +133,10 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
     }
     const emailBodyHtml = base64UrlDecode(htmlPart.body.data);
 
+    console.log('--- GMAIL API RESPONSE (Email Body HTML) ---');
+    console.log(emailBodyHtml);
+    console.log('-------------------------------------------');
+
     const articleMap = new Map<string, string>();
     const linkRegex = /<a[^>]+href="([^"]+medium\.com[^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
 
