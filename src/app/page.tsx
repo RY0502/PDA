@@ -1,64 +1,72 @@
-import Link from 'next/link';
-import { ArrowRight, Info } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { getMediumArticles } from '@/services/email-service';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
+import {
+  Search,
+  Paperclip,
+  Mic,
+  ArrowUp,
+  Users,
+  Scale,
+  GraduationCap,
+  HeartPulse,
+  ClipboardCheck,
+  ImageIcon,
+} from 'lucide-react';
 
-export default async function Home() {
-  const { articles, isMock } = await getMediumArticles();
-
+export default function Home() {
   return (
-    <div className="container max-w-screen-2xl py-8">
-      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-2 text-center md:pb-8">
-        <h1 className="text-3xl font-bold leading-tight tracking-tighter md:text-5xl lg:leading-[1.1]">
-          Your Daily Briefing
-        </h1>
-        <p className="max-w-[750px] text-lg text-muted-foreground sm:text-xl">
-          Latest articles curated for you from Medium.
-        </p>
-        {isMock && (
-          <Alert className="mt-4 text-left">
-            <Info className="h-4 w-4" />
-            <AlertTitle>Displaying Mock Data</AlertTitle>
-            <AlertDescription>
-              To fetch live articles from your inbox, please add your Gmail API credentials to the <code>.env</code>{' '}
-              file.
-            </AlertDescription>
-          </Alert>
-        )}
-      </section>
-
-      {articles.length > 0 ? (
-        <div className="grid gap-6 py-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {articles.map((article) => (
-            <Card key={article.id} className="flex flex-col">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold leading-snug">{article.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="flex-grow">
-                <p className="text-sm text-muted-foreground">{article.description}</p>
-              </CardContent>
-              <CardFooter>
-                <Button asChild className="w-full">
-                  <Link href={`/view?url=${encodeURIComponent(article.url)}`}>
-                    Read Article
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
+    <div className="flex h-screen w-full items-center justify-center">
+      <div className="mx-auto w-full max-w-2xl px-4">
+        <div className="mb-8 text-center">
+          <h1 className="text-5xl font-bold tracking-tight text-foreground">perplexity</h1>
+        </div>
+        <div className="relative mb-4">
+           <div className="flex h-16 items-center rounded-2xl border-2 border-border bg-card px-3">
+            <Search className="h-5 w-5 text-muted-foreground" />
+            <Input
+                type="text"
+                placeholder="Ask anything..."
+                className="h-full flex-1 border-0 bg-transparent pl-2 text-lg focus-visible:ring-0 focus-visible:ring-offset-0"
+            />
+            <div className="flex items-center">
+                <Button variant="ghost" size="icon">
+                  <ImageIcon className="h-5 w-5 text-muted-foreground" />
                 </Button>
-              </CardFooter>
-            </Card>
-          ))}
+                <Button variant="ghost" size="icon">
+                  <Paperclip className="h-5 w-5 text-muted-foreground" />
+                </Button>
+                <Button variant="ghost" size="icon">
+                  <Mic className="h-5 w-5 text-muted-foreground" />
+                </Button>
+                <Button size="icon" className="ml-2 rounded-lg bg-primary/90 hover:bg-primary">
+                  <ArrowUp className="h-5 w-5" />
+                </Button>
+            </div>
+          </div>
         </div>
-      ) : (
-        <div className="py-10 text-center">
-          <p className="text-lg text-muted-foreground">
-            {isMock
-              ? 'There was an issue fetching articles, and no mock data is available.'
-              : 'No new Medium articles found in your Gmail account.'}
-          </p>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <Button variant="outline" className="rounded-lg bg-card">
+            <Users className="mr-2 h-4 w-4" />
+            Parenting
+          </Button>
+          <Button variant="outline" className="rounded-lg bg-card">
+            <Scale className="mr-2 h-4 w-4" />
+            Compare
+          </Button>
+          <Button variant="outline" className="rounded-lg bg-card">
+            <GraduationCap className="mr-2 h-4 w-4" />
+            Perplexity 101
+          </Button>
+          <Button variant="outline" className="rounded-lg bg-card">
+            <HeartPulse className="mr-2 h-4 w-4" />
+            Health
+          </Button>
+          <Button variant="outline" className="rounded-lg bg-card">
+            <ClipboardCheck className="mr-2 h-4 w-4" />
+            Fact Check
+          </Button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
