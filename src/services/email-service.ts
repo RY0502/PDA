@@ -78,7 +78,7 @@ function createTitleFromUrl(url: string): string {
 
 export async function getMediumArticles(): Promise<MediumArticle[]> {
   if (!REFRESH_TOKEN || !CLIENT_ID || !CLIENT_SECRET) {
-    console.error('Gmail API credentials are not set in .env file. Returning mock data.');
+    console.log('Gmail API credentials are not set in .env file. Returning mock data.');
     return getMockMediumArticles();
   }
 
