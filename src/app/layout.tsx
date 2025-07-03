@@ -2,10 +2,10 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
-import { Header } from '@/components/layout/header';
+import { Sidebar } from '@/components/layout/sidebar';
 
 export const metadata: Metadata = {
-  title: 'YourDailyBrief',
+  title: 'PersonalDigitalAssistant',
   description: 'Your daily digest of news and trends.',
 };
 
@@ -22,9 +22,9 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet" />
       </head>
       <body className={cn('min-h-screen bg-background font-body antialiased')}>
-        <div className="relative flex min-h-screen flex-col">
-          <Header />
-          <main className="flex-1">{children}</main>
+        <div>
+          <Sidebar />
+          <main className="ml-60">{children}</main>
         </div>
         <Toaster />
       </body>

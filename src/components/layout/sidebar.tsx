@@ -3,28 +3,24 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Home, Compass, Library, Plus, LogIn, Sparkles } from 'lucide-react';
+import { Home, Newspaper, TrendingUp, LogIn, Sparkles } from 'lucide-react';
 
 const mainNav = [
   { name: 'Home', href: '/', icon: Home },
-  { name: 'Discover', href: '/football', icon: Compass },
-  { name: 'Spaces', href: '/trends', icon: Library },
+  { name: 'Football', href: '/football', icon: Newspaper },
+  { name: 'Trends', href: '/trends', icon: TrendingUp },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-60 flex-col border-r bg-sidebar">
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-60 flex-col border-r bg-background">
       <div className="flex h-full flex-col p-4">
         <div className="mb-8 flex items-center gap-2 px-3 py-2">
           <Sparkles className="h-8 w-8 text-primary" />
+          <span className="text-lg font-bold">PersonalDigitalAssistant</span>
         </div>
-
-        <Button variant="outline" className="mb-8 w-full justify-start">
-          <Plus className="mr-2" /> New
-        </Button>
 
         <nav className="flex flex-col gap-2">
           {mainNav.map((item) => (
