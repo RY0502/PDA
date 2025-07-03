@@ -68,14 +68,23 @@ function createTitleFromUrl(url: string): string {
   try {
     const path = new URL(url).pathname;
     const slug = path.substring(path.lastIndexOf('/') + 1);
-    // Take the part before the hash/query params if they exist
     const cleanSlug = slug.split('?')[0].split('#')[0];
-    // Remove the trailing unique ID if present
-    const titleSlug = cleanSlug.substring(0, cleanSlug.lastIndexOf('-'));
-    const title = titleSlug
-      .replace(/-/g, ' ')
-      .replace(/\b\w/g, (l) => l.toUpperCase()); // Capitalize words
-    return title.length > 10 ? title : 'Medium Article'; // Basic validation
+
+    const lastDashIndex = cleanSlug.lastIndexOf('-');
+    // Check if the slug likely ends with a Medium ID (e.g., -a1b2c3d4e5f6)
+    if (lastDashIndex > -1) {
+      const potentialId = cleanSlug.substring(lastDashIndex + 1);
+      // A simple check for hex characters
+      if (potentialId.length > 8 && /^[a-f0-9]+$/.test(potentialId)) {
+        const titleSlug = cleanSlug.substring(0, lastDashIndex);
+        const title = titleSlug.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+        return title || 'Medium Article';
+      }
+    }
+
+    // If no ID is found, just use the whole slug
+    const title = cleanSlug.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+    return title.length > 3 ? title : 'Medium Article';
   } catch {
     return 'Medium Article';
   }
@@ -131,8 +140,7 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
     const emailBodyHtml = base64UrlDecode(htmlPart.body.data);
 
     // 4. Extract all Medium article URLs from the HTML
-    // This regex looks for URLs within href attributes to be more specific
-    const urlRegex = /href="([^"]*medium\.com\/[^"]+)"/g;
+    const urlRegex = /href="(https?:\/\/[^"]*medium\.com\/[^"]*)"/g;
     let matches;
     const urls = new Set<string>();
     while ((matches = urlRegex.exec(emailBodyHtml)) !== null) {
@@ -141,7 +149,7 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
 
     // 5. Format into Article objects
     const articles: MediumArticle[] = Array.from(urls)
-      .filter((url) => url.length > 40 && !url.includes('source=email')) // Filter out unsubscribe/other links
+      .filter((url) => !url.includes('source=email') && !url.includes('unsubscribe'))
       .map((url, index) => ({
         id: `${latestMessageId}-${index}`,
         title: createTitleFromUrl(url),
