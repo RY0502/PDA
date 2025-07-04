@@ -8,14 +8,11 @@
 
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
-
-// These should be stored in your .env file
-const CLIENT_ID = process.env.GMAIL_CLIENT_ID;
-const CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET;
-const REDIRECT_URI = process.env.GMAIL_REDIRECT_URI;
-// This refresh token needs to be obtained through a one-time OAuth2 flow.
-// You can run a script locally to get this token.
-const REFRESH_TOKEN = process.env.GMAIL_REFRESH_TOKEN;
+import {
+  GMAIL_CLIENT_ID,
+  GMAIL_CLIENT_SECRET,
+  GMAIL_REFRESH_TOKEN,
+} from '@/lib/constants';
 
 export type MediumArticle = {
   id: string;
@@ -30,9 +27,15 @@ export type MediumArticleResponse = {
   isMock: boolean;
 };
 
-const oAuth2Client = new OAuth2Client(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
-if (REFRESH_TOKEN) {
-  oAuth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
+const REDIRECT_URI = 'http://localhost:3000/oauth2callback';
+
+const oAuth2Client = new OAuth2Client(
+  GMAIL_CLIENT_ID,
+  GMAIL_CLIENT_SECRET,
+  REDIRECT_URI
+);
+if (GMAIL_REFRESH_TOKEN) {
+  oAuth2Client.setCredentials({ refresh_token: GMAIL_REFRESH_TOKEN });
 }
 
 const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
@@ -67,7 +70,7 @@ function findHtmlPart(parts: any[]): any | null {
 }
 
 export async function getMediumArticles(): Promise<MediumArticleResponse> {
-  if (!REFRESH_TOKEN || !CLIENT_ID || !CLIENT_SECRET) {
+  if (!GMAIL_REFRESH_TOKEN || !GMAIL_CLIENT_ID || !GMAIL_CLIENT_SECRET) {
     console.log('Gmail API credentials are not set in .env file. Returning mock data.');
     return { articles: getMockMediumArticles(), isMock: true };
   }

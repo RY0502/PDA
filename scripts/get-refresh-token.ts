@@ -5,12 +5,13 @@ import * as readline from 'readline';
 // Load environment variables from .env file
 config();
 
-const CLIENT_ID = process.env.GMAIL_CLIENT_ID;
-const CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET;
+// Must be imported after config()
+import { GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET } from '../src/lib/constants';
+
 // This must match one of the "Authorized redirect URIs" in your Google Cloud Console project.
 const REDIRECT_URI = 'http://localhost:3000/oauth2callback';
 
-if (!CLIENT_ID || !CLIENT_SECRET) {
+if (!GMAIL_CLIENT_ID || !GMAIL_CLIENT_SECRET) {
   console.error(
     'Error: GMAIL_CLIENT_ID and GMAIL_CLIENT_SECRET must be set in your .env file.'
   );
@@ -18,7 +19,7 @@ if (!CLIENT_ID || !CLIENT_SECRET) {
   process.exit(1);
 }
 
-const oAuth2Client = new OAuth2Client(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+const oAuth2Client = new OAuth2Client(GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, REDIRECT_URI);
 
 const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly'];
 
