@@ -7,16 +7,26 @@
  * - GetLatestFootballNewsOutput - The return type for the getLatestFootballNews function.
  */
 
-import {ai} from '@/ai/genkit';
+// Import the shared ai instance and the shared googleAiPlugin instance.
+import {ai, googleAiPlugin} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GetLatestFootballNewsInputSchema = z.object({});
 export type GetLatestFootballNewsInput = z.infer<typeof GetLatestFootballNewsInputSchema>;
 
-const GetLatestFootballNewsOutputSchema = z.object({
-  articles: z.array(z.string()).describe('List of URLs for the latest football news articles.'),
+const ArticleSchema = z.object({
+  title: z.string().describe('The title of the news article.'),
+  url: z.string().describe('The direct URL to the news article.'),
 });
-export type GetLatestFootballNewsOutput = z.infer<typeof GetLatestFootballNewsOutputSchema>;
+
+const GetLatestFootballNewsOutputSchema = z.object({
+  articles: z
+    .array(ArticleSchema)
+    .describe('A list of 10 recent football news articles.'),
+});
+export type GetLatestFootballNewsOutput = z.infer<
+  typeof GetLatestFootballNewsOutputSchema
+>;
 
 export async function getLatestFootballNews(
   input: GetLatestFootballNewsInput
@@ -24,28 +34,16 @@ export async function getLatestFootballNews(
   return getLatestFootballNewsFlow(input);
 }
 
-const googleSearchTool = ai.defineTool({
-  name: 'googleSearch',
-  description: 'Performs a google search and returns a list of article URLs.',
-  inputSchema: z.object({
-    query: z.string().describe('The search query to use for the google search.'),
-  }),
-  outputSchema: z.array(z.string()).describe('A list of URLs returned from the google search.'),
-},
-async (input) => {
-    // TODO: Implement google search here.
-    // Placeholder implementation returns hardcoded URLs.
-    return [
-      'https://www.example.com/football-news-1',
-      'https://www.example.com/football-news-2',
-    ];
-  }
-);
-
 const getLatestFootballNewsPrompt = ai.definePrompt({
   name: 'getLatestFootballNewsPrompt',
-  tools: [googleSearchTool],
-  prompt: `Use the googleSearch tool to find the latest football news articles. The search query should be 'Latest football news'. Return a list of URLs for the articles.`,
+  model: 'googleai/gemini-2.5-flash',
+  // The googleSearch tool is available globally from the googleAiPlugin registered in genkit.ts.
+  // The prompt below instructs the model to use it.
+  input: {schema: GetLatestFootballNewsInputSchema},
+  output: {schema: GetLatestFootballNewsOutputSchema},
+  prompt: `Use Google Search to find the 10 latest football news articles. The search query should be 'football transfer news'.
+  
+  Return the result EXACTLY in the required JSON format. Do not add any conversational text or formatting around it.`,
 });
 
 const getLatestFootballNewsFlow = ai.defineFlow(
@@ -54,8 +52,9 @@ const getLatestFootballNewsFlow = ai.defineFlow(
     inputSchema: GetLatestFootballNewsInputSchema,
     outputSchema: GetLatestFootballNewsOutputSchema,
   },
-  async input => {
-    const {output} = await getLatestFootballNewsPrompt({});
-    return {articles: output!};
+  async (input) => {
+    const {output} = await getLatestFootballNewsPrompt(input);
+    // If the tool fails or the model returns a faulty response, return an empty array.
+    return output || {articles: []};
   }
 );
