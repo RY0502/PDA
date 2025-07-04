@@ -1,40 +1,36 @@
-// src/ai/flows/fetch-trending-searches.ts
 'use server';
 
 /**
- * @fileOverview Fetches and returns the top trending Google searches for the day.
+ * @fileOverview Fetches and returns the top trending Google searches for India.
  *
  * - fetchTrendingSearches - A function that retrieves the trending searches.
+ * - TrendingSearch - The type for a single trending search item.
  * - TrendingSearchesOutput - The return type for the fetchTrendingSearches function.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const TrendingSearchesOutputSchema = z.array(z.string());
+const TrendSchema = z.object({
+  query: z.string().describe('The trending search query.'),
+  url: z.string().describe('The direct URL to the Google search results for the trend.'),
+});
+export type TrendingSearch = z.infer<typeof TrendSchema>;
+
+const TrendingSearchesOutputSchema = z.array(TrendSchema);
 export type TrendingSearchesOutput = z.infer<typeof TrendingSearchesOutputSchema>;
 
 export async function fetchTrendingSearches(): Promise<TrendingSearchesOutput> {
   return fetchTrendingSearchesFlow();
 }
 
-const getTrendingSearches = ai.defineTool(
-  {
-    name: 'getTrendingSearches',
-    description: 'Retrieves the top trending Google searches for the day.',
-    inputSchema: z.object({}),
-    outputSchema: z.array(z.string()),
-  },
-  async () => {
-    // Placeholder implementation - replace with actual logic to fetch trending searches
-    return ['Trending Search 1', 'Trending Search 2', 'Trending Search 3'];
-  }
-);
-
 const trendingSearchesPrompt = ai.definePrompt({
   name: 'trendingSearchesPrompt',
-  tools: [getTrendingSearches],
-  prompt: `What are the top trending Google searches for the day? Use the getTrendingSearches tool to find out.`,
+  model: 'googleai/gemini-2.5-flash',
+  output: {schema: TrendingSearchesOutputSchema},
+  prompt: `Use Google Search to find the top 10 daily search trends from Google Trends for India (geo=IN). For each trend, provide the search query and the full Google search URL for that query.
+  
+  Return the result EXACTLY in the required JSON format. Do not add any conversational text or formatting around it.`,
 });
 
 const fetchTrendingSearchesFlow = ai.defineFlow(
@@ -44,9 +40,7 @@ const fetchTrendingSearchesFlow = ai.defineFlow(
     outputSchema: TrendingSearchesOutputSchema,
   },
   async () => {
-    const {text} = await trendingSearchesPrompt({});
-    // Since the tool returns the trending searches directly, we can just return the tool's output.
-    // If the tool returned a string that contained the searches, we would need to parse it here.
-    return await getTrendingSearches({});
+    const {output} = await trendingSearchesPrompt({});
+    return output || [];
   }
 );

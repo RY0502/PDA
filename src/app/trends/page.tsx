@@ -1,27 +1,10 @@
-import { fetchTrendingSearches } from '@/ai/flows/fetch-trending-searches';
-import { summarizeTrend } from '@/ai/flows/summarize-trend';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { TrendingUp } from 'lucide-react';
-
-type TrendWithSummary = {
-  query: string;
-  summary: string;
-};
+import { fetchTrendingSearches, TrendingSearch } from '@/ai/flows/fetch-trending-searches';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ExternalLink, TrendingUp } from 'lucide-react';
 
 export default async function TrendsPage() {
-  const trendingQueries = await fetchTrendingSearches();
-
-  const trendsWithSummaries: TrendWithSummary[] = await Promise.all(
-    trendingQueries.map(async (query) => {
-      try {
-        const result = await summarizeTrend({ query });
-        return { query, summary: result.summary };
-      } catch (error) {
-        console.error(`Failed to summarize trend for "${query}":`, error);
-        return { query, summary: 'Could not generate summary at this time.' };
-      }
-    })
-  );
+  const trendingTopics: TrendingSearch[] = await fetchTrendingSearches();
 
   return (
     <div className="container max-w-screen-2xl py-8">
@@ -31,21 +14,32 @@ export default async function TrendsPage() {
           Daily Trends
         </h1>
         <p className="max-w-[750px] text-lg text-muted-foreground sm:text-xl">
-          What the world is searching for today, summarized by AI.
+          Today's top Google search trends in India.
         </p>
       </section>
 
-      <div className="mx-auto max-w-4xl py-10">
-        <Accordion type="single" collapsible className="w-full">
-          {trendsWithSummaries.map((item, index) => (
-            <AccordionItem value={`item-${index}`} key={index}>
-              <AccordionTrigger className="text-left text-lg hover:no-underline">
-                {item.query}
-              </AccordionTrigger>
-              <AccordionContent className="text-base text-muted-foreground">{item.summary}</AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+      <div className="mx-auto max-w-2xl py-10">
+        <div className="flex flex-col gap-4">
+          {trendingTopics.length > 0 ? (
+            trendingTopics.map((item, index) => (
+              <Card key={index}>
+                <CardContent className="flex items-center justify-between p-4">
+                  <span className="text-lg font-medium">{item.query}</span>
+                  <Button asChild variant="ghost" size="sm">
+                    <a href={item.url} target="_blank" rel="noopener noreferrer">
+                      View Trend
+                      <ExternalLink className="ml-2 h-4 w-4" />
+                    </a>
+                  </Button>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <div className="py-12 text-center">
+              <p className="text-muted-foreground">Could not fetch trending topics at this time.</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
