@@ -41,7 +41,7 @@ const getLatestFootballNewsPrompt = ai.definePrompt({
   // The prompt below instructs the model to use it.
   input: {schema: GetLatestFootballNewsInputSchema},
   output: {schema: GetLatestFootballNewsOutputSchema},
-  prompt: `Use Google Search to find the 10 latest football news articles. The search query should be 'football transfer news'.
+  prompt: `Use Google Search to find the 10 latest football news articles. The search query should be 'Breaking football news'.
   
   Return the result EXACTLY in the required JSON format. Do not add any conversational text or formatting around it.`,
 });
