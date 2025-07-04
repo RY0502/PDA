@@ -3,26 +3,7 @@ import { Card, CardDescription, CardHeader, CardTitle, CardFooter } from '@/comp
 import { Button } from '@/components/ui/button';
 import { ExternalLink, Newspaper } from 'lucide-react';
 
-// Helper function to create a more readable title from a URL
-function formatTitleFromUrl(url: string) {
-  try {
-    const path = new URL(url).pathname;
-    const title = path
-      .substring(path.lastIndexOf('/') + 1)
-      .replace(/-/g, ' ')
-      .replace(/\.html$|\.htm$/, '');
-    // Capitalize first letter of each word
-    return title
-      .split(' ')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  } catch (e) {
-    return 'Latest Football News';
-  }
-}
-
 export default async function FootballPage() {
-  // The GenAI flow currently returns hardcoded URLs.
   const { articles } = await getLatestFootballNews({});
 
   return (
@@ -38,15 +19,15 @@ export default async function FootballPage() {
       </section>
 
       <div className="grid gap-6 py-10 sm:grid-cols-2 lg:grid-cols-3">
-        {articles.map((articleUrl, index) => (
-          <Card key={index} className="flex flex-col">
+        {articles.map((article) => (
+          <Card key={article.url} className="flex flex-col">
             <CardHeader className="flex-grow">
-              <CardTitle className="text-lg leading-snug">{formatTitleFromUrl(articleUrl)}</CardTitle>
-              <CardDescription className="break-all">{articleUrl}</CardDescription>
+              <CardTitle className="text-lg leading-snug">{article.title}</CardTitle>
+              <CardDescription className="break-all">{article.url}</CardDescription>
             </CardHeader>
             <CardFooter>
               <Button asChild className="w-full">
-                <a href={articleUrl} target="_blank" rel="noopener noreferrer">
+                <a href={article.url} target="_blank" rel="noopener noreferrer">
                   Read Full Story
                   <ExternalLink className="ml-2 h-4 w-4" />
                 </a>
