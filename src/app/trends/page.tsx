@@ -1,10 +1,11 @@
-import { fetchTrendingSearches, TrendingSearch } from '@/ai/flows/fetch-trending-searches';
+import { getCachedTrendingSearches } from '@/lib/data-cache';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ExternalLink, TrendingUp } from 'lucide-react';
+import type { TrendingSearch } from '@/ai/flows/fetch-trending-searches';
 
 export default async function TrendsPage() {
-  const trendingTopics: TrendingSearch[] = await fetchTrendingSearches();
+  const trendingTopics: TrendingSearch[] = await getCachedTrendingSearches();
 
   return (
     <div className="container max-w-screen-2xl py-8">

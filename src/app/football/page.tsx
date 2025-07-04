@@ -1,10 +1,10 @@
-import { getLatestFootballNews } from '@/ai/flows/get-latest-football-news';
+import { getCachedFootballNews } from '@/lib/data-cache';
 import { Card, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ExternalLink, Newspaper } from 'lucide-react';
 
 export default async function FootballPage() {
-  const { articles } = await getLatestFootballNews({});
+  const { articles } = await getCachedFootballNews();
 
   return (
     <div className="container max-w-screen-2xl py-8">

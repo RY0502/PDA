@@ -5,3 +5,14 @@ runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
   maxInstances: 1
+
+scheduler:
+  - schedule: "every 6 hours"
+    target: /api/cron/medium
+    timeZone: "America/Los_Angeles"
+  - schedule: "every 1 hours"
+    target: /api/cron/football
+    timeZone: "America/Los_Angeles"
+  - schedule: "every 1 hours"
+    target: /api/cron/trends
+    timeZone: "America/Los_Angeles"
