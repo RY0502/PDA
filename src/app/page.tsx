@@ -1,7 +1,6 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import Link from 'next/link';
 import { getMediumArticles, MediumArticle, MediumArticleResponse } from '@/services/email-service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +19,9 @@ function ArticleCard({ article }: { article: MediumArticle }) {
       </CardContent>
       <CardFooter>
         <Button asChild className="w-full">
-          <Link href={`/view?url=${encodeURIComponent(article.url)}`}>Read More</Link>
+          <a href={`https://freedium.cfd/${article.url}`} target="_blank" rel="noopener noreferrer">
+            Read More
+          </a>
         </Button>
       </CardFooter>
     </Card>
