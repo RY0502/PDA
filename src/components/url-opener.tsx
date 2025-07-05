@@ -10,7 +10,7 @@ export function UrlOpener() {
 
   const handleGoClick = () => {
     if (url.trim()) {
-      const fullUrl = `https://freedium.cf/${url.trim()}`;
+      const fullUrl = `https://freedium.cfd/${url.trim()}`;
       window.open(fullUrl, '_blank', 'noopener,noreferrer');
     }
   };
@@ -18,7 +18,7 @@ export function UrlOpener() {
   return (
     <div className="mt-12 max-w-xl mx-auto">
       <div className="flex w-full items-end space-x-2 rounded-lg border bg-card p-4 shadow-sm">
-        <div className="grid flex-1 items-center gap-1.5">
+        <div className="flex flex-1 items-center space-x-2">
           <Label htmlFor="url-input">Link:</Label>
           <Input
             id="url-input"
