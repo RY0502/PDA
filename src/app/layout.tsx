@@ -15,7 +15,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <body className={cn('min-h-screen bg-background font-body antialiased')}>
         <Sidebar />
         <main className="transition-all duration-300 ml-14 md:ml-60">{children}</main>
