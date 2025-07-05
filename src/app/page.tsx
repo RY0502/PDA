@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
 import type { MediumArticle } from '@/services/email-service';
+import { UrlOpener } from '@/components/url-opener';
 
 function ArticleCard({ article }: { article: MediumArticle }) {
   return (
@@ -59,6 +60,8 @@ export default async function Home() {
           <p className="text-muted-foreground">No articles found in your latest Medium email.</p>
         </div>
       )}
+
+      <UrlOpener />
     </div>
   );
 }
