@@ -7,8 +7,8 @@ import { Header } from '@/components/layout/header';
 import '@/lib/scheduler'; // Initialize schedulers
 
 export const metadata: Metadata = {
-  title: 'YourDailyBrief',
-  description: 'Your daily digest of news and trends.',
+  title: 'PersonalDigitalAssistant',
+  description: 'Your personal digital assistant.',
 };
 
 export default function RootLayout({
