@@ -20,7 +20,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={cn('min-h-screen bg-background font-body antialiased')}>
         <Sidebar />
-        <main className="transition-all duration-300 ml-14 md:ml-60">{children}</main>
+        <main className="transition-all duration-300 ml-16 md:ml-60">{children}</main>
         <Toaster />
       </body>
     </html>

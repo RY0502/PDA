@@ -16,7 +16,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen flex-col border-r bg-background transition-all duration-300 w-14 md:w-60">
+    <aside className="fixed left-0 top-0 z-40 flex h-screen flex-col border-r bg-background transition-all duration-300 w-16 md:w-60">
       <div className="flex h-full flex-col p-2 md:p-4">
         <div className="mb-8 flex h-[40px] items-center justify-center">
           <Sparkles className="h-8 w-8 text-primary" />
