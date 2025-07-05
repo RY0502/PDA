@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Sidebar } from '@/components/layout/sidebar';
 
 export const metadata: Metadata = {
-  title: 'PersonalDigitalAssistant',
+  title: 'YourDailyBrief',
   description: 'Your daily digest of news and trends.',
 };
 
@@ -16,16 +16,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet" />
-      </head>
       <body className={cn('min-h-screen bg-background font-body antialiased')}>
-        <div>
-          <Sidebar />
-          <main className="ml-60">{children}</main>
-        </div>
+        <Sidebar />
+        <main className="transition-all duration-300 ml-14 md:ml-60">{children}</main>
         <Toaster />
       </body>
     </html>
