@@ -7,7 +7,7 @@ export default async function FootballPage() {
   const { articles } = await getCachedFootballNews();
 
   return (
-    <div className="container max-w-screen-2xl py-8">
+    <div className="container py-8">
       <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-2 text-center md:pb-8">
         <Newspaper className="h-16 w-16 text-primary" />
         <h1 className="mt-4 text-3xl font-bold leading-tight tracking-tighter md:text-5xl lg:leading-[1.1]">
