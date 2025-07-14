@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -23,17 +24,6 @@ export type MediumArticleResponse = {
 };
 
 const REDIRECT_URI = 'http://localhost:3000/oauth2callback';
-
-const oAuth2Client = new OAuth2Client(
-  process.env.GMAIL_CLIENT_ID,
-  process.env.GMAIL_CLIENT_SECRET,
-  REDIRECT_URI
-);
-if (process.env.GMAIL_REFRESH_TOKEN) {
-  oAuth2Client.setCredentials({ refresh_token: process.env.GMAIL_REFRESH_TOKEN });
-}
-
-const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
 
 // Helper to decode base64url encoding
 function base64UrlDecode(input: string): string {
@@ -135,16 +125,28 @@ function extractArticlesFromHtml(
 }
 
 export async function getMediumArticles(): Promise<MediumArticleResponse> {
-  if (!process.env.GMAIL_REFRESH_TOKEN || !process.env.GMAIL_CLIENT_ID || !process.env.GMAIL_CLIENT_SECRET) {
+  if (!process.env.GMAIL_CLIENT_ID || !process.env.GMAIL_CLIENT_SECRET || !process.env.GMAIL_REFRESH_TOKEN) {
     console.log('Gmail API credentials are not set in .env file. Returning mock data.');
     return { articles: getMockMediumArticles(), isMock: true };
   }
 
   try {
+    // Create a new OAuth2Client for each request to ensure token is refreshed.
+    const oAuth2Client = new OAuth2Client(
+      process.env.GMAIL_CLIENT_ID,
+      process.env.GMAIL_CLIENT_SECRET,
+      REDIRECT_URI
+    );
+    oAuth2Client.setCredentials({ refresh_token: process.env.GMAIL_REFRESH_TOKEN });
+
+    // The google-auth-library will automatically use the refresh token to get a new
+    // access token if the old one has expired.
+    const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
+
     const listRes = await gmail.users.messages.list({
       userId: 'me',
       q: 'from:noreply@medium.com subject:"Daily Digest"',
-      maxResults: 5, 
+      maxResults: 1, 
     });
 
     const messages = listRes.data.messages;
@@ -153,15 +155,14 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
       return { articles: [], isMock: false };
     }
 
-    // Pick a random message from the list to introduce variety
-    const randomMessageInfo = messages[Math.floor(Math.random() * messages.length)];
-    const messageId = randomMessageInfo.id;
+    const latestMessageInfo = messages[0];
+    const messageId = latestMessageInfo.id;
     if (!messageId) {
-        console.log('Selected message has no ID.');
+        console.log('Latest message has no ID.');
         return { articles: [], isMock: false };
     }
 
-    console.log(`Processing a random Medium email with ID: ${messageId}`);
+    console.log(`Processing latest Medium email with ID: ${messageId}`);
     
     const messageRes = await gmail.users.messages.get({
         userId: 'me',
@@ -196,7 +197,7 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
     }
     
   } catch (error: any) {
-    if (error.message && error.message.includes('invalid_grant')) {
+    if (error.response?.data?.error === 'invalid_grant') {
       console.log(
         'Gmail API Error: The refresh token is invalid or has been revoked. ' +
           'Please generate a new one by running `npm run get-token` and update your .env file. ' +
