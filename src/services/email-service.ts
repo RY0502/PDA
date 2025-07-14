@@ -4,7 +4,7 @@
 /**
  * @fileoverview Service for fetching Medium articles from a Gmail account.
  * This service uses the Gmail API to find the latest email from Medium
- * and extracts article links from it.
+ * and extracts article links from it
  */
 
 import { google } from 'googleapis';
