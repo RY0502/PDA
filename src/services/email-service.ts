@@ -8,11 +8,6 @@
 
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
-import {
-  GMAIL_CLIENT_ID,
-  GMAIL_CLIENT_SECRET,
-  GMAIL_REFRESH_TOKEN,
-} from '@/lib/constants';
 
 export type MediumArticle = {
   id: string;
@@ -30,12 +25,12 @@ export type MediumArticleResponse = {
 const REDIRECT_URI = 'http://localhost:3000/oauth2callback';
 
 const oAuth2Client = new OAuth2Client(
-  GMAIL_CLIENT_ID,
-  GMAIL_CLIENT_SECRET,
+  process.env.GMAIL_CLIENT_ID,
+  process.env.GMAIL_CLIENT_SECRET,
   REDIRECT_URI
 );
-if (GMAIL_REFRESH_TOKEN) {
-  oAuth2Client.setCredentials({ refresh_token: GMAIL_REFRESH_TOKEN });
+if (process.env.GMAIL_REFRESH_TOKEN) {
+  oAuth2Client.setCredentials({ refresh_token: process.env.GMAIL_REFRESH_TOKEN });
 }
 
 const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
@@ -69,8 +64,78 @@ function findHtmlPart(parts: any[]): any | null {
   return null;
 }
 
+function extractArticlesFromHtml(
+  emailBodyHtml: string,
+  source: string,
+  latestMessageId: string
+): MediumArticle[] {
+  const articles: MediumArticle[] = [];
+  const linkRegex = /<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
+  const articleUrls = new Set<string>(); // To prevent duplicates
+
+  let match;
+  while ((match = linkRegex.exec(emailBodyHtml)) !== null) {
+    const rawUrl = match[1];
+    const innerHtml = match[2];
+
+    const h2Regex = /<h2[^>]*>([\s\S]*?)<\/h2>/;
+    const h3Regex = /<h3[^>]*>([\s\S]*?)<\/h3>/;
+
+    const h2Match = innerHtml.match(h2Regex);
+    const h3Match = innerHtml.match(h3Regex);
+
+    if (h2Match && h2Match[1] && h3Match && h3Match[1]) {
+      let title = h2Match[1].replace(/<[^>]+>/g, ' ').trim();
+      let description = h3Match[1].replace(/<[^>]+>/g, ' ').trim();
+
+      let url = rawUrl.replace(/&amp;/g, '&');
+      if (url.startsWith('https://medium.r.axd.email/')) {
+        try {
+          const urlObj = new URL(url);
+          const targetUrl = urlObj.searchParams.get('url');
+          if (targetUrl) {
+            url = decodeURIComponent(targetUrl);
+          }
+        } catch (e) {
+          // Ignore if URL parsing fails
+        }
+      }
+      const cleanUrl = url.split('?')[0].split('#')[0];
+
+      // Decode HTML entities
+      const decode = (str: string) =>
+        str
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/&nbsp;/g, ' ')
+          .replace(/—/g, '—')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+      title = decode(title);
+      description = decode(description);
+
+      if (title && description && !articleUrls.has(cleanUrl)) {
+        articles.push({
+          id: `${latestMessageId}-${articles.length}`,
+          title,
+          description,
+          url: cleanUrl,
+          source,
+        });
+        articleUrls.add(cleanUrl);
+      }
+    }
+  }
+
+  return articles;
+}
+
 export async function getMediumArticles(): Promise<MediumArticleResponse> {
-  if (!GMAIL_REFRESH_TOKEN || !GMAIL_CLIENT_ID || !GMAIL_CLIENT_SECRET) {
+  if (!process.env.GMAIL_REFRESH_TOKEN || !process.env.GMAIL_CLIENT_ID || !process.env.GMAIL_CLIENT_SECRET) {
     console.log('Gmail API credentials are not set in .env file. Returning mock data.');
     return { articles: getMockMediumArticles(), isMock: true };
   }
@@ -79,7 +144,7 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
     const listRes = await gmail.users.messages.list({
       userId: 'me',
       q: 'from:noreply@medium.com',
-      maxResults: 1,
+      maxResults: 5, // Fetch the last 5 emails to find the most recent digest
     });
 
     const messages = listRes.data.messages;
@@ -88,100 +153,46 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
       return { articles: [], isMock: false };
     }
 
-    const latestMessageId = messages[0].id;
-    if (!latestMessageId) {
-      console.log('Could not retrieve message ID.');
-      return { articles: [], isMock: false };
-    }
+    // Iterate through the fetched messages to find the first one with articles
+    for (const messageInfo of messages) {
+      const messageId = messageInfo.id;
+      if (!messageId) continue;
 
-    const messageRes = await gmail.users.messages.get({
-      userId: 'me',
-      id: latestMessageId,
-      format: 'full',
-    });
+      const messageRes = await gmail.users.messages.get({
+        userId: 'me',
+        id: messageId,
+        format: 'full',
+      });
 
-    const { payload } = messageRes.data;
-    const subjectHeader = payload?.headers?.find((h) => h.name === 'Subject');
-    const source = subjectHeader?.value || 'Medium';
+      const { payload } = messageRes.data;
+      const subjectHeader = payload?.headers?.find((h) => h.name === 'Subject');
+      const source = subjectHeader?.value || 'Medium';
 
-    const htmlPart = payload?.parts
-      ? findHtmlPart(payload.parts)
-      : payload?.body?.data
-      ? payload
-      : null;
-    if (!htmlPart || !htmlPart.body?.data) {
-      console.log('No HTML part found in the email.');
-      return { articles: [], isMock: false };
-    }
-    const emailBodyHtml = base64UrlDecode(htmlPart.body.data);
+      const htmlPart = payload?.parts
+        ? findHtmlPart(payload.parts)
+        : payload?.body?.data
+        ? payload
+        : null;
 
-    const articles: MediumArticle[] = [];
-    const linkRegex = /<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
-    const articleUrls = new Set<string>(); // To prevent duplicates
+      if (!htmlPart || !htmlPart.body?.data) {
+        console.log(`No HTML part found in email with ID: ${messageId}. Skipping.`);
+        continue;
+      }
 
-    let match;
-    while ((match = linkRegex.exec(emailBodyHtml)) !== null) {
-      const rawUrl = match[1];
-      const innerHtml = match[2];
+      const emailBodyHtml = base64UrlDecode(htmlPart.body.data);
+      const articles = extractArticlesFromHtml(emailBodyHtml, source, messageId);
 
-      const h2Regex = /<h2[^>]*>([\s\S]*?)<\/h2>/;
-      const h3Regex = /<h3[^>]*>([\s\S]*?)<\/h3>/;
-
-      const h2Match = innerHtml.match(h2Regex);
-      const h3Match = innerHtml.match(h3Regex);
-
-      if (h2Match && h2Match[1] && h3Match && h3Match[1]) {
-        let title = h2Match[1].replace(/<[^>]+>/g, ' ').trim();
-        let description = h3Match[1].replace(/<[^>]+>/g, ' ').trim();
-
-        let url = rawUrl.replace(/&amp;/g, '&');
-        if (url.startsWith('https://medium.r.axd.email/')) {
-          try {
-            const urlObj = new URL(url);
-            const targetUrl = urlObj.searchParams.get('url');
-            if (targetUrl) {
-              url = decodeURIComponent(targetUrl);
-            }
-          } catch (e) {
-            // Ignore if URL parsing fails
-          }
-        }
-        const cleanUrl = url.split('?')[0].split('#')[0];
-
-        // Decode HTML entities
-        const decode = (str: string) =>
-          str
-            .replace(/&amp;/g, '&')
-            .replace(/&lt;/g, '<')
-            .replace(/&gt;/g, '>')
-            .replace(/&quot;/g, '"')
-            .replace(/&#39;/g, "'")
-            .replace(/&nbsp;/g, ' ')
-            .replace(/—/g, '—')
-            .replace(/\s+/g, ' ')
-            .trim();
-
-        title = decode(title);
-        description = decode(description);
-
-        if (title && description && !articleUrls.has(cleanUrl)) {
-          articles.push({
-            id: `${latestMessageId}-${articles.length}`,
-            title,
-            description,
-            url: cleanUrl,
-            source,
-          });
-          articleUrls.add(cleanUrl);
-        }
+      // If we found articles in this email, we're done.
+      if (articles.length > 0) {
+        console.log(`Found ${articles.length} articles in email with ID: ${messageId}.`);
+        return { articles, isMock: false };
+      } else {
+        console.log(`No articles found in email with ID: ${messageId}. Checking next email.`);
       }
     }
 
-    if (articles.length === 0) {
-      console.log('No articles found with h2 (title) and h3 (summary) tags.');
-    }
-
-    return { articles, isMock: false };
+    console.log('No articles found in the last 5 Medium emails.');
+    return { articles: [], isMock: false };
   } catch (error: any) {
     if (error.message && error.message.includes('invalid_grant')) {
       console.log(
