@@ -143,56 +143,58 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
   try {
     const listRes = await gmail.users.messages.list({
       userId: 'me',
-      q: 'from:noreply@medium.com',
-      maxResults: 5, // Fetch the last 5 emails to find the most recent digest
+      q: 'from:noreply@medium.com subject:"Daily Digest"',
+      maxResults: 5, 
     });
 
     const messages = listRes.data.messages;
     if (!messages || messages.length === 0) {
-      console.log('No Medium emails found.');
+      console.log('No Medium digest emails found.');
       return { articles: [], isMock: false };
     }
 
-    // Iterate through the fetched messages to find the first one with articles
-    for (const messageInfo of messages) {
-      const messageId = messageInfo.id;
-      if (!messageId) continue;
+    // Pick a random message from the list to introduce variety
+    const randomMessageInfo = messages[Math.floor(Math.random() * messages.length)];
+    const messageId = randomMessageInfo.id;
+    if (!messageId) {
+        console.log('Selected message has no ID.');
+        return { articles: [], isMock: false };
+    }
 
-      const messageRes = await gmail.users.messages.get({
+    console.log(`Processing a random Medium email with ID: ${messageId}`);
+    
+    const messageRes = await gmail.users.messages.get({
         userId: 'me',
         id: messageId,
         format: 'full',
-      });
+    });
 
-      const { payload } = messageRes.data;
-      const subjectHeader = payload?.headers?.find((h) => h.name === 'Subject');
-      const source = subjectHeader?.value || 'Medium';
+    const { payload } = messageRes.data;
+    const subjectHeader = payload?.headers?.find((h) => h.name === 'Subject');
+    const source = subjectHeader?.value || 'Medium';
 
-      const htmlPart = payload?.parts
+    const htmlPart = payload?.parts
         ? findHtmlPart(payload.parts)
         : payload?.body?.data
         ? payload
         : null;
 
-      if (!htmlPart || !htmlPart.body?.data) {
-        console.log(`No HTML part found in email with ID: ${messageId}. Skipping.`);
-        continue;
-      }
-
-      const emailBodyHtml = base64UrlDecode(htmlPart.body.data);
-      const articles = extractArticlesFromHtml(emailBodyHtml, source, messageId);
-
-      // If we found articles in this email, we're done.
-      if (articles.length > 0) {
-        console.log(`Found ${articles.length} articles in email with ID: ${messageId}.`);
-        return { articles, isMock: false };
-      } else {
-        console.log(`No articles found in email with ID: ${messageId}. Checking next email.`);
-      }
+    if (!htmlPart || !htmlPart.body?.data) {
+        console.log(`No HTML part found in email with ID: ${messageId}.`);
+        return { articles: [], isMock: false };
     }
 
-    console.log('No articles found in the last 5 Medium emails.');
-    return { articles: [], isMock: false };
+    const emailBodyHtml = base64UrlDecode(htmlPart.body.data);
+    const articles = extractArticlesFromHtml(emailBodyHtml, source, messageId);
+
+    if (articles.length > 0) {
+        console.log(`Found ${articles.length} articles in email with ID: ${messageId}.`);
+        return { articles, isMock: false };
+    } else {
+        console.log(`No articles found in email with ID: ${messageId}.`);
+        return { articles: [], isMock: false };
+    }
+    
   } catch (error: any) {
     if (error.message && error.message.includes('invalid_grant')) {
       console.log(
