@@ -41,7 +41,7 @@ const getLatestFootballNewsPrompt = ai.definePrompt({
   output: {schema: GetLatestFootballNewsOutputSchema},
   model: 'googleai/gemini-2.5-flash',
   prompt:
-    'Use Google Search to find the top 10 latest football news articles. For each article, provide the title and the direct, full, absolute URL to the story. Ensure the URL is clean and does not contain any tracking parameters or redirects from the search results.',
+    'Do not simulate search. Use Grounding with Google Search to find in realtime-web top 10 latest football news articles. For each article, provide the title and the direct, full, absolute URL to the story. Ensure the URL is clean and does not contain any tracking parameters or redirects from the search results.',
 });
 
 const getLatestFootballNewsFlow = ai.defineFlow(
