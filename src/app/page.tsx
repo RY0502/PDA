@@ -1,10 +1,13 @@
-import { getCachedMediumArticles } from '@/lib/data-cache';
+import { getMediumArticles } from '@/services/email-service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
 import type { MediumArticle } from '@/services/email-service';
 import { UrlOpener } from '@/components/url-opener';
+
+// Revalidate the page every hour
+export const revalidate = 3600;
 
 function ArticleCard({ article }: { article: MediumArticle }) {
   return (
@@ -27,7 +30,7 @@ function ArticleCard({ article }: { article: MediumArticle }) {
 }
 
 export default async function Home() {
-  const response = await getCachedMediumArticles();
+  const response = await getMediumArticles();
   
   const articles = response?.articles;
   const isMock = response?.isMock;

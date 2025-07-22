@@ -1,11 +1,14 @@
-import { getCachedTrendingSearches } from '@/lib/data-cache';
+import { fetchTrendingSearches } from '@/ai/flows/fetch-trending-searches';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ExternalLink, TrendingUp } from 'lucide-react';
 import type { TrendingSearch } from '@/ai/flows/fetch-trending-searches';
 
+// Revalidate the page every hour
+export const revalidate = 3600;
+
 export default async function TrendsPage() {
-  const trendingTopics: TrendingSearch[] = await getCachedTrendingSearches();
+  const trendingTopics: TrendingSearch[] = await fetchTrendingSearches();
 
   return (
     <div className="container py-8">

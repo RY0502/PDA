@@ -4,7 +4,6 @@ import '@fontsource/inter';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import { Header } from '@/components/layout/header';
-import '@/lib/scheduler'; // Initialize schedulers
 
 export const metadata: Metadata = {
   title: 'PersonalDigitalAssistant',

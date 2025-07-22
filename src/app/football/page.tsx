@@ -1,10 +1,13 @@
-import { getCachedFootballNews } from '@/lib/data-cache';
+import { getLatestFootballNews } from '@/ai/flows/get-latest-football-news';
 import { Card, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ExternalLink, Newspaper } from 'lucide-react';
 
+// Revalidate the page every hour
+export const revalidate = 3600;
+
 export default async function FootballPage() {
-  const { articles } = await getCachedFootballNews();
+  const { articles } = await getLatestFootballNews({});
 
   return (
     <div className="container py-8">
