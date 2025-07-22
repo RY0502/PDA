@@ -9,7 +9,6 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import {runTool} from 'genkit/experimental/tool';
 
 const GetLatestFootballNewsInputSchema = z.object({});
 export type GetLatestFootballNewsInput = z.infer<typeof GetLatestFootballNewsInputSchema>;
@@ -25,15 +24,8 @@ export async function getLatestFootballNews(
   return getLatestFootballNewsFlow(input);
 }
 
-const googleSearchTool = ai.defineTool({
-  name: 'googleSearch',
-  description: 'Performs a google search and returns a list of article URLs.',
-  inputSchema: z.object({
-    query: z.string().describe('The search query to use for the google search.'),
-  }),
-  outputSchema: z.array(z.string()).describe('A list of URLs returned from the google search.'),
-},
-async (input) => {
+// Export the underlying function so we can call it directly.
+export async function performGoogleSearch(input: { query: string }): Promise<string[]> {
     // TODO: Implement google search here.
     // Placeholder implementation returns hardcoded URLs.
     return [
@@ -42,7 +34,17 @@ async (input) => {
       'https://www.goal.com/en-us/news/erik-ten-hag-man-utd-future-sir-jim-ratcliffe-ineos-thomas-tuchel-mauricio-pochettino/bltc9a848a60a7e6e5b',
       'https://talksport.com/football/1880416/erik-ten-hag-man-utd-future-latest-news-mauricio-pochettino-available/',
     ];
-  }
+}
+
+const googleSearchTool = ai.defineTool({
+  name: 'googleSearch',
+  description: 'Performs a google search and returns a list of article URLs.',
+  inputSchema: z.object({
+    query: z.string().describe('The search query to use for the google search.'),
+  }),
+  outputSchema: z.array(z.string()).describe('A list of URLs returned from the google search.'),
+},
+  performGoogleSearch
 );
 
 const getLatestFootballNewsFlow = ai.defineFlow(
@@ -52,8 +54,8 @@ const getLatestFootballNewsFlow = ai.defineFlow(
     outputSchema: GetLatestFootballNewsOutputSchema,
   },
   async input => {
-    // Directly call the tool to ensure we get a valid array of URLs.
-    const articles = await runTool(googleSearchTool, { query: 'Latest football news' });
+    // Directly call the tool's underlying function to ensure we get a valid array of URLs.
+    const articles = await performGoogleSearch({ query: 'Latest football news' });
     return {articles};
   }
 );
