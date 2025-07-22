@@ -17,7 +17,7 @@ export type GetLatestFootballNewsInput = z.infer<
 
 const ArticleSchema = z.object({
   title: z.string().describe('The title of the news article.'),
-  url: z.string().describe('The direct URL to the news article.'),
+  url: z.string().describe('The direct, full, and clean URL to the news article.'),
 });
 
 const GetLatestFootballNewsOutputSchema = z.object({
@@ -40,7 +40,7 @@ const getLatestFootballNewsPrompt = ai.definePrompt({
   input: {schema: GetLatestFootballNewsInputSchema},
   output: {schema: GetLatestFootballNewsOutputSchema},
   prompt:
-    'Use Google Search to find the top 10 latest football news articles. Return the list of articles in the required JSON format.',
+    'Use Google Search to find the top 10 latest football news articles. For each article, provide the title and the direct, full, absolute URL to the story. Ensure the URL is clean and does not contain any tracking parameters or redirects from the search results.',
 });
 
 const getLatestFootballNewsFlow = ai.defineFlow(
