@@ -158,7 +158,7 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
             .replace(/&#39;/g, "'")
             .replace(/&nbsp;/g, ' ')
             .replace(/—/g, '—')
-            .replace(/\s+/g, ' ')
+             .replace(/\s+/g, ' ')
             .trim();
 
         title = decode(title);
