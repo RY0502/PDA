@@ -8,7 +8,8 @@
  */
 
 // Import the shared ai instance and the shared googleAiPlugin instance.
-import {ai, googleAiPlugin} from '@/ai/genkit';
+import {ai} from '@/ai/genkit';
+import {googleSearchTool} from '@genkit-ai/googleai';
 import {z} from 'genkit';
 
 const GetLatestFootballNewsInputSchema = z.object({});
@@ -34,27 +35,28 @@ export async function getLatestFootballNews(
   return getLatestFootballNewsFlow(input);
 }
 
-const getLatestFootballNewsPrompt = ai.definePrompt({
-  name: 'getLatestFootballNewsPrompt',
-  model: 'googleai/gemini-2.5-flash',
-  // The googleSearch tool is available globally from the googleAiPlugin registered in genkit.ts.
-  // The prompt below instructs the model to use it.
-  input: {schema: GetLatestFootballNewsInputSchema},
-  output: {schema: GetLatestFootballNewsOutputSchema},
-  prompt: `Use Google Search to find the 10 latest football news articles. The search query should be 'Breaking football news'.
-  
-  Return the result EXACTLY in the required JSON format. Do not add any conversational text or formatting around it.`,
-});
-
 const getLatestFootballNewsFlow = ai.defineFlow(
   {
     name: 'getLatestFootballNewsFlow',
     inputSchema: GetLatestFootballNewsInputSchema,
     outputSchema: GetLatestFootballNewsOutputSchema,
   },
-  async (input) => {
-    const {output} = await getLatestFootballNewsPrompt(input);
-    // If the tool fails or the model returns a faulty response, return an empty array.
-    return output || {articles: []};
+  async () => {
+    // Directly call the googleSearchTool to get the latest news.
+    const searchResult = await googleSearchTool({
+      query: 'Latest football news',
+    });
+
+    // The tool can return a single object or an array of objects. We'll handle both cases.
+    const results = Array.isArray(searchResult) ? searchResult : [searchResult];
+
+    // Map the tool's output to the required Article schema.
+    const articles =
+      results[0]?.results?.map(article => ({
+        title: article.title || 'No title available',
+        url: article.url,
+      })) || [];
+
+    return {articles};
   }
 );
