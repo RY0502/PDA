@@ -7,13 +7,14 @@
  * - GetLatestFootballNewsOutput - The return type for the getLatestFootballNews function.
  */
 
-// Import the shared ai instance and the shared googleAiPlugin instance.
 import {ai} from '@/ai/genkit';
-import {googleSearchTool} from '@genkit-ai/googleai';
 import {z} from 'genkit';
+import {googleSearchTool} from '@genkit-ai/googleai';
 
 const GetLatestFootballNewsInputSchema = z.object({});
-export type GetLatestFootballNewsInput = z.infer<typeof GetLatestFootballNewsInputSchema>;
+export type GetLatestFootballNewsInput = z.infer<
+  typeof GetLatestFootballNewsInputSchema
+>;
 
 const ArticleSchema = z.object({
   title: z.string().describe('The title of the news article.'),
@@ -35,28 +36,23 @@ export async function getLatestFootballNews(
   return getLatestFootballNewsFlow(input);
 }
 
+const getLatestFootballNewsPrompt = ai.definePrompt({
+  name: 'footballNewsPrompt',
+  input: {schema: GetLatestFootballNewsInputSchema},
+  output: {schema: GetLatestFootballNewsOutputSchema},
+  tools: [googleSearchTool],
+  prompt:
+    'Use Google Search to find the top 10 latest football news articles. Return the list of articles in the required JSON format.',
+});
+
 const getLatestFootballNewsFlow = ai.defineFlow(
   {
     name: 'getLatestFootballNewsFlow',
     inputSchema: GetLatestFootballNewsInputSchema,
     outputSchema: GetLatestFootballNewsOutputSchema,
   },
-  async () => {
-    // Directly call the googleSearchTool to get the latest news.
-    const searchResult = await googleSearchTool({
-      query: 'Latest football news',
-    });
-
-    // The tool can return a single object or an array of objects. We'll handle both cases.
-    const results = Array.isArray(searchResult) ? searchResult : [searchResult];
-
-    // Map the tool's output to the required Article schema.
-    const articles =
-      results[0]?.results?.map(article => ({
-        title: article.title || 'No title available',
-        url: article.url,
-      })) || [];
-
-    return {articles};
+  async input => {
+    const {output} = await getLatestFootballNewsPrompt(input);
+    return output || {articles: []};
   }
 );
