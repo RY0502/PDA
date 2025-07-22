@@ -9,7 +9,6 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import {googleSearchTool} from '@genkit-ai/googleai/tools';
 
 const GetLatestFootballNewsInputSchema = z.object({});
 export type GetLatestFootballNewsInput = z.infer<
@@ -40,7 +39,6 @@ const getLatestFootballNewsPrompt = ai.definePrompt({
   name: 'footballNewsPrompt',
   input: {schema: GetLatestFootballNewsInputSchema},
   output: {schema: GetLatestFootballNewsOutputSchema},
-  tools: [googleSearchTool],
   prompt:
     'Use Google Search to find the top 10 latest football news articles. Return the list of articles in the required JSON format.',
 });
