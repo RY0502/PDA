@@ -5,6 +5,24 @@ import { TrendingUp } from 'lucide-react';
 // Revalidate the page every hour
 export const revalidate = 3600;
 
+function TrendContent({ summary }: { summary: string }) {
+  const parts = summary.split(/(\*\*.*?\*\*)/g).filter(part => part);
+
+  return (
+    <div className="whitespace-pre-line text-sm text-muted-foreground">
+      {parts.map((part, i) =>
+        part.startsWith('**') && part.endsWith('**') ? (
+          <strong key={i} className="font-semibold text-primary">
+            {part.slice(2, -2)}
+          </strong>
+        ) : (
+          part
+        )
+      )}
+    </div>
+  );
+}
+
 export default async function TrendsPage() {
   const { summary } = await fetchTrendingSearches();
 
@@ -27,9 +45,7 @@ export default async function TrendsPage() {
           </CardHeader>
           <CardContent>
             {summary ? (
-              <p className="whitespace-pre-line text-sm text-muted-foreground">
-                {summary}
-              </p>
+              <TrendContent summary={summary} />
             ) : (
               <p className="text-muted-foreground">
                 Could not fetch trending topics at this time.
