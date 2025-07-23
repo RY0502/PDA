@@ -35,6 +35,8 @@ function NewsListItem({ item }: { item: NewsItem }) {
   );
 }
 
+let cachedNewsSections: NewsSection[] = [];
+
 export default async function FootballPage() {
   const { summary } = await getLatestFootballNews({});
   const lines = summary.split('\n').filter(item => item.trim().length > 0);
@@ -64,6 +66,11 @@ export default async function FootballPage() {
     newsSections.push(currentSection);
   }
 
+  // Update cached data only if the new fetch returned news sections
+  if (newsSections.length > 0) {
+    cachedNewsSections = newsSections;
+  }
+
   return (
     <div className="container py-8">
       <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-2 text-center md:pb-8">
@@ -82,9 +89,9 @@ export default async function FootballPage() {
             <CardTitle>Today's Top Stories</CardTitle>
           </CardHeader>
           <CardContent>
-            {newsSections.length > 0 ? (
+            {cachedNewsSections.length > 0 ? (
               <div className="space-y-6">
-                {newsSections.map((section, index) => (
+                {cachedNewsSections.map((section, index) => (
                   <div key={index}>
                     <h3 className="text-lg font-semibold tracking-tight text-foreground">
                       {section.title}
