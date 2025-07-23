@@ -15,15 +15,8 @@ export type GetLatestFootballNewsInput = z.infer<
   typeof GetLatestFootballNewsInputSchema
 >;
 
-const ArticleSchema = z.object({
-  title: z.string().describe('The title of the news article.'),
-  url: z.string().describe('The direct, full, and clean URL to the news article.'),
-});
-
 const GetLatestFootballNewsOutputSchema = z.object({
-  articles: z
-    .array(ArticleSchema)
-    .describe('A list of 10 recent football news articles.'),
+  summary: z.string().describe('A summary of the latest football news.'),
 });
 export type GetLatestFootballNewsOutput = z.infer<
   typeof GetLatestFootballNewsOutputSchema
@@ -61,34 +54,22 @@ export async function getLatestFootballNews(
       console.error('API call failed with status:', response.status);
       const errorBody = await response.text();
       console.error('Error body:', errorBody);
-      return { articles: [] };
+      return { summary: 'Could not fetch news at this time.' };
     }
 
     const data = await response.json();
     
-    const groundingMetadata = data.candidates?.[0]?.groundingMetadata;
-    if (!groundingMetadata || !groundingMetadata.groundingChunks) {
-      console.log('No grounding metadata found in the response.');
-      return { articles: [] };
+    const summary = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!summary) {
+      console.log('No summary found in the response.');
+      return { summary: 'No news summary available right now.' };
     }
 
-    const articles = groundingMetadata.groundingChunks
-      .map((chunk: any) => {
-        if (chunk.web && chunk.web.title && chunk.web.uri) {
-          return {
-            title: chunk.web.title,
-            url: chunk.web.uri,
-          };
-        }
-        return null;
-      })
-      .filter((article: any): article is { title: string; url: string } => article !== null);
-
-    // Limit to 10 articles to match original intent
-    return { articles: articles.slice(0, 10) };
+    return { summary };
 
   } catch (error) {
     console.error('Error fetching football news:', error);
-    return { articles: [] };
+    return { summary: 'An error occurred while fetching the news.' };
   }
 }

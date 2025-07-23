@@ -1,13 +1,35 @@
 import { getLatestFootballNews } from '@/ai/flows/get-latest-football-news';
-import { Card, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ExternalLink, Newspaper } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Newspaper } from 'lucide-react';
 
 // Revalidate the page every hour
 export const revalidate = 3600;
 
+function NewsListItem({ text }: { text: string }) {
+  // Remove leading asterisks and trim whitespace
+  const cleanedText = text.replace(/^\*+\s*/, '').trim();
+
+  // Make the first part bold (e.g., team name)
+  const parts = cleanedText.split('**');
+  
+  return (
+    <li className="py-3">
+      {parts.length > 2 ? (
+        <p>
+          <span className="font-semibold text-primary">{parts[1]}</span>
+          {parts[2]}
+        </p>
+      ) : (
+        <p>{cleanedText}</p>
+      )}
+    </li>
+  );
+}
+
 export default async function FootballPage() {
-  const { articles } = await getLatestFootballNews({});
+  const { summary } = await getLatestFootballNews({});
+  const newsItems = summary.split('\n').filter(item => item.trim().length > 0 && item.trim().startsWith('*'));
 
   return (
     <div className="container py-8">
@@ -17,27 +39,27 @@ export default async function FootballPage() {
           Football News
         </h1>
         <p className="max-w-[750px] text-lg text-muted-foreground sm:text-xl">
-          Top football headlines from across the web, powered by AI.
+          The latest headlines and transfer talk from the world of football, powered by AI.
         </p>
       </section>
 
-      <div className="grid gap-6 py-10 sm:grid-cols-2 lg:grid-cols-3">
-        {articles.map((article) => (
-          <Card key={article.url} className="flex flex-col">
-            <CardHeader className="flex-grow">
-              <CardTitle className="text-lg leading-snug">{article.title}</CardTitle>
-              <CardDescription className="break-all">{article.url}</CardDescription>
-            </CardHeader>
-            <CardFooter>
-              <Button asChild className="w-full">
-                <a href={article.url} target="_blank" rel="noopener noreferrer">
-                  Read Full Story
-                  <ExternalLink className="ml-2 h-4 w-4" />
-                </a>
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
+      <div className="mx-auto max-w-3xl py-10">
+        <Card>
+          <CardHeader>
+            <CardTitle>Today's Top Stories</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {newsItems.length > 0 ? (
+              <ul className="divide-y divide-border">
+                {newsItems.map((item, index) => (
+                  <NewsListItem key={index} text={item} />
+                ))}
+              </ul>
+            ) : (
+              <p className="text-muted-foreground">No news to display at the moment.</p>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
