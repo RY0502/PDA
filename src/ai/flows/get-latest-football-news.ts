@@ -7,8 +7,8 @@
  * - GetLatestFootballNewsOutput - The return type for the getLatestFootballNews function.
  */
 
-import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { GEMINI_API_KEY } from '@/lib/constants';
 
 const GetLatestFootballNewsInputSchema = z.object({});
 export type GetLatestFootballNewsInput = z.infer<
@@ -32,26 +32,63 @@ export type GetLatestFootballNewsOutput = z.infer<
 export async function getLatestFootballNews(
   input: GetLatestFootballNewsInput
 ): Promise<GetLatestFootballNewsOutput> {
-  return getLatestFootballNewsFlow(input);
-}
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
 
-const getLatestFootballNewsPrompt = ai.definePrompt({
-  name: 'footballNewsPrompt',
-  input: {schema: GetLatestFootballNewsInputSchema},
-  output: {schema: GetLatestFootballNewsOutputSchema},
-  model: 'googleai/gemini-2.5-flash',
-  prompt:
-    'Do not simulate search. Use Grounding with Google Search to find in realtime-web top 10 latest football news articles. For each article, provide the title and the direct, full, absolute URL to the story. Ensure the URL is clean and does not contain any tracking parameters or redirects from the search results.',
-});
+  const requestBody = {
+    contents: [
+      {
+        parts: [{ text: 'Latest football news' }],
+      },
+    ],
+    tools: [
+      {
+        google_search: {},
+      },
+    ],
+  };
 
-const getLatestFootballNewsFlow = ai.defineFlow(
-  {
-    name: 'getLatestFootballNewsFlow',
-    inputSchema: GetLatestFootballNewsInputSchema,
-    outputSchema: GetLatestFootballNewsOutputSchema,
-  },
-  async input => {
-    const {output} = await getLatestFootballNewsPrompt(input);
-    return output || {articles: []};
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': GEMINI_API_KEY!,
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      console.error('API call failed with status:', response.status);
+      const errorBody = await response.text();
+      console.error('Error body:', errorBody);
+      return { articles: [] };
+    }
+
+    const data = await response.json();
+    
+    const groundingMetadata = data.candidates?.[0]?.groundingMetadata;
+    if (!groundingMetadata || !groundingMetadata.groundingChunks) {
+      console.log('No grounding metadata found in the response.');
+      return { articles: [] };
+    }
+
+    const articles = groundingMetadata.groundingChunks
+      .map((chunk: any) => {
+        if (chunk.web && chunk.web.title && chunk.web.uri) {
+          return {
+            title: chunk.web.title,
+            url: chunk.web.uri,
+          };
+        }
+        return null;
+      })
+      .filter((article: any): article is { title: string; url: string } => article !== null);
+
+    // Limit to 10 articles to match original intent
+    return { articles: articles.slice(0, 10) };
+
+  } catch (error) {
+    console.error('Error fetching football news:', error);
+    return { articles: [] };
   }
-);
+}
