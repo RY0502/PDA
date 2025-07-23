@@ -35,7 +35,7 @@ export async function fetchTrendingSearches(): Promise<TrendingSearchesOutput> {
   const body = JSON.stringify({
     contents: [
       {
-        parts: [{text: 'Trending searches on google search today'}],
+        parts: [{text: 'Trending today in india'}],
       },
     ],
     tools: [
