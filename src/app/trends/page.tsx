@@ -1,6 +1,7 @@
 import { fetchTrendingSearches } from '@/ai/flows/fetch-trending-searches';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp } from 'lucide-react';
+import { UrlOpener } from '@/components/url-opener';
 
 // Revalidate the page every hour
 export const revalidate = 3600;
@@ -34,6 +35,8 @@ export default async function TrendsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <UrlOpener />
     </div>
   );
 }
