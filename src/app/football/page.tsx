@@ -6,6 +6,11 @@ import { Newspaper } from 'lucide-react';
 // Revalidate the page every hour
 export const revalidate = 3600;
 
+interface NewsSection {
+  title: string;
+  items: string[];
+}
+
 function NewsListItem({ text }: { text: string }) {
   // Remove leading asterisks and trim whitespace
   const cleanedText = text.replace(/^\*+\s*/, '').trim();
@@ -14,7 +19,7 @@ function NewsListItem({ text }: { text: string }) {
   const parts = cleanedText.split('**');
   
   return (
-    <li className="py-3">
+    <li className="py-2">
       {parts.length > 2 ? (
         <p>
           <span className="font-semibold text-primary">{parts[1]}</span>
@@ -29,7 +34,28 @@ function NewsListItem({ text }: { text: string }) {
 
 export default async function FootballPage() {
   const { summary } = await getLatestFootballNews({});
-  const newsItems = summary.split('\n').filter(item => item.trim().length > 0 && item.trim().startsWith('*'));
+  const lines = summary.split('\n').filter(item => item.trim().length > 0);
+
+  const newsSections: NewsSection[] = [];
+  let currentSection: NewsSection | null = null;
+
+  lines.forEach(line => {
+    if (line.startsWith('**') && line.endsWith('**')) {
+      if (currentSection) {
+        newsSections.push(currentSection);
+      }
+      currentSection = {
+        title: line.replace(/\*\*/g, ''),
+        items: [],
+      };
+    } else if (line.startsWith('*') && currentSection) {
+      currentSection.items.push(line);
+    }
+  });
+
+  if (currentSection) {
+    newsSections.push(currentSection);
+  }
 
   return (
     <div className="container py-8">
@@ -49,12 +75,22 @@ export default async function FootballPage() {
             <CardTitle>Today's Top Stories</CardTitle>
           </CardHeader>
           <CardContent>
-            {newsItems.length > 0 ? (
-              <ul className="divide-y divide-border">
-                {newsItems.map((item, index) => (
-                  <NewsListItem key={index} text={item} />
+            {newsSections.length > 0 ? (
+              <div className="flex flex-col gap-8">
+                {newsSections.map((section, sectionIndex) => (
+                  <div key={sectionIndex}>
+                    <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+                      {section.title}
+                    </h2>
+                    <Separator className="my-4" />
+                    <ul className="divide-y divide-border">
+                      {section.items.map((item, itemIndex) => (
+                        <NewsListItem key={itemIndex} text={item} />
+                      ))}
+                    </ul>
+                  </div>
                 ))}
-              </ul>
+              </div>
             ) : (
               <p className="text-muted-foreground">No news to display at the moment.</p>
             )}
