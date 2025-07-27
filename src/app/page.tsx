@@ -1,3 +1,4 @@
+
 import { getMediumArticles } from '@/services/email-service';
 import { Button } from '@/components/ui/button';
 import {
@@ -46,7 +47,7 @@ function ArticleCard({ article }: { article: MediumArticle }) {
                 {article.description}
               </CardDescription>
             </div>
-            <div className="mt-3 flex justify-center">
+            <div className="mt-3 flex justify-start">
               <Button asChild size="sm">
                 <a
                   href={`https://freedium.cfd/${article.url}`}
