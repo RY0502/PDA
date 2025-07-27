@@ -55,7 +55,7 @@ function ClubLogos({ clubs }: { clubs: ClubWithLogo[] }) {
         {clubs.map((club) => (
           <Tooltip key={club.name}>
             <TooltipTrigger asChild>
-              <Avatar className="h-12 w-12">
+              <Avatar key={club.name} className="h-12 w-12 bg-muted">
                 <AvatarImage src={club.logoUrl} alt={`${club.name} logo`} />
                 <AvatarFallback>{club.name.substring(0, 2)}</AvatarFallback>
               </Avatar>
