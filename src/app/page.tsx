@@ -38,16 +38,16 @@ function ArticleCard({ article }: { article: MediumArticle }) {
               </div>
             )}
           </div>
-          <div className="flex flex-grow flex-col justify-between">
+          <div className="flex flex-grow flex-col">
             <div>
-              <CardTitle className="mb-2 line-clamp-2 text-base leading-tight">
+              <CardTitle className="mb-1 line-clamp-2 text-base leading-tight">
                 {article.title}
               </CardTitle>
               <CardDescription className="line-clamp-2 text-sm">
                 {article.description}
               </CardDescription>
             </div>
-            <div className="mt-3 flex justify-start">
+            <div className="mt-2 flex flex-grow items-end justify-end">
               <Button asChild size="sm">
                 <a
                   href={`https://freedium.cfd/${article.url}`}
