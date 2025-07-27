@@ -18,7 +18,8 @@ const ClubWithLogoSchema = z.object({
 
 const GetLatestFootballNewsOutputSchema = z.object({
   summary: z.string().describe('A summary of the latest football news.'),
-  clubsWithLogos: z.array(ClubWithLogoSchema).describe('A list of clubs mentioned in the news, with their generated logos.')
+  clubsWithLogos: z.array(ClubWithLogoSchema).describe('A list of clubs mentioned in the news, with their generated logos.'),
+  totalClubs: z.number().describe('The total number of unique clubs mentioned in the summary.')
 });
 export type GetLatestFootballNewsOutput = z.infer<
   typeof GetLatestFootballNewsOutputSchema
@@ -28,6 +29,7 @@ export async function getLatestFootballNews(): Promise<GetLatestFootballNewsOutp
   const fallbackResponse = {
     summary: 'Could not fetch news at this time.',
     clubsWithLogos: [],
+    totalClubs: 0,
   };
 
   if (!GEMINI_API_KEY) {
@@ -36,6 +38,7 @@ export async function getLatestFootballNews(): Promise<GetLatestFootballNewsOutp
       summary:
         '**Configuration Error**\n* The Gemini API key is not configured. Please set it in your environment variables.',
       clubsWithLogos: [],
+      totalClubs: 0,
     };
   }
 
@@ -70,6 +73,7 @@ export async function getLatestFootballNews(): Promise<GetLatestFootballNewsOutp
       return {
         summary: `**API Error**\n* Could not fetch news. Status: ${response.status}`,
         clubsWithLogos: [],
+        totalClubs: 0,
       };
     }
 
@@ -81,14 +85,17 @@ export async function getLatestFootballNews(): Promise<GetLatestFootballNewsOutp
       return {
         summary: '**API Error**\n* No news summary was returned from the API.',
         clubsWithLogos: [],
+        totalClubs: 0,
       };
     }
     
     const clubNameRegex = /\*\*(.*?)\*\*/g;
     const matches = summary.match(clubNameRegex) || [];
-    const uniqueClubNames = Array.from(new Set(matches.map(name => name.replace(/\*\*/g, '').trim().replace(/:$/, '')))).slice(0, 4);
+    const allUniqueClubNames = Array.from(new Set(matches.map(name => name.replace(/\*\*/g, '').trim().replace(/:$/, ''))));
+    const totalClubs = allUniqueClubNames.length;
+    const topClubNames = allUniqueClubNames.slice(0, 6);
     
-    const logoPromises = uniqueClubNames.map(name => 
+    const logoPromises = topClubNames.map(name => 
       generateClubLogo({ clubName: name }).then(result => ({
         name: name,
         logoUrl: result.logoUrl,
@@ -97,12 +104,13 @@ export async function getLatestFootballNews(): Promise<GetLatestFootballNewsOutp
 
     const clubsWithLogos = await Promise.all(logoPromises);
 
-    return { summary, clubsWithLogos };
+    return { summary, clubsWithLogos, totalClubs };
   } catch (error) {
     console.error('Error fetching football news:', error);
     return {
       summary: `**Network Error**\n* There was an error fetching the news. Please check your connection.`,
       clubsWithLogos: [],
+      totalClubs: 0,
     };
   }
 }

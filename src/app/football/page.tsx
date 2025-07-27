@@ -5,7 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Newspaper, Dot } from 'lucide-react';
 import Image from 'next/image';
 
-export const revalidate = 3600; // Revalidate the page every hour
+export const revalidate = 5400; // Revalidate the page every 1.5 hours
 
 // Define the types for our structured data
 interface NewsItem {
@@ -44,10 +44,12 @@ function NewsListItem({ item }: { item: NewsItem }) {
 }
 
 // A component to display club logos
-function ClubLogos({ clubs }: { clubs: ClubWithLogo[] }) {
+function ClubLogos({ clubs, totalClubs }: { clubs: ClubWithLogo[], totalClubs: number }) {
   if (!clubs || clubs.length === 0) {
     return null;
   }
+  
+  const remainingClubs = totalClubs - clubs.length;
 
   return (
     <div className="mx-auto mb-8 flex max-w-3xl flex-wrap items-center justify-center gap-4">
@@ -65,6 +67,18 @@ function ClubLogos({ clubs }: { clubs: ClubWithLogo[] }) {
             </TooltipContent>
           </Tooltip>
         ))}
+        {remainingClubs > 0 && (
+           <Tooltip>
+            <TooltipTrigger asChild>
+              <Avatar className="h-12 w-12 bg-muted">
+                <AvatarFallback>+{remainingClubs}</AvatarFallback>
+              </Avatar>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{remainingClubs} more clubs mentioned</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
       </TooltipProvider>
     </div>
   );
@@ -72,7 +86,7 @@ function ClubLogos({ clubs }: { clubs: ClubWithLogo[] }) {
 
 
 export default async function FootballPage() {
-  const { summary, clubsWithLogos } = await getLatestFootballNews();
+  const { summary, clubsWithLogos, totalClubs } = await getLatestFootballNews();
   const lines = summary.split('\n').filter((item) => item.trim().length > 0);
 
   const newsSections: NewsSection[] = [];
@@ -114,7 +128,7 @@ export default async function FootballPage() {
       </section>
 
       <div className="py-10">
-        <ClubLogos clubs={clubsWithLogos} />
+        <ClubLogos clubs={clubsWithLogos} totalClubs={totalClubs} />
         <Card className="mx-auto max-w-3xl">
           <CardHeader>
             <CardTitle>Today's Top Stories</CardTitle>

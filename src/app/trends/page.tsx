@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp } from 'lucide-react';
 
 // Revalidate the page every hour
-export const revalidate = 3600;
+export const revalidate = 14400;
 
 function TrendContent({ summary }: { summary: string }) {
   const parts = summary.split(/(\*\*.*?\*\*)/g).filter(part => part);
