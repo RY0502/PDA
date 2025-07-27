@@ -4,7 +4,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -20,45 +19,47 @@ export const revalidate = 3600;
 function ArticleCard({ article }: { article: MediumArticle }) {
   return (
     <Card className="overflow-hidden rounded-lg transition-shadow duration-300 hover:shadow-xl">
-      <div className="flex">
-        <div className="relative h-24 w-24 flex-shrink-0 bg-muted">
-          {article.imageUrl ? (
-            <Image
-              src={article.imageUrl}
-              alt={article.title}
-              fill
-              sizes="96px"
-              className="object-cover"
-              data-ai-hint="article cover"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center">
-              <ImageIcon className="h-8 w-8 text-muted-foreground" />
+      <CardContent className="p-4">
+        <div className="flex gap-4">
+          <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md bg-muted">
+            {article.imageUrl ? (
+              <Image
+                src={article.imageUrl}
+                alt={article.title}
+                fill
+                sizes="96px"
+                className="object-cover"
+                data-ai-hint="article cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center">
+                <ImageIcon className="h-8 w-8 text-muted-foreground" />
+              </div>
+            )}
+          </div>
+          <div className="flex flex-grow flex-col justify-between">
+            <div>
+              <CardTitle className="mb-2 line-clamp-2 text-base leading-tight">
+                {article.title}
+              </CardTitle>
+              <CardDescription className="line-clamp-2 text-sm">
+                {article.description}
+              </CardDescription>
             </div>
-          )}
-        </div>
-        <div className="flex flex-grow flex-col justify-between p-4">
-          <div>
-            <CardTitle className="mb-2 line-clamp-2 text-base leading-tight">
-              {article.title}
-            </CardTitle>
-            <CardDescription className="line-clamp-2 text-sm">
-              {article.description}
-            </CardDescription>
-          </div>
-          <div className="mt-3">
-            <Button asChild size="sm" className="w-full sm:w-auto">
-              <a
-                href={`https://freedium.cfd/${article.url}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Read More
-              </a>
-            </Button>
+            <div className="mt-3">
+              <Button asChild size="sm" className="w-full sm:w-auto">
+                <a
+                  href={`https://freedium.cfd/${article.url}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Read More
+                </a>
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      </CardContent>
     </Card>
   );
 }
