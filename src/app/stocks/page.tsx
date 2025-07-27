@@ -20,8 +20,6 @@ import { ArrowDown, ArrowUp, LineChart } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
 
-export const revalidate = 7200; // Revalidate every 2 hours
-
 function StockPriceCard({
   price,
   stockCode,
@@ -186,7 +184,7 @@ function StocksPageContent() {
 
 export default function StocksPage() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<div className="container py-8 text-center">Loading...</div>}>
             <StocksPageContent />
         </Suspense>
     )

@@ -10,7 +10,7 @@
 import {z} from 'genkit';
 import {GEMINI_API_KEY} from '@/lib/constants';
 
-export const LoserSchema = z.object({
+const LoserSchema = z.object({
   name: z.string(),
   price: z.string(),
   change: z.string(),

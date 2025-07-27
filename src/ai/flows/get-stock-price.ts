@@ -11,12 +11,12 @@
 import {z} from 'genkit';
 import {GEMINI_API_KEY} from '@/lib/constants';
 
-export const StockPriceInputSchema = z.object({
+const StockPriceInputSchema = z.object({
   stockCode: z.string().describe('The NSE stock symbol, e.g., "PVRINOX".'),
 });
 export type StockPriceInput = z.infer<typeof StockPriceInputSchema>;
 
-export const StockPriceOutputSchema = z.object({
+const StockPriceOutputSchema = z.object({
   stockCode: z.string(),
   currentPrice: z.string(),
   highPrice: z.string(),
