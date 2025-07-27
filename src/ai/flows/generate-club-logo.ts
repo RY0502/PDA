@@ -28,7 +28,7 @@ export type GenerateClubLogoOutput = z.infer<
 export async function generateClubLogo(
   input: GenerateClubLogoInput
 ): Promise<GenerateClubLogoOutput> {
-  const prompt = `Generate a modern, minimalist circular logo for the football club: "${input.clubName}". The logo should be on a transparent background.`;
+  const prompt = `Generate a logo for the football club: "${input.clubName}". The design should be a modern, minimalist, circular interpretation that is as close as possible to the actual official club logo. The logo must be on a transparent background.`;
 
   const {media} = await ai.generate({
     model: 'googleai/gemini-2.0-flash-preview-image-generation',
