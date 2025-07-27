@@ -23,26 +23,26 @@ export async function getTopGainers(): Promise<TopGainer[]> {
     return [];
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
   const headers = {
     'x-goog-api-key': GEMINI_API_KEY,
     'Content-Type': 'application/json',
   };
+  
+  const prompt = `
+    List today's top 10 stock market gainers on NSE with a share price between 400 and 950 INR.
+    
+    Provide the output as a clean JSON array like this:
+    [
+      { "name": "Company A", "price": "550.20", "change": "+12.30" },
+      { "name": "Company B", "price": "780.90", "change": "+8.55" }
+    ]
+    Do not include any other text, just the JSON array. Ensure the change value is a string starting with a '+'.
+  `;
+
   const body = JSON.stringify({
-    contents: [
-      {
-        parts: [
-          {
-            text: "List today's top 10 stock market gainers on NSE with a share price between 400 and 950 INR. For each, provide the company name, its current price, and its price change.",
-          },
-        ],
-      },
-    ],
-    tools: [
-      {
-        google_search: {},
-      },
-    ],
+    contents: [{ parts: [{ text: prompt }] }],
+    tools: [{ google_search: {} }],
   });
 
   try {
@@ -65,26 +65,14 @@ export async function getTopGainers(): Promise<TopGainer[]> {
       return [];
     }
 
-    const gainers: TopGainer[] = [];
-    const lines = text.split('\n');
-    for (const line of lines) {
-      if (line.startsWith('* **')) {
-        const parts = line.split(':**');
-        const name = parts[0].replace('* **', '').trim();
-        const details = parts[1] || '';
-        const priceMatch = details.match(/Price:.*?([\d,]+\.\d+)/);
-        const changeMatch = details.match(/Change:.*?([\d,]+\.\d+)/);
-
-        if (name && priceMatch && changeMatch) {
-          gainers.push({
-            name,
-            price: priceMatch[1],
-            change: `+${changeMatch[1]}`,
-          });
-        }
-      }
+    try {
+      const cleanedJsonString = text.replace(/```json\n|```/g, '').trim();
+      const parsedData: TopGainer[] = JSON.parse(cleanedJsonString);
+      return parsedData;
+    } catch (e) {
+      console.error('Error parsing JSON from top gainers API:', e);
+      return [];
     }
-    return gainers;
   } catch (error) {
     console.error('Error fetching top gainers:', error);
     return [];

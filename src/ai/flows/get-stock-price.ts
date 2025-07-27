@@ -41,26 +41,29 @@ export async function getStockPrice(
     return fallbackResponse;
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
   const headers = {
     'x-goog-api-key': GEMINI_API_KEY,
     'Content-Type': 'application/json',
   };
+  
+  const prompt = `
+    What is the current, today's high, and today's low price for the stock with symbol ${input.stockCode} on the NSE? Also provide the full company name.
+    
+    Please provide the output in a clean JSON format like this:
+    {
+      "stockCode": "PVRINOX",
+      "companyName": "PVR INOX Limited",
+      "currentPrice": "1430.00",
+      "highPrice": "1450.00",
+      "lowPrice": "1420.00"
+    }
+    Do not include any other text, just the JSON object.
+  `;
+
   const body = JSON.stringify({
-    contents: [
-      {
-        parts: [
-          {
-            text: `What is the current, today's high, and today's low price for the stock with symbol ${input.stockCode} on the NSE? Also provide the full company name.`,
-          },
-        ],
-      },
-    ],
-    tools: [
-      {
-        google_search: {},
-      },
-    ],
+    contents: [{ parts: [{ text: prompt }] }],
+    tools: [{ google_search: {} }],
   });
 
   try {
@@ -82,21 +85,15 @@ export async function getStockPrice(
       console.error('No text found in API response:', data);
       return fallbackResponse;
     }
-    
-    const companyNameMatch = text.match(/\*\*(.*?)\*\*/);
-    const companyName = companyNameMatch ? companyNameMatch[1] : input.stockCode;
 
-    const currentPriceMatch = text.match(/Current Price:.*?([\d,]+\.\d+)/);
-    const highPriceMatch = text.match(/High:.*?([\d,]+\.\d+)/);
-    const lowPriceMatch = text.match(/Low:.*?([\d,]+\.\d+)/);
-
-    return {
-      stockCode: input.stockCode,
-      companyName,
-      currentPrice: currentPriceMatch ? currentPriceMatch[1] : 'N/A',
-      highPrice: highPriceMatch ? highPriceMatch[1] : 'N/A',
-      lowPrice: lowPriceMatch ? lowPriceMatch[1] : 'N/A',
-    };
+    try {
+      const cleanedJsonString = text.replace(/```json\n|```/g, '').trim();
+      const parsedData: StockPriceOutput = JSON.parse(cleanedJsonString);
+      return parsedData;
+    } catch (e) {
+      console.error('Error parsing JSON from stock price API:', e);
+      return fallbackResponse;
+    }
   } catch (error) {
     console.error('Error fetching stock price:', error);
     return fallbackResponse;
