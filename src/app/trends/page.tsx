@@ -9,7 +9,7 @@ function TrendContent({ summary }: { summary: string }) {
   const parts = summary.split(/(\*\*.*?\*\*)/g).filter(part => part);
 
   return (
-    <div className="whitespace-pre-line text-sm text-muted-foreground">
+    <div className="whitespace-pre-line text-base text-muted-foreground">
       {parts.map((part, i) =>
         part.startsWith('**') && part.endsWith('**') ? (
           <strong key={i} className="font-semibold text-primary">

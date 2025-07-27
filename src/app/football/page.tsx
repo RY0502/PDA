@@ -20,7 +20,7 @@ function NewsListItem({ item }: { item: NewsItem }) {
   return (
     <li className="flex items-start gap-2">
       <Dot className="h-5 w-5 flex-shrink-0 text-primary" />
-      <span className="flex-1 text-sm text-muted-foreground">
+      <span className="flex-1 text-base text-muted-foreground">
         {parts.map((part, i) =>
           part.startsWith('**') && part.endsWith('**') ? (
             <strong key={i} className="font-semibold text-primary">
