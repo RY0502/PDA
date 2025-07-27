@@ -1,14 +1,6 @@
 import { getLatestFootballNews } from '@/ai/flows/get-latest-football-news';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Newspaper, Dot } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import type { ClubWithLogo } from '@/ai/flows/get-latest-football-news';
 
 export const revalidate = 3600; // Revalidate the page every hour
 
@@ -20,43 +12,6 @@ interface NewsItem {
 interface NewsSection {
   title: string;
   items: NewsItem[];
-}
-
-function ClubLogos({ clubs }: { clubs: ClubWithLogo[] }) {
-  if (!clubs || clubs.length === 0) {
-    return null;
-  }
-  return (
-    <div className="mx-auto mb-8 max-w-3xl">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl">Clubs in the News</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <TooltipProvider>
-            <div className="flex flex-wrap items-center gap-4">
-              {clubs.map((club) => (
-                <Tooltip key={club.name}>
-                  <TooltipTrigger>
-                    <Avatar className="h-12 w-12 border">
-                      <AvatarImage
-                        src={club.logoUrl}
-                        alt={`${club.name} logo`}
-                      />
-                      <AvatarFallback>{club.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{club.name}</p>
-                  </TooltipContent>
-                </Tooltip>
-              ))}
-            </div>
-          </TooltipProvider>
-        </CardContent>
-      </Card>
-    </div>
-  );
 }
 
 // A component to render a single news item, handling team name highlighting
@@ -81,10 +36,9 @@ function NewsListItem({ item }: { item: NewsItem }) {
 }
 
 let cachedNewsSections: NewsSection[] = [];
-let cachedClubs: ClubWithLogo[] = [];
 
 export default async function FootballPage() {
-  const { summary, clubsWithLogos } = await getLatestFootballNews();
+  const { summary } = await getLatestFootballNews();
   const lines = summary.split('\n').filter((item) => item.trim().length > 0);
 
   const newsSections: NewsSection[] = [];
@@ -116,10 +70,7 @@ export default async function FootballPage() {
   if (newsSections.length > 0) {
     cachedNewsSections = newsSections;
   }
-  if (clubsWithLogos.length > 0) {
-    cachedClubs = clubsWithLogos;
-  }
-
+  
   return (
     <div className="container py-8">
       <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-2 text-center md:pb-8">
@@ -134,8 +85,6 @@ export default async function FootballPage() {
       </section>
 
       <div className="py-10">
-        <ClubLogos clubs={cachedClubs} />
-
         <Card className="mx-auto max-w-3xl">
           <CardHeader>
             <CardTitle>Today's Top Stories</CardTitle>
