@@ -86,7 +86,7 @@ export async function getLatestFootballNews(): Promise<GetLatestFootballNewsOutp
     
     const clubNameRegex = /\*\*(.*?)\*\*/g;
     const matches = summary.match(clubNameRegex) || [];
-    const uniqueClubNames = Array.from(new Set(matches.map(name => name.replace(/\*\*/g, '').trim().replace(/:$/, '')))).slice(0, 5);
+    const uniqueClubNames = Array.from(new Set(matches.map(name => name.replace(/\*\*/g, '').trim().replace(/:$/, '')))).slice(0, 4);
     
     const logoPromises = uniqueClubNames.map(name => 
       generateClubLogo({ clubName: name }).then(result => ({
