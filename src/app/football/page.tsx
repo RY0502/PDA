@@ -1,6 +1,14 @@
 import { getLatestFootballNews } from '@/ai/flows/get-latest-football-news';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Newspaper, Dot } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import type { ClubWithLogo } from '@/ai/flows/get-latest-football-news';
 
 export const revalidate = 3600; // Revalidate the page every hour
 
@@ -14,9 +22,46 @@ interface NewsSection {
   items: NewsItem[];
 }
 
+function ClubLogos({ clubs }: { clubs: ClubWithLogo[] }) {
+  if (!clubs || clubs.length === 0) {
+    return null;
+  }
+  return (
+    <div className="mx-auto mb-8 max-w-3xl">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl">Clubs in the News</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <TooltipProvider>
+            <div className="flex flex-wrap items-center gap-4">
+              {clubs.map((club) => (
+                <Tooltip key={club.name}>
+                  <TooltipTrigger>
+                    <Avatar className="h-12 w-12 border">
+                      <AvatarImage
+                        src={club.logoUrl}
+                        alt={`${club.name} logo`}
+                      />
+                      <AvatarFallback>{club.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{club.name}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+          </TooltipProvider>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // A component to render a single news item, handling team name highlighting
 function NewsListItem({ item }: { item: NewsItem }) {
-  const parts = item.text.split(/(\*\*.*?\*\*)/g).filter(part => part);
+  const parts = item.text.split(/(\*\*.*?\*\*)/g).filter((part) => part);
   return (
     <li className="flex items-start gap-2">
       <Dot className="h-5 w-5 flex-shrink-0 text-primary" />
@@ -36,18 +81,18 @@ function NewsListItem({ item }: { item: NewsItem }) {
 }
 
 let cachedNewsSections: NewsSection[] = [];
+let cachedClubs: ClubWithLogo[] = [];
 
 export default async function FootballPage() {
-  const { summary } = await getLatestFootballNews({});
-  const lines = summary.split('\n').filter(item => item.trim().length > 0);
+  const { summary, clubsWithLogos } = await getLatestFootballNews();
+  const lines = summary.split('\n').filter((item) => item.trim().length > 0);
 
   const newsSections: NewsSection[] = [];
   let currentSection: NewsSection | null = null;
 
-  lines.forEach(line => {
+  lines.forEach((line) => {
     const trimmedLine = line.trim();
     if (trimmedLine.startsWith('**') && trimmedLine.endsWith('**')) {
-      // If a new section starts, push the old one and start a new one
       if (currentSection) {
         newsSections.push(currentSection);
       }
@@ -55,20 +100,24 @@ export default async function FootballPage() {
         title: trimmedLine.slice(2, -2),
         items: [],
       };
-    } else if (currentSection && (trimmedLine.startsWith('*') || trimmedLine.startsWith('-'))) {
-      // Add item to the current section
+    } else if (
+      currentSection &&
+      (trimmedLine.startsWith('*') || trimmedLine.startsWith('-'))
+    ) {
       currentSection.items.push({ text: trimmedLine.slice(1).trim() });
     }
   });
 
-  // Add the last section if it exists
   if (currentSection) {
     newsSections.push(currentSection);
   }
 
-  // Update cached data only if the new fetch returned news sections
+  // Update cached data only if the new fetch returned data
   if (newsSections.length > 0) {
     cachedNewsSections = newsSections;
+  }
+  if (clubsWithLogos.length > 0) {
+    cachedClubs = clubsWithLogos;
   }
 
   return (
@@ -79,12 +128,15 @@ export default async function FootballPage() {
           Football News
         </h1>
         <p className="max-w-[750px] text-lg text-muted-foreground sm:text-xl">
-          The latest headlines and transfer talk from the world of football, powered by AI.
+          The latest headlines and transfer talk from the world of football,
+          powered by AI.
         </p>
       </section>
 
-      <div className="mx-auto max-w-3xl py-10">
-        <Card>
+      <div className="py-10">
+        <ClubLogos clubs={cachedClubs} />
+
+        <Card className="mx-auto max-w-3xl">
           <CardHeader>
             <CardTitle>Today's Top Stories</CardTitle>
           </CardHeader>
@@ -105,7 +157,9 @@ export default async function FootballPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground">No news to display at the moment.</p>
+              <p className="text-muted-foreground">
+                No news to display at the moment.
+              </p>
             )}
           </CardContent>
         </Card>
