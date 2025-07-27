@@ -20,24 +20,32 @@ export const revalidate = 3600;
 function ArticleCard({ article }: { article: MediumArticle }) {
   return (
     <Card className="overflow-hidden rounded-lg transition-shadow duration-300 hover:shadow-xl">
-      <CardContent className="p-4">
-        <div className="flex gap-4">
-          <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md bg-muted">
+      <CardContent className="p-3">
+        <div className="flex gap-3">
+          <div className="flex-shrink-0">
             {article.imageUrl ? (
-              <Image
-                src={article.imageUrl}
-                alt={article.title}
-                fill
-                sizes="96px"
-                className="object-cover"
-                data-ai-hint="article cover"
-              />
+              <div className="relative h-20 w-20 overflow-hidden rounded-md bg-muted">
+                <Image
+                  src={article.imageUrl}
+                  alt={article.title}
+                  fill
+                  sizes="80px"
+                  className="object-cover"
+                  data-ai-hint="article cover"
+                />
+              </div>
             ) : (
-              <div className="flex h-full w-full items-center justify-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-md bg-muted">
                 <ImageIcon className="h-8 w-8 text-muted-foreground" />
               </div>
             )}
+            {article.author && (
+              <p className="mt-1 w-20 truncate text-center text-xs font-medium text-muted-foreground">
+                {article.author}
+              </p>
+            )}
           </div>
+
           <div className="flex flex-grow flex-col">
             <div>
               <CardTitle className="mb-1 line-clamp-2 text-base leading-tight">
