@@ -50,29 +50,22 @@ function ClubLogos({ clubs }: { clubs: ClubWithLogo[] }) {
   }
 
   return (
-    <div className="mx-auto mb-8 max-w-3xl">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl">Clubs in the News</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap items-center gap-4">
-          <TooltipProvider>
-            {clubs.map((club) => (
-              <Tooltip key={club.name}>
-                <TooltipTrigger asChild>
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={club.logoUrl} alt={`${club.name} logo`} />
-                    <AvatarFallback>{club.name.substring(0, 2)}</AvatarFallback>
-                  </Avatar>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{club.name}</p>
-                </TooltipContent>
-              </Tooltip>
-            ))}
-          </TooltipProvider>
-        </CardContent>
-      </Card>
+    <div className="mx-auto mb-8 flex max-w-3xl flex-wrap items-center justify-center gap-4">
+      <TooltipProvider>
+        {clubs.map((club) => (
+          <Tooltip key={club.name}>
+            <TooltipTrigger asChild>
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={club.logoUrl} alt={`${club.name} logo`} />
+                <AvatarFallback>{club.name.substring(0, 2)}</AvatarFallback>
+              </Avatar>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{club.name}</p>
+            </TooltipContent>
+          </Tooltip>
+        ))}
+      </TooltipProvider>
     </div>
   );
 }
