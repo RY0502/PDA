@@ -21,32 +21,32 @@ function ArticleCard({ article }: { article: MediumArticle }) {
   return (
     <Card className="overflow-hidden rounded-lg transition-shadow duration-300 hover:shadow-xl">
       <div className="flex">
-        <div className="relative h-32 w-32 flex-shrink-0 bg-muted">
+        <div className="relative h-24 w-24 flex-shrink-0 bg-muted">
           {article.imageUrl ? (
             <Image
               src={article.imageUrl}
               alt={article.title}
               fill
-              sizes="128px"
+              sizes="96px"
               className="object-cover"
               data-ai-hint="article cover"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
-              <ImageIcon className="h-10 w-10 text-muted-foreground" />
+              <ImageIcon className="h-8 w-8 text-muted-foreground" />
             </div>
           )}
         </div>
         <div className="flex flex-grow flex-col justify-between p-4">
           <div>
-            <CardTitle className="mb-2 line-clamp-2 text-lg leading-tight">
+            <CardTitle className="mb-2 line-clamp-2 text-base leading-tight">
               {article.title}
             </CardTitle>
-            <CardDescription className="line-clamp-3 text-sm">
+            <CardDescription className="line-clamp-2 text-sm">
               {article.description}
             </CardDescription>
           </div>
-          <div className="mt-4">
+          <div className="mt-3">
             <Button asChild size="sm" className="w-full sm:w-auto">
               <a
                 href={`https://freedium.cfd/${article.url}`}
