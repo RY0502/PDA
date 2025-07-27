@@ -25,14 +25,16 @@ export function Header() {
               PersonalDigitalAssistant
             </span>
           </Link>
-          <nav className="flex items-center space-x-8 text-sm font-medium">
+          <nav className="flex items-center space-x-8 text-sm">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 className={cn(
                   'transition-colors hover:text-foreground/80',
-                  pathname === link.href ? 'text-foreground' : 'text-foreground/60'
+                  pathname === link.href
+                    ? 'font-bold text-foreground'
+                    : 'font-medium text-foreground/60'
                 )}
               >
                 {link.label}

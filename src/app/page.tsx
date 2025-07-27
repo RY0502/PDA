@@ -46,8 +46,8 @@ function ArticleCard({ article }: { article: MediumArticle }) {
                 {article.description}
               </CardDescription>
             </div>
-            <div className="mt-3">
-              <Button asChild size="sm" className="w-full sm:w-auto">
+            <div className="mt-3 flex justify-center">
+              <Button asChild size="sm">
                 <a
                   href={`https://freedium.cfd/${article.url}`}
                   target="_blank"
