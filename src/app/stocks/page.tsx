@@ -2,7 +2,7 @@
 
 import { getStockPrice, type StockPriceOutput } from '@/ai/flows/get-stock-price';
 import { getTopGainers, type TopGainer } from '@/ai/flows/get-top-gainers';
-import { getTopLosers, type TopLoser } from '@/aiflows/get-top-losers';
+import { getTopLosers, type TopLoser } from '@/ai/flows/get-top-losers';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
