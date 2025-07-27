@@ -1,6 +1,9 @@
 import { getLatestFootballNews } from '@/ai/flows/get-latest-football-news';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Newspaper, Dot } from 'lucide-react';
+import Image from 'next/image';
 
 export const revalidate = 3600; // Revalidate the page every hour
 
@@ -12,6 +15,11 @@ interface NewsItem {
 interface NewsSection {
   title: string;
   items: NewsItem[];
+}
+
+interface ClubWithLogo {
+  name: string;
+  logoUrl: string;
 }
 
 // A component to render a single news item, handling team name highlighting
@@ -35,10 +43,43 @@ function NewsListItem({ item }: { item: NewsItem }) {
   );
 }
 
-let cachedNewsSections: NewsSection[] = [];
+// A component to display club logos
+function ClubLogos({ clubs }: { clubs: ClubWithLogo[] }) {
+  if (!clubs || clubs.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mx-auto mb-8 max-w-3xl">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl">Clubs in the News</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-center gap-4">
+          <TooltipProvider>
+            {clubs.map((club) => (
+              <Tooltip key={club.name}>
+                <TooltipTrigger asChild>
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={club.logoUrl} alt={`${club.name} logo`} />
+                    <AvatarFallback>{club.name.substring(0, 2)}</AvatarFallback>
+                  </Avatar>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{club.name}</p>
+                </TooltipContent>
+              </Tooltip>
+            ))}
+          </TooltipProvider>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 
 export default async function FootballPage() {
-  const { summary } = await getLatestFootballNews();
+  const { summary, clubsWithLogos } = await getLatestFootballNews();
   const lines = summary.split('\n').filter((item) => item.trim().length > 0);
 
   const newsSections: NewsSection[] = [];
@@ -65,11 +106,6 @@ export default async function FootballPage() {
   if (currentSection) {
     newsSections.push(currentSection);
   }
-
-  // Update cached data only if the new fetch returned data
-  if (newsSections.length > 0) {
-    cachedNewsSections = newsSections;
-  }
   
   return (
     <div className="container py-8">
@@ -85,14 +121,15 @@ export default async function FootballPage() {
       </section>
 
       <div className="py-10">
+        <ClubLogos clubs={clubsWithLogos} />
         <Card className="mx-auto max-w-3xl">
           <CardHeader>
             <CardTitle>Today's Top Stories</CardTitle>
           </CardHeader>
           <CardContent>
-            {cachedNewsSections.length > 0 ? (
+            {newsSections.length > 0 ? (
               <div className="space-y-6">
-                {cachedNewsSections.map((section, index) => (
+                {newsSections.map((section, index) => (
                   <div key={index}>
                     <h3 className="text-lg font-semibold tracking-tight text-foreground">
                       {section.title}
