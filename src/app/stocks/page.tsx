@@ -20,22 +20,7 @@ import { ArrowDown, ArrowUp, LineChart } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
 
-function StockPriceCard({
-  price,
-  stockCode,
-}: {
-  price: StockPriceOutput;
-  stockCode: string;
-}) {
-  const router = useRouter();
-  const [newStockCode, setNewStockCode] = useState(stockCode);
-
-  const handleUpdate = () => {
-    if (newStockCode.trim()) {
-      router.push(`/stocks?stockcode=${newStockCode.trim().toUpperCase()}`);
-    }
-  };
-
+function StockPriceCard({ price }: { price: StockPriceOutput }) {
   return (
     <Card>
       <CardHeader>
@@ -44,28 +29,47 @@ function StockPriceCard({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          <div className="text-center">
+        <div className="grid grid-cols-1 gap-6 text-center md:grid-cols-3">
+          <div>
             <p className="text-2xl font-bold">{price.currentPrice}</p>
             <p className="text-sm text-muted-foreground">Current Price</p>
           </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-green-600">{price.highPrice}</p>
+          <div>
+            <p className="text-2xl font-bold text-green-600">
+              {price.highPrice}
+            </p>
             <p className="text-sm text-muted-foreground">Day's High</p>
           </div>
-          <div className="text-center">
+          <div>
             <p className="text-2xl font-bold text-red-600">{price.lowPrice}</p>
             <p className="text-sm text-muted-foreground">Day's Low</p>
           </div>
         </div>
-        <Separator className="my-6" />
+      </CardContent>
+    </Card>
+  );
+}
+
+function WatchCodeInput({ initialStockCode }: { initialStockCode: string }) {
+  const router = useRouter();
+  const [stockCode, setStockCode] = useState(initialStockCode);
+
+  const handleUpdate = () => {
+    if (stockCode.trim()) {
+      router.push(`/stocks?stockcode=${stockCode.trim().toUpperCase()}`);
+    }
+  };
+
+  return (
+    <Card>
+      <CardContent className="p-4">
         <div className="flex items-end space-x-2">
           <div className="flex-1">
             <Label htmlFor="stock-code">Watch Code</Label>
             <Input
               id="stock-code"
-              value={newStockCode}
-              onChange={(e) => setNewStockCode(e.target.value)}
+              value={stockCode}
+              onChange={(e) => setStockCode(e.target.value)}
               placeholder="e.g. PVRINOX"
               onKeyDown={(e) => e.key === 'Enter' && handleUpdate()}
             />
@@ -173,9 +177,10 @@ function StocksPageContent() {
       </section>
 
       <div className="mx-auto max-w-3xl space-y-8">
-        {price && <StockPriceCard price={price} stockCode={stockCode} />}
+        {price && <StockPriceCard price={price} />}
         {gainers.length > 0 && <StockTable stocks={gainers} title="Top 10 Gainers" variant="gainer" />}
         {losers.length > 0 && <StockTable stocks={losers} title="Top 10 Losers" variant="loser" />}
+        <WatchCodeInput initialStockCode={stockCode} />
       </div>
     </div>
   );
