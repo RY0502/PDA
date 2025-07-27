@@ -1,7 +1,7 @@
 'use server';
 
 /**
- * @fileOverview Fetches the top 10 stock market losers from NSE within a specified price range.
+ * @fileOverview Fetches the top 10 stock market losers from NSE.
  *
  * - getTopLosers - A function that retrieves the list of top losers.
  * - TopLoser - The type for a single loser stock.
@@ -30,7 +30,7 @@ export async function getTopLosers(): Promise<TopLoser[]> {
   };
   
   const prompt = `
-    List today's top 10 stock market losers on NSE with a share price between 400 and 950 INR.
+    List today's top 10 stock market losers on NSE.
     
     Provide the output as a clean JSON array like this:
     [

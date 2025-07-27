@@ -1,7 +1,7 @@
 'use server';
 
 /**
- * @fileOverview Fetches the top 10 stock market gainers from NSE within a specified price range.
+ * @fileOverview Fetches the top 10 stock market gainers from NSE.
  *
  * - getTopGainers - A function that retrieves the list of top gainers.
  * - TopGainer - The type for a single gainer stock.
@@ -30,7 +30,7 @@ export async function getTopGainers(): Promise<TopGainer[]> {
   };
   
   const prompt = `
-    List today's top 10 stock market gainers on NSE with a share price between 400 and 950 INR.
+    List today's top 10 stock market gainers on NSE.
     
     Provide the output as a clean JSON array like this:
     [
