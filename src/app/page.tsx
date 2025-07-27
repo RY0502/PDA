@@ -2,9 +2,10 @@ import { getMediumArticles } from '@/services/email-service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Terminal } from 'lucide-react';
+import { Terminal, Image as ImageIcon } from 'lucide-react';
 import type { MediumArticle } from '@/services/email-service';
 import { UrlOpener } from '@/components/url-opener';
+import Image from 'next/image';
 
 // Revalidate the page every hour
 export const revalidate = 3600;
@@ -12,6 +13,22 @@ export const revalidate = 3600;
 function ArticleCard({ article }: { article: MediumArticle }) {
   return (
     <Card className="flex h-full flex-col overflow-hidden rounded-lg transition-shadow duration-300 hover:shadow-xl">
+      <div className="relative aspect-video w-full bg-muted">
+        {article.imageUrl ? (
+          <Image
+            src={article.imageUrl}
+            alt={article.title}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover"
+            data-ai-hint="article cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <ImageIcon className="h-12 w-12 text-muted-foreground" />
+          </div>
+        )}
+      </div>
       <CardHeader>
         <CardTitle className="line-clamp-2 text-xl">{article.title}</CardTitle>
       </CardHeader>

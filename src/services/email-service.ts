@@ -20,6 +20,7 @@ export type MediumArticle = {
   url: string;
   source: string;
   description: string;
+  imageUrl?: string;
 };
 
 export type MediumArticleResponse = {
@@ -116,69 +117,62 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
     const emailBodyHtml = base64UrlDecode(htmlPart.body.data);
 
     const articles: MediumArticle[] = [];
-    const linkRegex = /<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
+    // Regex to find blocks containing an image and an article link with h2/h3 tags
+    const articleBlockRegex = /<a[^>]+href="[^"]+"[^>]*>[\s\S]*?<img[^>]+src="([^"]+)"[^>]*>[\s\S]*?<\/a>[\s\S]*?<a[^>]+href="([^"]+)"[^>]*>[\s\S]*?<h2[^>]*>([\s\S]*?)<\/h2>[\s\S]*?<h3[^>]*>([\s\S]*?)<\/h3>[\s\S]*?<\/a>/g;
     const articleUrls = new Set<string>(); // To prevent duplicates
 
     let match;
-    while ((match = linkRegex.exec(emailBodyHtml)) !== null) {
-      const rawUrl = match[1];
-      const innerHtml = match[2];
-
-      const h2Regex = /<h2[^>]*>([\s\S]*?)<\/h2>/;
-      const h3Regex = /<h3[^>]*>([\s\S]*?)<\/h3>/;
-
-      const h2Match = innerHtml.match(h2Regex);
-      const h3Match = innerHtml.match(h3Regex);
-
-      if (h2Match && h2Match[1] && h3Match && h3Match[1]) {
-        let title = h2Match[1].replace(/<[^>]+>/g, ' ').trim();
-        let description = h3Match[1].replace(/<[^>]+>/g, ' ').trim();
-
-        let url = rawUrl.replace(/&amp;/g, '&');
-        if (url.startsWith('https://medium.r.axd.email/')) {
-          try {
-            const urlObj = new URL(url);
-            const targetUrl = urlObj.searchParams.get('url');
-            if (targetUrl) {
-              url = decodeURIComponent(targetUrl);
-            }
-          } catch (e) {
-            // Ignore if URL parsing fails
+    while ((match = articleBlockRegex.exec(emailBodyHtml)) !== null) {
+      const imageUrl = match[1];
+      const rawUrl = match[2];
+      const titleHtml = match[3];
+      const descriptionHtml = match[4];
+      
+      let url = rawUrl.replace(/&amp;/g, '&');
+      if (url.startsWith('https://medium.r.axd.email/')) {
+        try {
+          const urlObj = new URL(url);
+          const targetUrl = urlObj.searchParams.get('url');
+          if (targetUrl) {
+            url = decodeURIComponent(targetUrl);
           }
+        } catch (e) {
+          // Ignore if URL parsing fails
         }
-        const cleanUrl = url.split('?')[0].split('#')[0];
+      }
+      const cleanUrl = url.split('?')[0].split('#')[0];
 
-        // Decode HTML entities
-        const decode = (str: string) =>
-          str
-            .replace(/&amp;/g, '&')
-            .replace(/&lt;/g, '<')
-            .replace(/&gt;/g, '>')
-            .replace(/&quot;/g, '"')
-            .replace(/&#39;/g, "'")
-            .replace(/&nbsp;/g, ' ')
-            .replace(/—/g, '—')
-             .replace(/\s+/g, ' ')
-            .trim();
+      const decode = (str: string) =>
+        str
+          .replace(/<[^>]+>/g, ' ') // strip tags
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/&nbsp;/g, ' ')
+          .replace(/—/g, '—')
+          .replace(/\s+/g, ' ')
+          .trim();
 
-        title = decode(title);
-        description = decode(description);
+      const title = decode(titleHtml);
+      const description = decode(descriptionHtml);
 
-        if (title && description && !articleUrls.has(cleanUrl)) {
-          articles.push({
-            id: `${latestMessageId}-${articles.length}`,
-            title,
-            description,
-            url: cleanUrl,
-            source,
-          });
-          articleUrls.add(cleanUrl);
-        }
+      if (title && description && !articleUrls.has(cleanUrl)) {
+        articles.push({
+          id: `${latestMessageId}-${articles.length}`,
+          title,
+          description,
+          url: cleanUrl,
+          source,
+          imageUrl,
+        });
+        articleUrls.add(cleanUrl);
       }
     }
 
     if (articles.length === 0) {
-      console.log('No articles found with h2 (title) and h3 (summary) tags.');
+      console.log('No articles found matching the pattern.');
     }
 
     return { articles, isMock: false };
@@ -209,6 +203,7 @@ function getMockMediumArticles(): MediumArticle[] {
       url: 'https://medium.com/towards-data-science/the-generative-ai-revolution-is-just-getting-started-b16f2434411def',
       source: 'Towards Data Science',
       description: 'An overview of the recent breakthroughs in generative AI and what they mean for the future.',
+      imageUrl: 'https://placehold.co/600x400.png',
     },
     {
       id: '2',
@@ -216,6 +211,7 @@ function getMockMediumArticles(): MediumArticle[] {
       url: 'https://medium.com/ux-design-weekly/how-to-build-a-design-system-in-2024-b0a3c20c0a9e',
       source: 'UX Design Weekly',
       description: 'A step-by-step guide to creating and maintaining a design system for your team.',
+      imageUrl: 'https://placehold.co/600x400.png',
     },
     {
       id: '3',
@@ -223,6 +219,7 @@ function getMockMediumArticles(): MediumArticle[] {
       url: 'https://medium.com/swlh/the-art-of-clean-code-8b67548239c5',
       source: 'The Startup',
       description: 'Principles and practices for writing readable, maintainable, and robust code.',
+      imageUrl: 'https://placehold.co/600x400.png',
     },
     {
       id: '4',
@@ -230,6 +227,7 @@ function getMockMediumArticles(): MediumArticle[] {
       url: 'https://medium.com/javascript-in-plain-english/mastering-react-hooks-a-deep-dive-into-useeffect-3453b3424692',
       source: 'JavaScript in Plain English',
       description: 'Explore advanced patterns and common pitfalls of the useEffect hook in React.',
+      imageUrl: 'https://placehold.co/600x400.png',
     },
   ];
 }
