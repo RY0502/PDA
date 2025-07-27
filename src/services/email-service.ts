@@ -101,6 +101,10 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
       format: 'full',
     });
 
+    // Log the entire raw response to the console
+    console.log('Complete Gmail API Response:', JSON.stringify(messageRes.data, null, 2));
+
+
     const { payload } = messageRes.data;
     const subjectHeader = payload?.headers?.find((h) => h.name === 'Subject');
     const source = subjectHeader?.value || 'Medium';
