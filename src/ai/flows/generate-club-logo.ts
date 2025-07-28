@@ -19,7 +19,8 @@ export type GenerateClubLogoInput = z.infer<typeof GenerateClubLogoInputSchema>;
 const GenerateClubLogoOutputSchema = z.object({
   logoUrl: z
     .string()
-    .describe('The data URI of the generated logo image.'),
+    .describe('The data URI of the generated logo image.')
+    .optional(),
 });
 export type GenerateClubLogoOutput = z.infer<
   typeof GenerateClubLogoOutputSchema
@@ -30,21 +31,25 @@ export async function generateClubLogo(
 ): Promise<GenerateClubLogoOutput> {
   const prompt = `Generate a logo for the football club: "${input.clubName}". The design should be a modern, minimalist, circular interpretation that is as close as possible to the actual official club logo. The logo must be on a transparent background.`;
 
-  const {media} = await ai.generate({
-    model: 'googleai/gemini-2.0-flash-preview-image-generation',
-    prompt: prompt,
-    config: {
-      responseModalities: ['TEXT', 'IMAGE'],
-    },
-  });
-  
-  const logoUrl = media?.url;
+  try {
+    const {media} = await ai.generate({
+      model: 'googleai/gemini-2.0-flash-preview-image-generation',
+      prompt: prompt,
+      config: {
+        responseModalities: ['TEXT', 'IMAGE'],
+      },
+    });
 
-  if (!logoUrl) {
-    console.error(`Failed to generate logo for ${input.clubName}`);
-    // Return a placeholder or handle the error as needed
-    return { logoUrl: 'https://placehold.co/100x100.png' };
+    const logoUrl = media?.url;
+
+    if (!logoUrl) {
+      console.error(`Failed to generate logo for ${input.clubName}`);
+      return {logoUrl: undefined};
+    }
+
+    return {logoUrl};
+  } catch (error) {
+    console.error(`Error generating logo for ${input.clubName}:`, error);
+    return {logoUrl: undefined};
   }
-
-  return { logoUrl };
 }
