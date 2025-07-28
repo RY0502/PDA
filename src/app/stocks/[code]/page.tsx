@@ -52,8 +52,7 @@ async function getStockData(stockCode: string): Promise<StockMarketOverview | nu
     const response = await fetch(url, {
       method: 'POST',
       headers,
-      body,
-      next: { revalidate: 3600 } // Cache for 1 hour
+      body
     });
 
     if (!response.ok) {
