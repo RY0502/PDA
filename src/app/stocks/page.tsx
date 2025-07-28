@@ -1,248 +1,28 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import {
   getStockMarketOverview,
   type StockMarketOverview,
 } from '@/ai/flows/get-stock-market-overview';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AreaChart, ArrowDown, ArrowUp, LineChart } from 'lucide-react';
+import StocksPageClient from './stocks-client';
+import PageSkeleton from './skeleton';
 
-export const revalidate = 7200; // Revalidate every 2 hours
+export const revalidate = 7200; // 2 hours
 
-function StockCard({
-  stock,
+async function StocksData({ stockCode }: { stockCode: string }) {
+  const initialData = await getStockMarketOverview({ stockCode });
+  return <StocksPageClient initialData={initialData} stockCode={stockCode} />;
+}
+
+export default function StocksPage({
+  searchParams,
 }: {
-  stock: StockMarketOverview['topGainers'][0];
+  searchParams?: { [key: string]: string | string[] | undefined };
 }) {
-  const isGainer = stock.change.startsWith('+');
-  const isLoser = stock.change.startsWith('-');
-  const colorClass = isGainer
-    ? 'text-green-600'
-    : isLoser
-    ? 'text-red-600'
-    : 'text-muted-foreground';
+  const stockCode = (searchParams?.code as string) || 'PVRINOX';
 
   return (
-    <div className="flex items-center justify-between rounded-md bg-muted p-3">
-      <div>
-        <p className="font-semibold text-foreground">{stock.name}</p>
-        <p className="text-sm text-muted-foreground">{stock.price}</p>
-      </div>
-      <div className={`text-right text-sm font-medium ${colorClass}`}>
-        <p>{stock.change}</p>
-        <p>{stock.changePercent}</p>
-      </div>
-    </div>
-  );
-}
-
-function WatchlistManager({ stockCode }: { stockCode: string }) {
-  const router = useRouter();
-  const [code, setCode] = useState(stockCode);
-
-  const handleUpdate = () => {
-    if (code.trim()) {
-      router.push(`/stocks?code=${code.trim().toUpperCase()}`);
-    }
-  };
-
-  return (
-    <div className="mx-auto mt-8 max-w-sm">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Watch Code</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-end gap-2">
-            <div className="flex-grow">
-              <Label htmlFor="stock-code-input">Stock Code</Label>
-              <Input
-                id="stock-code-input"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder="e.g., RELIANCE"
-                onKeyDown={(e) => e.key === 'Enter' && handleUpdate()}
-              />
-            </div>
-            <Button onClick={handleUpdate}>Update</Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function PageSkeleton() {
-  return (
-    <div className="container py-8">
-      <header className="mb-8 text-center">
-        <Skeleton className="mx-auto h-12 w-48" />
-        <Skeleton className="mx-auto mt-4 h-6 w-64" />
-      </header>
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {/* Main Stock */}
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <Skeleton className="h-8 w-1/2" />
-          </CardHeader>
-          <CardContent className="flex justify-around gap-4 text-center">
-            {[1, 2].map((i) => (
-              <div key={i} className="flex-1">
-                <Skeleton className="mx-auto h-6 w-24" />
-                <Skeleton className="mx-auto mt-2 h-8 w-32" />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-        {/* Gainers and Losers */}
-        {[...Array(2)].map((_, colIndex) => (
-          <Card key={colIndex} className={colIndex === 0 ? 'lg:col-start-1' : ''}>
-            <CardHeader>
-              <Skeleton className="h-8 w-3/4" />
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <div className="w-1/2 space-y-2">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </div>
-                  <div className="w-1/4 space-y-2">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-full" />
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-
-export default function StocksPage() {
-  const searchParams = useSearchParams();
-  const stockCode = searchParams.get('code') || 'PVRINOX';
-  const [overview, setOverview] = useState<StockMarketOverview | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setLoading(true);
-    setError(null);
-    getStockMarketOverview({ stockCode })
-      .then((data) => {
-        if (data) {
-          setOverview(data);
-        } else {
-           setError('Could not fetch stock market data. The service may be temporarily unavailable.');
-        }
-      })
-      .catch(() => {
-        setError('An unexpected error occurred while fetching data.');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [stockCode]);
-
-  if (loading) {
-    return <PageSkeleton />;
-  }
-
-  if (error) {
-    return (
-        <div className="container py-8">
-             <Alert variant="destructive" className="mx-auto max-w-2xl">
-              <LineChart className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>
-                {error} Please try again later.
-              </AlertDescription>
-            </Alert>
-        </div>
-    )
-  }
-
-  return (
-    <div className="container py-8">
-      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-2 text-center md:pb-8">
-        <AreaChart className="h-16 w-16 text-primary" />
-        <h1 className="mt-4 text-3xl font-bold leading-tight tracking-tighter md:text-5xl lg:leading-[1.1]">
-          Stock Market Overview
-        </h1>
-        <p className="max-w-[750px] text-lg text-muted-foreground sm:text-xl">
-          Today's highlights from the National Stock Exchange (NSE).
-        </p>
-      </section>
-
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {/* Watched Stock */}
-        {overview?.watchedStock && (
-            <Card className="lg:col-span-3">
-            <CardHeader>
-                <CardTitle>
-                Watching: <span className='text-primary'>{overview.watchedStock.name}</span>
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="flex justify-around gap-4 text-center">
-                <div className="flex-1">
-                    <p className="text-sm text-muted-foreground">Today's High</p>
-                    <p className="text-2xl font-bold text-green-600">{overview.watchedStock.high}</p>
-                </div>
-                 <div className="flex-1">
-                    <p className="text-sm text-muted-foreground">Today's Low</p>
-                    <p className="text-2xl font-bold text-red-600">{overview.watchedStock.low}</p>
-                </div>
-            </CardContent>
-            </Card>
-        )}
-
-        {/* Top Gainers */}
-        {overview?.topGainers && (
-          <Card className='md:col-span-1 lg:col-span-2'>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ArrowUp className="h-6 w-6 text-green-600" />
-                Top 10 Gainers
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {overview.topGainers.map((stock) => (
-                <StockCard key={stock.name} stock={stock} />
-              ))}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Top Losers */}
-        {overview?.topLosers && (
-          <Card className='md:col-span-1 lg:col-span-1'>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ArrowDown className="h-6 w-6 text-red-600" />
-                Top 10 Losers
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {overview.topLosers.slice(0,5).map((stock) => (
-                <StockCard key={stock.name} stock={stock} />
-              ))}
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      <WatchlistManager stockCode={stockCode} />
-    </div>
+    <Suspense fallback={<PageSkeleton />}>
+      <StocksData stockCode={stockCode} />
+    </Suspense>
   );
 }
