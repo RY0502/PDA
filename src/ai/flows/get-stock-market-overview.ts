@@ -73,8 +73,8 @@ export async function getStockMarketOverview(
       I need the following information in a structured JSON format only:
 
       1.  **watchedStock**: Get today's high and low price for the stock with the code: "${input.stockCode}". The object should contain 'name', 'high', and 'low'.
-      2.  **topGainers**: A list of the top 10 gainers on the NSE. For each stock, provide its 'name', current 'price', price 'change', and percentage 'changePercent'.
-      3.  **topLosers**: A list of the top 10 losers on the NSE. For each stock, provide its 'name', current 'price', price 'change', and percentage 'changePercent'.
+      2.  **topGainers**: A list of the top 10 gainers on the NSE today. For each stock, provide its 'name', current 'price', price 'change', and percentage 'changePercent'.
+      3.  **topLosers**: A list of the top 10 losers on the NSE today. For each stock, provide its 'name', current 'price', price 'change', and percentage 'changePercent'.
 
       Ensure the output is a valid JSON object only, with no extra text or markdown. The final output should start with { and end with }.
     `;
