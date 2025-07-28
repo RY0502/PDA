@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -43,7 +42,7 @@ function WatchlistManager({ stockCode }: { stockCode: string }) {
 
   const handleUpdate = () => {
     if (code.trim()) {
-      router.push(`/stocks?code=${code.trim().toUpperCase()}`);
+      router.push(`/stocks/${code.trim().toUpperCase()}`);
     }
   };
 
@@ -81,18 +80,20 @@ export default function StocksPageClient({
   stockCode: string;
 }) {
   if (!overview) {
-     return (
-        <div className="container py-8">
-             <Alert variant="destructive" className="mx-auto max-w-2xl">
-              <LineChart className="h-4 w-4" />
-              <AlertTitle>Error Fetching Data</AlertTitle>
-              <AlertDescription>
-                Could not fetch stock market data. The service may be temporarily unavailable or you have exceeded your API quota. Please try again later.
-              </AlertDescription>
-            </Alert>
-            <WatchlistManager stockCode={stockCode} />
-        </div>
-    )
+    return (
+      <div className="container py-8">
+        <Alert variant="destructive" className="mx-auto max-w-2xl">
+          <LineChart className="h-4 w-4" />
+          <AlertTitle>Error Fetching Data</AlertTitle>
+          <AlertDescription>
+            Could not fetch stock market data. The service may be temporarily
+            unavailable or you have exceeded your API quota. Please try again
+            later.
+          </AlertDescription>
+        </Alert>
+        <WatchlistManager stockCode={stockCode} />
+      </div>
+    );
   }
 
   return (
@@ -112,7 +113,8 @@ export default function StocksPageClient({
           <Card className="lg:col-span-3">
             <CardHeader>
               <CardTitle>
-                Watching: <span className="text-primary">{overview.watchedStock.name}</span>
+                Watching:{' '}
+                <span className="text-primary">{overview.watchedStock.name}</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="flex justify-around gap-4 text-center">

@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/football', label: 'Football' },
-  { href: '/stocks', label: 'Stocks' },
+  { href: '/stocks/PVRINOX', label: 'Stocks' },
   { href: '/trends', label: 'Trends' },
 ];
 
@@ -33,7 +33,9 @@ export function Header() {
                 href={link.href}
                 className={cn(
                   'transition-colors hover:text-foreground/80',
-                  pathname === link.href
+                  pathname.startsWith('/stocks') && link.label === 'Stocks'
+                    ? 'font-bold text-foreground'
+                    : pathname === link.href
                     ? 'font-bold text-foreground'
                     : 'font-medium text-foreground/60'
                 )}
