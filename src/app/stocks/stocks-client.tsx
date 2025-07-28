@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -180,14 +181,14 @@ export default function StocksPageClient({
         )}
 
         {overview.topLosers && (
-          <Card className="md:col-span-1 lg:col-span-1">
+          <Card className="md:col-span-1 lg:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ArrowDown className="h-6 w-6 text-red-600" />
                 Top 10 Losers
               </CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-3">
+            <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {overview.topLosers.map((stock) => (
                 <StockCard key={stock.name} stock={stock} />
               ))}
@@ -200,3 +201,4 @@ export default function StocksPageClient({
     </div>
   );
 }
+

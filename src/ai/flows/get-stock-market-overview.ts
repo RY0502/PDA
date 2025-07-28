@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -68,7 +69,7 @@ export async function getStockMarketOverview(
     return null;
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
   const headers = {
     'x-goog-api-key': GEMINI_API_KEY,
     'Content-Type': 'application/json',
@@ -96,9 +97,6 @@ export async function getStockMarketOverview(
         google_search: {},
       },
     ],
-    generationConfig: {
-      responseMimeType: 'application/json',
-    },
   });
 
   try {
