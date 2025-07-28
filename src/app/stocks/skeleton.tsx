@@ -25,12 +25,12 @@ export default function PageSkeleton() {
           </Card>
           {/* Gainers and Losers */}
           {[...Array(2)].map((_, colIndex) => (
-            <Card key={colIndex} className={colIndex === 0 ? 'lg:col-start-1' : ''}>
+            <Card key={colIndex} className={colIndex === 0 ? 'lg:col-start-1 lg:col-span-2' : 'lg:col-span-1'}>
               <CardHeader>
                 <Skeleton className="h-8 w-3/4" />
               </CardHeader>
               <CardContent className="space-y-3">
-                {[...Array(5)].map((_, i) => (
+                {[...Array(10)].map((_, i) => (
                   <div key={i} className="flex items-center justify-between">
                     <div className="w-1/2 space-y-2">
                       <Skeleton className="h-4 w-full" />
