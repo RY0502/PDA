@@ -95,11 +95,12 @@ export default function StocksPageClient({
       getStockMarketOverview({ stockCode: currentCode })
         .then(data => {
           setOverview(data);
-          setLoading(false);
         })
         .catch(() => {
           setOverview(null);
-          setLoading(false);
+        })
+        .finally(() => {
+            setLoading(false);
         });
     } else {
         setOverview(initialData)
