@@ -25,8 +25,9 @@ function StockCard({
     changePercent: string;
   };
 }) {
-  const isGainer = stock.change.startsWith('+');
-  const isLoser = stock.change.startsWith('-');
+  const changeValue = stock.change || '';
+  const isGainer = changeValue.startsWith('+');
+  const isLoser = changeValue.startsWith('-');
   const colorClass = isGainer
     ? 'text-green-600'
     : isLoser
@@ -40,7 +41,7 @@ function StockCard({
         <p className="text-sm text-muted-foreground">{stock.price}</p>
       </div>
       <div className={`text-right text-sm font-medium ${colorClass}`}>
-        <p>{stock.change}</p>
+        <p>{changeValue}</p>
         <p>{stock.changePercent}</p>
       </div>
     </div>
