@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   getStockMarketOverview,
   type StockMarketOverview,
@@ -84,8 +84,33 @@ export default function StocksPageClient({
   initialData: StockMarketOverview | null;
   stockCode: string;
 }) {
+  const [overview, setOverview] = useState(initialData);
+  const [loading, setLoading] = useState(false);
+  const searchParams = useSearchParams();
+  const currentCode = searchParams.get('code') || 'PVRINOX';
 
-  if (!initialData) {
+  useEffect(() => {
+    if (currentCode !== stockCode) {
+      setLoading(true);
+      getStockMarketOverview({ stockCode: currentCode })
+        .then(data => {
+          setOverview(data);
+          setLoading(false);
+        })
+        .catch(() => {
+          setOverview(null);
+          setLoading(false);
+        });
+    } else {
+        setOverview(initialData)
+    }
+  }, [currentCode, stockCode, initialData]);
+
+  if (loading) {
+    return <PageSkeleton />;
+  }
+
+  if (!overview) {
      return (
         <div className="container py-8">
              <Alert variant="destructive" className="mx-auto max-w-2xl">
@@ -100,8 +125,6 @@ export default function StocksPageClient({
     )
   }
 
-  const overview = initialData;
-
   return (
     <div className="container py-8">
       <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-2 text-center md:pb-8">
@@ -115,7 +138,6 @@ export default function StocksPageClient({
       </section>
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {/* Watched Stock */}
         {overview.watchedStock && (
           <Card className="lg:col-span-3">
             <CardHeader>
@@ -140,7 +162,6 @@ export default function StocksPageClient({
           </Card>
         )}
 
-        {/* Top Gainers */}
         {overview.topGainers && (
           <Card className="md:col-span-1 lg:col-span-2">
             <CardHeader>
@@ -157,7 +178,6 @@ export default function StocksPageClient({
           </Card>
         )}
 
-        {/* Top Losers */}
         {overview.topLosers && (
           <Card className="md:col-span-1 lg:col-span-1">
             <CardHeader>
@@ -175,7 +195,7 @@ export default function StocksPageClient({
         )}
       </div>
 
-      <WatchlistManager stockCode={stockCode} />
+      <WatchlistManager stockCode={currentCode} />
     </div>
   );
 }

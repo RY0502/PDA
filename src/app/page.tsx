@@ -1,6 +1,6 @@
 
 import { getMediumArticles } from '@/services/email-service';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -13,6 +13,8 @@ import { Terminal, Image as ImageIcon } from 'lucide-react';
 import type { MediumArticle } from '@/services/email-service';
 import { UrlOpener } from '@/components/url-opener';
 import Image from 'next/image';
+import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 // Revalidate the page every hour
 export const revalidate = 3600;
@@ -56,15 +58,14 @@ function ArticleCard({ article }: { article: MediumArticle }) {
               </CardDescription>
             </div>
             <div className="mt-2 flex flex-grow items-end justify-end">
-              <Button asChild size="sm">
-                <a
+                <Link
                   href={`https://freedium.cfd/${article.url}`}
                   target="_blank"
                   rel="noopener noreferrer"
+                  className={cn(buttonVariants({ size: 'sm' }))}
                 >
                   Read More
-                </a>
-              </Button>
+                </Link>
             </div>
           </div>
         </div>
