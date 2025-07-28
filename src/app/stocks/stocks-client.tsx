@@ -1,10 +1,9 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
-  getStockMarketOverview,
   type StockMarketOverview,
   type StockInfo,
 } from '@/ai/flows/get-stock-market-overview';
@@ -14,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AreaChart, ArrowDown, ArrowUp, LineChart } from 'lucide-react';
-import PageSkeleton from './skeleton';
 
 function StockCard({
   stock,
@@ -23,7 +21,6 @@ function StockCard({
   stock: StockInfo;
   variant: 'gainer' | 'loser';
 }) {
-  const changeValue = String(stock.change || '');
   const colorClass = variant === 'gainer' ? 'text-green-600' : 'text-red-600';
 
   return (
@@ -33,7 +30,7 @@ function StockCard({
         <p className="text-sm text-muted-foreground">{stock.price}</p>
       </div>
       <div className={`text-right text-sm font-medium ${colorClass}`}>
-        <p>{changeValue}</p>
+        <p>{stock.change}</p>
         <p>{stock.changePercent}%</p>
       </div>
     </div>
@@ -77,39 +74,12 @@ function WatchlistManager({ stockCode }: { stockCode: string }) {
 }
 
 export default function StocksPageClient({
-  initialData,
+  initialData: overview,
   stockCode,
 }: {
   initialData: StockMarketOverview | null;
   stockCode: string;
 }) {
-  const [overview, setOverview] = useState(initialData);
-  const [loading, setLoading] = useState(false);
-  const searchParams = useSearchParams();
-  const currentCode = searchParams.get('code') || 'PVRINOX';
-
-  useEffect(() => {
-    if (currentCode !== stockCode) {
-      setLoading(true);
-      getStockMarketOverview({ stockCode: currentCode })
-        .then(data => {
-          setOverview(data);
-        })
-        .catch(() => {
-          setOverview(null);
-        })
-        .finally(() => {
-            setLoading(false);
-        });
-    } else {
-        setOverview(initialData)
-    }
-  }, [currentCode, stockCode, initialData]);
-
-  if (loading) {
-    return <PageSkeleton />;
-  }
-
   if (!overview) {
      return (
         <div className="container py-8">
@@ -195,7 +165,7 @@ export default function StocksPageClient({
         )}
       </div>
 
-      <WatchlistManager stockCode={currentCode} />
+      <WatchlistManager stockCode={stockCode} />
     </div>
   );
 }
