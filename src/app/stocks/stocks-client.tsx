@@ -21,7 +21,7 @@ function StockCard({
 }: {
   stock: StockInfo;
 }) {
-  const changeValue = stock.change || '';
+  const changeValue = String(stock.change || '');
   const isGainer = changeValue.startsWith('+');
   const isLoser = changeValue.startsWith('-');
   const colorClass = isGainer
