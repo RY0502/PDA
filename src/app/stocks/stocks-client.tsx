@@ -101,7 +101,7 @@ export default function StocksPageClient({
     : [];
 
   const sortedLosers = overview.topLosers
-    ? [...overview.topLosers].sort((a, b) => parseFloat(b.change) - parseFloat(a.change))
+    ? [...overview.topLosers].sort((a, b) => parseFloat(a.change) - parseFloat(b.change))
     : [];
 
   return (
