@@ -119,6 +119,8 @@ export async function getStockMarketOverview(
         return null;
     }
 
+    console.log('Stock API Response:', JSON.stringify(overview, null, 2));
+
     // Basic manual validation to ensure the key properties exist
     if (overview.watchedStock && overview.topGainers && overview.topLosers) {
         return overview;

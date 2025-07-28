@@ -166,22 +166,6 @@ export default function StocksPageClient({
           </Card>
         )}
 
-        {overview.topGainers && (
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ArrowUp className="h-6 w-6 text-green-600" />
-                Top 10 Gainers
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {overview.topGainers.map((stock) => (
-                <StockCard key={stock.name} stock={stock} />
-              ))}
-            </CardContent>
-          </Card>
-        )}
-
         {overview.topLosers && (
           <Card className="lg:col-span-1">
             <CardHeader>
@@ -192,6 +176,22 @@ export default function StocksPageClient({
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-3">
               {overview.topLosers.map((stock) => (
+                <StockCard key={stock.name} stock={stock} />
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {overview.topGainers && (
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ArrowUp className="h-6 w-6 text-green-600" />
+                Top 10 Gainers
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {overview.topGainers.map((stock) => (
                 <StockCard key={stock.name} stock={stock} />
               ))}
             </CardContent>
