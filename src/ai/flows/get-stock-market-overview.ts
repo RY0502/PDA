@@ -29,13 +29,15 @@ const WatchedStockSchema = z.object({
 const StockMarketOverviewSchema = z.object({
   watchedStock: WatchedStockSchema.describe(
     'The details for the user-watched stock.'
-  ),
+  ).optional(),
   topGainers: z
     .array(StockInfoSchema)
-    .describe('A list of the top 10 gainer stocks from NSE.'),
+    .describe('A list of the top 10 gainer stocks from NSE.')
+    .optional(),
   topLosers: z
     .array(StockInfoSchema)
-    .describe('A list of the top 10 loser stocks from NSE.'),
+    .describe('A list of the top 10 loser stocks from NSE.')
+    .optional(),
 });
 
 export type StockMarketOverview = z.infer<typeof StockMarketOverviewSchema>;

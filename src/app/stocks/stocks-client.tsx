@@ -18,7 +18,12 @@ import PageSkeleton from './skeleton';
 function StockCard({
   stock,
 }: {
-  stock: StockMarketOverview['topGainers'][0];
+  stock: {
+    name: string;
+    price: string;
+    change: string;
+    changePercent: string;
+  };
 }) {
   const isGainer = stock.change.startsWith('+');
   const isLoser = stock.change.startsWith('-');
@@ -201,4 +206,3 @@ export default function StocksPageClient({
     </div>
   );
 }
-
