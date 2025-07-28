@@ -95,6 +95,14 @@ export default function StocksPageClient({
       </div>
     );
   }
+  
+  const sortedGainers = overview.topGainers
+    ? [...overview.topGainers].sort((a, b) => parseFloat(b.change) - parseFloat(a.change))
+    : [];
+
+  const sortedLosers = overview.topLosers
+    ? [...overview.topLosers].sort((a, b) => parseFloat(b.change) - parseFloat(a.change))
+    : [];
 
   return (
     <div className="container py-8">
@@ -134,7 +142,7 @@ export default function StocksPageClient({
           </Card>
         )}
 
-        {overview.topLosers && (
+        {sortedLosers.length > 0 && (
           <Card className="lg:col-span-1">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -143,14 +151,14 @@ export default function StocksPageClient({
               </CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-3">
-              {overview.topLosers.map((stock) => (
+              {sortedLosers.map((stock) => (
                 <StockCard key={stock.name} stock={stock} variant="loser" />
               ))}
             </CardContent>
           </Card>
         )}
 
-        {overview.topGainers && (
+        {sortedGainers.length > 0 && (
           <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -159,7 +167,7 @@ export default function StocksPageClient({
               </CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {overview.topGainers.map((stock) => (
+              {sortedGainers.map((stock) => (
                 <StockCard key={stock.name} stock={stock} variant="gainer" />
               ))}
             </CardContent>
