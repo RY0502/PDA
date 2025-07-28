@@ -37,11 +37,12 @@ export interface StockMarketInput {
 
 function safeJsonParse(jsonString: string): any | null {
   try {
-    // The AI may wrap the JSON in markdown backticks, so we strip them
-    const sanitizedString = jsonString
-      .replace(/^```json\n?/, '')
-      .replace(/\n?```$/, '');
-    return JSON.parse(sanitizedString);
+    // The AI may wrap the JSON in markdown backticks or other text, so we extract it.
+    const match = jsonString.match(/\{[\s\S]*\}/);
+    if (match) {
+      return JSON.parse(match[0]);
+    }
+    return null; // Return null if no JSON object is found
   } catch (error) {
     console.error(
       'Failed to parse JSON string:',
