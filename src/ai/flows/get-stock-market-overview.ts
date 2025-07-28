@@ -44,9 +44,11 @@ export interface StockMarketInput {
 
 function safeJsonParse(jsonString: string): any | null {
   try {
-    return JSON.parse(jsonString);
+    // The AI may wrap the JSON in markdown backticks, so we strip them
+    const sanitizedString = jsonString.replace(/^```json\n?/, '').replace(/\n?```$/, '');
+    return JSON.parse(sanitizedString);
   } catch (error) {
-    console.error('Failed to parse JSON string:', error);
+    console.error('Failed to parse JSON string:', error, 'Original string:', jsonString);
     return null;
   }
 }
@@ -59,7 +61,7 @@ export async function getStockMarketOverview(
     return null;
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`;
   const headers = {
     'x-goog-api-key': GEMINI_API_KEY,
     'Content-Type': 'application/json',
@@ -67,13 +69,13 @@ export async function getStockMarketOverview(
 
   const prompt = `
       Provide a comprehensive overview of the Indian stock market (NSE) today.
-      I need the following information in a structured JSON format:
+      I need the following information in a structured JSON format only:
 
       1.  **Watched Stock**: Get today's high and low price for the stock with the code: "${input.stockCode}".
       2.  **Top 10 Gainers**: A list of the top 10 gainers on the NSE. For each stock, provide its name, current price, price change, and percentage change.
       3.  **Top 10 Losers**: A list of the top 10 losers on the NSE. For each stock, provide its name, current price, price change, and percentage change.
 
-      Ensure the output is a valid JSON object only, with no extra text or markdown.
+      Ensure the output is a valid JSON object only, with no extra text or markdown. The final output should start with { and end with }.
     `;
 
   const body = JSON.stringify({
@@ -89,7 +91,6 @@ export async function getStockMarketOverview(
     ],
     generationConfig: {
       responseMimeType: 'application/json',
-      responseSchema: StockMarketOverviewSchema,
     },
   });
 

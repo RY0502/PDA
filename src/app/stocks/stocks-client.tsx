@@ -86,7 +86,7 @@ export default function StocksPageClient({
 }) {
   const [overview, setOverview] =
     useState<StockMarketOverview | null>(initialData);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const currentCode = searchParams.get('code') || 'PVRINOX';
@@ -96,6 +96,7 @@ export default function StocksPageClient({
     if (currentCode.toLowerCase() !== stockCode.toLowerCase()) {
         setLoading(true);
         setError(null);
+        setOverview(null);
         getStockMarketOverview({ stockCode: currentCode })
             .then((data) => {
             if (data) {
@@ -112,6 +113,10 @@ export default function StocksPageClient({
             });
     } else if (initialData) {
         setOverview(initialData);
+        setLoading(false);
+    } else {
+      setError('Could not fetch initial stock market data. The service may be temporarily unavailable or the stock code is invalid.');
+      setLoading(false);
     }
   }, [currentCode, stockCode, initialData]);
 
@@ -139,9 +144,9 @@ export default function StocksPageClient({
       <div className="container py-8">
         <Alert variant="destructive" className="mx-auto max-w-2xl">
           <LineChart className="h-4 w-4" />
-          <AlertTitle>No Data</AlertTitle>
+          <AlertTitle>No Data Available</AlertTitle>
           <AlertDescription>
-            Could not fetch stock market data at this time.
+            Could not fetch stock market data. Please check the stock code or try again later.
           </AlertDescription>
         </Alert>
         <WatchlistManager stockCode={stockCode} />
@@ -213,8 +218,8 @@ export default function StocksPageClient({
                 Top 10 Losers
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {overview.topLosers.slice(0, 5).map((stock) => (
+            <CardContent className="grid grid-cols-1 gap-3">
+              {overview.topLosers.map((stock) => (
                 <StockCard key={stock.name} stock={stock} />
               ))}
             </CardContent>
