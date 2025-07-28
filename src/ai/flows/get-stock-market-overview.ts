@@ -96,7 +96,6 @@ export async function getStockMarketOverview(
       method: 'POST',
       headers,
       body,
-      next: { revalidate: 7200 },
     });
 
     if (!response.ok) {

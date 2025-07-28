@@ -145,7 +145,7 @@ export default function StocksPageClient({
         </p>
       </section>
 
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {overview.watchedStock && (
           <Card className="lg:col-span-3">
             <CardHeader>
@@ -171,7 +171,7 @@ export default function StocksPageClient({
         )}
 
         {overview.topGainers && (
-          <Card className="md:col-span-1 lg:col-span-2">
+          <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ArrowUp className="h-6 w-6 text-green-600" />
@@ -187,14 +187,14 @@ export default function StocksPageClient({
         )}
 
         {overview.topLosers && (
-          <Card className="md:col-span-1 lg:col-span-2">
+          <Card className="lg:col-span-1">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ArrowDown className="h-6 w-6 text-red-600" />
                 Top 10 Losers
               </CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <CardContent className="grid grid-cols-1 gap-3">
               {overview.topLosers.map((stock) => (
                 <StockCard key={stock.name} stock={stock} />
               ))}

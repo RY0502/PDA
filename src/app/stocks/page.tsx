@@ -6,8 +6,6 @@ import {
 import StocksPageClient from './stocks-client';
 import PageSkeleton from './skeleton';
 
-export const revalidate = 7200; // 2 hours
-
 async function StocksData({ stockCode }: { stockCode: string }) {
   const initialData = await getStockMarketOverview({ stockCode });
   return <StocksPageClient initialData={initialData} stockCode={stockCode} />;
