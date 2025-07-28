@@ -27,7 +27,7 @@ export type GetLatestFootballNewsOutput = z.infer<
 
 export async function getLatestFootballNews(): Promise<GetLatestFootballNewsOutput> {
   const fallbackResponse = {
-    summary: 'Could not fetch news at this time.',
+    summary: '**Network Error**\n* There was an error fetching the news. Please check your connection or API key.',
     clubsWithLogos: [],
     totalClubs: 0,
   };
@@ -105,12 +105,8 @@ export async function getLatestFootballNews(): Promise<GetLatestFootballNewsOutp
     const clubsWithLogos = await Promise.all(logoPromises);
 
     return { summary, clubsWithLogos, totalClubs };
-  } catch (error) {
-    console.error('Error fetching football news:', error);
-    return {
-      summary: `**Network Error**\n* There was an error fetching the news. Please check your connection.`,
-      clubsWithLogos: [],
-      totalClubs: 0,
-    };
+  } catch (error: any) {
+    console.error('Error fetching football news:', error.message || error);
+    return fallbackResponse;
   }
 }
