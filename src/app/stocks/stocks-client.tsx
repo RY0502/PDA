@@ -18,17 +18,13 @@ import PageSkeleton from './skeleton';
 
 function StockCard({
   stock,
+  variant,
 }: {
   stock: StockInfo;
+  variant: 'gainer' | 'loser';
 }) {
   const changeValue = String(stock.change || '');
-  const isGainer = changeValue.startsWith('+');
-  const isLoser = changeValue.startsWith('-');
-  const colorClass = isGainer
-    ? 'text-green-600'
-    : isLoser
-    ? 'text-red-600'
-    : 'text-muted-foreground';
+  const colorClass = variant === 'gainer' ? 'text-green-600' : 'text-red-600';
 
   return (
     <div className="flex items-center justify-between rounded-md bg-muted p-3">
@@ -38,7 +34,7 @@ function StockCard({
       </div>
       <div className={`text-right text-sm font-medium ${colorClass}`}>
         <p>{changeValue}</p>
-        <p>{stock.changePercent}</p>
+        <p>{stock.changePercent}%</p>
       </div>
     </div>
   );
@@ -176,7 +172,7 @@ export default function StocksPageClient({
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-3">
               {overview.topLosers.map((stock) => (
-                <StockCard key={stock.name} stock={stock} />
+                <StockCard key={stock.name} stock={stock} variant="loser" />
               ))}
             </CardContent>
           </Card>
@@ -192,7 +188,7 @@ export default function StocksPageClient({
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {overview.topGainers.map((stock) => (
-                <StockCard key={stock.name} stock={stock} />
+                <StockCard key={stock.name} stock={stock} variant="gainer" />
               ))}
             </CardContent>
           </Card>
