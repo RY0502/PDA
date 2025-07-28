@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   getStockMarketOverview,
   type StockMarketOverview,
@@ -84,54 +84,15 @@ export default function StocksPageClient({
   initialData: StockMarketOverview | null;
   stockCode: string;
 }) {
-  const [overview, setOverview] =
-    useState<StockMarketOverview | null>(initialData);
-  const [loading, setLoading] = useState(!initialData);
-  const [error, setError] = useState<string | null>(null);
-  const searchParams = useSearchParams();
-  const currentCode = searchParams.get('code') || 'PVRINOX';
 
-  useEffect(() => {
-    // Only fetch on the client if the code changes
-    if (currentCode.toLowerCase() !== stockCode.toLowerCase()) {
-        setLoading(true);
-        setError(null);
-        setOverview(null);
-        getStockMarketOverview({ stockCode: currentCode })
-            .then((data) => {
-            if (data) {
-                setOverview(data);
-            } else {
-                setError('Could not fetch stock market data. The service may be temporarily unavailable.');
-            }
-            })
-            .catch(() => {
-            setError('An unexpected error occurred while fetching data.');
-            })
-            .finally(() => {
-            setLoading(false);
-            });
-    } else if (initialData) {
-        setOverview(initialData);
-        setLoading(false);
-    } else {
-      setError('Could not fetch initial stock market data. The service may be temporarily unavailable or the stock code is invalid.');
-      setLoading(false);
-    }
-  }, [currentCode, stockCode, initialData]);
-
-  if (loading) {
-    return <PageSkeleton />;
-  }
-  
-  if (error) {
+  if (!initialData) {
      return (
         <div className="container py-8">
              <Alert variant="destructive" className="mx-auto max-w-2xl">
               <LineChart className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
+              <AlertTitle>Error Fetching Data</AlertTitle>
               <AlertDescription>
-                {error} Please try again later.
+                Could not fetch stock market data. The service may be temporarily unavailable or you have exceeded your API quota. Please try again later.
               </AlertDescription>
             </Alert>
             <WatchlistManager stockCode={stockCode} />
@@ -139,20 +100,7 @@ export default function StocksPageClient({
     )
   }
 
-  if (!overview) {
-    return (
-      <div className="container py-8">
-        <Alert variant="destructive" className="mx-auto max-w-2xl">
-          <LineChart className="h-4 w-4" />
-          <AlertTitle>No Data Available</AlertTitle>
-          <AlertDescription>
-            Could not fetch stock market data. Please check the stock code or try again later.
-          </AlertDescription>
-        </Alert>
-        <WatchlistManager stockCode={stockCode} />
-      </div>
-    );
-  }
+  const overview = initialData;
 
   return (
     <div className="container py-8">

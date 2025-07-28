@@ -45,10 +45,17 @@ export interface StockMarketInput {
 function safeJsonParse(jsonString: string): any | null {
   try {
     // The AI may wrap the JSON in markdown backticks, so we strip them
-    const sanitizedString = jsonString.replace(/^```json\n?/, '').replace(/\n?```$/, '');
+    const sanitizedString = jsonString
+      .replace(/^```json\n?/, '')
+      .replace(/\n?```$/, '');
     return JSON.parse(sanitizedString);
   } catch (error) {
-    console.error('Failed to parse JSON string:', error, 'Original string:', jsonString);
+    console.error(
+      'Failed to parse JSON string:',
+      error,
+      'Original string:',
+      jsonString
+    );
     return null;
   }
 }
@@ -95,10 +102,12 @@ export async function getStockMarketOverview(
   });
 
   try {
+    // Cache the response for 2 hours
     const response = await fetch(url, {
       method: 'POST',
       headers,
       body,
+      next: { revalidate: 7200 },
     });
 
     if (!response.ok) {
