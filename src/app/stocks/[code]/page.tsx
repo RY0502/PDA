@@ -1,9 +1,8 @@
-import { Suspense, cache } from 'react';
+import { Suspense } from 'react';
 import StocksPageClient from '../stocks-client';
 import PageSkeleton from '../skeleton';
 import { GEMINI_API_KEY } from '@/lib/constants';
 import type { StockMarketOverview } from '@/ai/flows/get-stock-market-overview';
-
 
 export const revalidate = 3600; // Revalidate the page every 1 hour
 
@@ -15,12 +14,19 @@ function safeJsonParse(jsonString: string): any | null {
     }
     return null;
   } catch (error) {
-    console.error('Failed to parse JSON string:', error, 'Original string:', jsonString);
+    console.error(
+      'Failed to parse JSON string:',
+      error,
+      'Original string:',
+      jsonString
+    );
     return null;
   }
 }
 
-async function getStockData(stockCode: string): Promise<StockMarketOverview | null> {
+async function getStockData(
+  stockCode: string
+): Promise<StockMarketOverview | null> {
   if (!GEMINI_API_KEY) {
     console.error('GEMINI_API_KEY is not set.');
     return null;
@@ -52,7 +58,8 @@ async function getStockData(stockCode: string): Promise<StockMarketOverview | nu
     const response = await fetch(url, {
       method: 'POST',
       headers,
-      body
+      body,
+      next: { revalidate: 3600 }, // Cache POST requests for 1 hour
     });
 
     if (!response.ok) {
@@ -69,40 +76,38 @@ async function getStockData(stockCode: string): Promise<StockMarketOverview | nu
     }
 
     const overview: StockMarketOverview = safeJsonParse(jsonText);
-    
+
     if (!overview || typeof overview !== 'object') {
-        console.error('Parsed JSON is not a valid object:', overview);
-        return null;
+      console.error('Parsed JSON is not a valid object:', overview);
+      return null;
     }
 
     if (overview.watchedStock && overview.topGainers && overview.topLosers) {
-        return overview;
+      return overview;
     } else {
-        console.error('API response was missing one or more required fields (watchedStock, topGainers, topLosers).', overview);
-        return null;
+      console.error(
+        'API response was missing one or more required fields (watchedStock, topGainers, topLosers).',
+        overview
+      );
+      return null;
     }
-
   } catch (error) {
     console.error('Error fetching stock market overview:', error);
     return null;
   }
 }
 
-async function StocksData({ stockCode }: { stockCode: string }) {
-  const initialData = await getStockData(stockCode);
-  return <StocksPageClient initialData={initialData} stockCode={stockCode} />;
-}
-
-export default function StockCodePage({
+export default async function StockCodePage({
   params,
 }: {
   params: { code: string };
 }) {
   const stockCode = params.code || 'PVRINOX';
+  const initialData = await getStockData(stockCode);
 
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <StocksData stockCode={stockCode} />
+      <StocksPageClient initialData={initialData} stockCode={stockCode} />
     </Suspense>
   );
 }
