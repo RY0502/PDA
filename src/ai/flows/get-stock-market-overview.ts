@@ -12,14 +12,14 @@
 
 import {GEMINI_API_KEY} from '@/lib/constants';
 
-interface StockInfo {
+export interface StockInfo {
   name: string;
   price: string;
   change: string;
   changePercent: string;
 }
 
-interface WatchedStock {
+export interface WatchedStock {
   name: string;
   high: string;
   low: string;
@@ -71,9 +71,9 @@ export async function getStockMarketOverview(
       Provide a comprehensive overview of the Indian stock market (NSE) today.
       I need the following information in a structured JSON format only:
 
-      1.  **watchedStock**: Get today's high and low price for the stock with the code: "${input.stockCode}".
-      2.  **topGainers**: A list of the top 10 gainers on the NSE. For each stock, provide its name, current price, price change, and percentage change.
-      3.  **topLosers**: A list of the top 10 losers on the NSE. For each stock, provide its name, current price, price change, and percentage change.
+      1.  **watchedStock**: Get today's high and low price for the stock with the code: "${input.stockCode}". The object should contain 'name', 'high', and 'low'.
+      2.  **topGainers**: A list of the top 10 gainers on the NSE. For each stock, provide its 'name', current 'price', price 'change', and percentage 'changePercent'.
+      3.  **topLosers**: A list of the top 10 losers on the NSE. For each stock, provide its 'name', current 'price', price 'change', and percentage 'changePercent'.
 
       Ensure the output is a valid JSON object only, with no extra text or markdown. The final output should start with { and end with }.
     `;

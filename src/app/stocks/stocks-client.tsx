@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
   getStockMarketOverview,
   type StockMarketOverview,
+  type StockInfo,
 } from '@/ai/flows/get-stock-market-overview';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,12 +19,7 @@ import PageSkeleton from './skeleton';
 function StockCard({
   stock,
 }: {
-  stock: {
-    name: string;
-    price: string;
-    change: string;
-    changePercent: string;
-  };
+  stock: StockInfo;
 }) {
   const changeValue = stock.change || '';
   const isGainer = changeValue.startsWith('+');
