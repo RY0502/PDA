@@ -10,37 +10,27 @@
  * - StockMarketOverview - The return type for the function.
  */
 
-import {z} from 'genkit';
 import {GEMINI_API_KEY} from '@/lib/constants';
 
-const StockInfoSchema = z.object({
-  name: z.string().describe('The name of the stock or index.'),
-  price: z.string().describe('The current price of the stock.'),
-  change: z.string().describe('The change in price (e.g., "+5.50").'),
-  changePercent: z.string().describe('The percentage change (e.g., "+1.25%").'),
-});
+interface StockInfo {
+  name: string;
+  price: string;
+  change: string;
+  changePercent: string;
+}
 
-const WatchedStockSchema = z.object({
-  name: z.string().describe('The name of the watched stock.'),
-  high: z.string().describe("Today's high price for the stock."),
-  low: z.string().describe("Today's low price for the stock."),
-});
+interface WatchedStock {
+  name: string;
+  high: string;
+  low: string;
+}
 
-const StockMarketOverviewSchema = z.object({
-  watchedStock: WatchedStockSchema.describe(
-    'The details for the user-watched stock.'
-  ).optional(),
-  topGainers: z
-    .array(StockInfoSchema)
-    .describe('A list of the top 10 gainer stocks from NSE.')
-    .optional(),
-  topLosers: z
-    .array(StockInfoSchema)
-    .describe('A list of the top 10 loser stocks from NSE.')
-    .optional(),
-});
+export interface StockMarketOverview {
+  watchedStock?: WatchedStock;
+  topGainers?: StockInfo[];
+  topLosers?: StockInfo[];
+}
 
-export type StockMarketOverview = z.infer<typeof StockMarketOverviewSchema>;
 export interface StockMarketInput {
   stockCode: string;
 }
@@ -81,9 +71,9 @@ export async function getStockMarketOverview(
       Provide a comprehensive overview of the Indian stock market (NSE) today.
       I need the following information in a structured JSON format only:
 
-      1.  **Watched Stock**: Get today's high and low price for the stock with the code: "${input.stockCode}".
-      2.  **Top 10 Gainers**: A list of the top 10 gainers on the NSE. For each stock, provide its name, current price, price change, and percentage change.
-      3.  **Top 10 Losers**: A list of the top 10 losers on the NSE. For each stock, provide its name, current price, price change, and percentage change.
+      1.  **watchedStock**: Get today's high and low price for the stock with the code: "${input.stockCode}".
+      2.  **topGainers**: A list of the top 10 gainers on the NSE. For each stock, provide its name, current price, price change, and percentage change.
+      3.  **topLosers**: A list of the top 10 losers on the NSE. For each stock, provide its name, current price, price change, and percentage change.
 
       Ensure the output is a valid JSON object only, with no extra text or markdown. The final output should start with { and end with }.
     `;
@@ -102,7 +92,6 @@ export async function getStockMarketOverview(
   });
 
   try {
-    // Cache the response for 2 hours
     const response = await fetch(url, {
       method: 'POST',
       headers,
@@ -123,18 +112,21 @@ export async function getStockMarketOverview(
       return null;
     }
 
-    const overview = safeJsonParse(jsonText);
-    if (!overview) {
-      return null;
+    const overview: StockMarketOverview = safeJsonParse(jsonText);
+    
+    if (!overview || typeof overview !== 'object') {
+        console.error('Parsed JSON is not a valid object:', overview);
+        return null;
     }
 
-    const parsed = StockMarketOverviewSchema.safeParse(overview);
-    if (parsed.success) {
-      return parsed.data;
+    // Basic manual validation to ensure the key properties exist
+    if (overview.watchedStock && overview.topGainers && overview.topLosers) {
+        return overview;
     } else {
-      console.error('Failed to parse API response into schema:', parsed.error);
-      return null;
+        console.error('API response was missing one or more required fields (watchedStock, topGainers, topLosers).', overview);
+        return null;
     }
+
   } catch (error) {
     console.error('Error fetching stock market overview:', error);
     return null;
