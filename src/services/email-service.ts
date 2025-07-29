@@ -126,17 +126,12 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
       /<h2[^>]*>([\s\S]*?)<\/h2>[\s\S]*?<h3[^>]*>([\s\S]*?)<\/h3>/g;
     let match;
     while ((match = articleBlockRegex.exec(emailBodyHtml)) !== null) {
-      const titleHtml = match[1];
-      const descriptionHtml = match[2];
-
       const articleHtmlBlock = emailBodyHtml.substring(0, match.index);
       const lastAnchorRegex = /<a[^>]+href="([^"]+)"[^>]*>[^<]*$/;
       const anchorMatch = lastAnchorRegex.exec(articleHtmlBlock);
 
       if (anchorMatch) {
         let rawUrl = anchorMatch[1];
-
-        // Handle Medium's tracking URLs
         if (rawUrl.startsWith('https://medium.r.axd.email/')) {
           try {
             const urlObj = new URL(rawUrl);
@@ -167,15 +162,12 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
             .replace(/\s+/g, ' ')
             .trim();
 
-        const title = decode(titleHtml);
-        const description = decode(descriptionHtml);
+        const title = decode(match[1]);
+        const description = decode(match[2]);
 
-        let imageUrl;
-        const imgRegex = /<img[^>]+src="([^"]+)"/;
+        const imgRegex = /<img[^>]+src="(https:\/\/miro\.medium\.com[^"]+)"/;
         const imgMatch = imgRegex.exec(articleHtmlBlock);
-        if (imgMatch) {
-          imageUrl = imgMatch[1];
-        }
+        const imageUrl = imgMatch ? imgMatch[1] : undefined;
 
         if (title && description) {
           articles.push({
