@@ -13,6 +13,7 @@ import {
   GMAIL_CLIENT_SECRET,
   GMAIL_REFRESH_TOKEN,
 } from '@/lib/constants';
+import type { RegExpExecArray } from 'node-html-parser';
 
 export type MediumArticle = {
   id: string;
@@ -118,18 +119,19 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
     const emailBodyHtml = base64UrlDecode(htmlPart.body.data);
 
     const articles: MediumArticle[] = [];
-    // Regex based on user-provided structure
-    const articleBlockRegex = /<a[^>]+href="([^"]+)"[^>]*>[\s\S]*?<img[^>]+src="([^"]+)"[\s\S]*?<\/a>\s*<\/div>[\s\S]*?<div[^>]+>[\s\S]*?<a[^>]+href="([^"]+)"[^>]*>[\s\S]*?<h2[^>]*>([\s\S]*?)<\/h2>[\s\S]*?<div[^>]*>[\s\S]*?<h3[^>]*>([\s\S]*?)<\/h3>/g;
-    const articleUrls = new Set<string>(); // To prevent duplicates
+    const articleBlockRegex =
+      /<a[^>]+href="([^"]+)"[^>]*>[\s\S]*?<img[^>]+src="([^"]+)"[\s\S]*?<\/a>\s*<\/div>[\s\S]*?<div[^>]+>[\s\S]*?<a[^>]+href="([^"]+)"[^>]*>[\s\S]*?<h2[^>]*>([\s\S]*?)<\/h2>[\s\S]*?<div[^>]*>[\s\S]*?<h3[^>]*>([\s\S]*?)<\/h3>/g;
+    const articleUrls = new Set<string>();
 
-    let match;
-    while ((match = articleBlockRegex.exec(emailBodyHtml)) !== null) {
+    const allMatches = Array.from(emailBodyHtml.matchAll(articleBlockRegex));
+
+    for (const match of allMatches.reverse()) {
       const rawUrl = match[1];
       const imageUrl = match[2];
       const extraHref = match[3];
       const titleHtml = match[4];
       const descriptionHtml = match[5];
-      
+
       let url = rawUrl.replace(/&amp;/g, '&');
       if (url.startsWith('https://medium.r.axd.email/')) {
         try {
@@ -146,7 +148,7 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
 
       const decode = (str: string) =>
         str
-          .replace(/<[^>]+>/g, ' ') // strip tags
+          .replace(/<[^>]+>/g, ' ')
           .replace(/&amp;/g, '&')
           .replace(/&lt;/g, '<')
           .replace(/&gt;/g, '>')
@@ -177,7 +179,7 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
       console.log('No articles found matching the pattern.');
     }
 
-    return { articles, isMock: false };
+    return { articles: articles.reverse(), isMock: false };
   } catch (error: any) {
     if (error.message && error.message.includes('invalid_grant')) {
       console.error(
@@ -187,7 +189,10 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
           'Falling back to mock data.'
       );
     } else {
-      console.error('An error occurred while fetching from Gmail API:', error.message || error);
+      console.error(
+        'An error occurred while fetching from Gmail API:',
+        error.message || error
+      );
     }
     return { articles: getMockMediumArticles(), isMock: true };
   }
@@ -203,7 +208,8 @@ function getMockMediumArticles(): MediumArticle[] {
       title: 'The Generative AI Revolution Is Just Getting Started',
       url: 'https://medium.com/towards-data-science/the-generative-ai-revolution-is-just-getting-started-b16f2434411def',
       source: 'Towards Data Science',
-      description: 'An overview of the recent breakthroughs in generative AI and what they mean for the future.',
+      description:
+        'An overview of the recent breakthroughs in generative AI and what they mean for the future.',
       imageUrl: 'https://placehold.co/600x400.png',
       author: 'John Doe',
     },
@@ -212,7 +218,8 @@ function getMockMediumArticles(): MediumArticle[] {
       title: 'How to Build a Design System in 2024',
       url: 'https://medium.com/ux-design-weekly/how-to-build-a-design-system-in-2024-b0a3c20c0a9e',
       source: 'UX Design Weekly',
-      description: 'A step-by-step guide to creating and maintaining a design system for your team.',
+      description:
+        'A step-by-step guide to creating and maintaining a design system for your team.',
       imageUrl: 'https://placehold.co/600x400.png',
       author: 'Jane Smith',
     },
@@ -221,7 +228,8 @@ function getMockMediumArticles(): MediumArticle[] {
       title: 'The Art of Clean Code',
       url: 'https://medium.com/swlh/the-art-of-clean-code-8b67548239c5',
       source: 'The Startup',
-      description: 'Principles and practices for writing readable, maintainable, and robust code.',
+      description:
+        'Principles and practices for writing readable, maintainable, and robust code.',
       imageUrl: 'https://placehold.co/600x400.png',
       author: 'Al Coder',
     },
@@ -230,7 +238,8 @@ function getMockMediumArticles(): MediumArticle[] {
       title: 'Mastering React Hooks: A Deep Dive into useEffect',
       url: 'https://medium.com/javascript-in-plain-english/mastering-react-hooks-a-deep-dive-into-useeffect-3453b3424692',
       source: 'JavaScript in Plain English',
-      description: 'Explore advanced patterns and common pitfalls of the useEffect hook in React.',
+      description:
+        'Explore advanced patterns and common pitfalls of the useEffect hook in React.',
       imageUrl: 'https://placehold.co/600x400.png',
       author: 'React Dev',
     },
