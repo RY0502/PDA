@@ -1,8 +1,15 @@
-import { Suspense } from 'react';
-import StocksPageClient from '../stocks-client';
-import PageSkeleton from '../skeleton';
+import {
+  type StockMarketOverview,
+  type StockInfo,
+} from '@/ai/flows/get-stock-market-overview';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AreaChart, ArrowDown, ArrowUp, LineChart } from 'lucide-react';
 import { GEMINI_API_KEY } from '@/lib/constants';
-import type { StockMarketOverview } from '@/ai/flows/get-stock-market-overview';
+import { WatchlistManager } from './watchlist-manager';
 
 export const revalidate = 3600; // Revalidate the page every 1 hour
 
@@ -59,7 +66,7 @@ async function getStockData(
       method: 'POST',
       headers,
       body,
-      next: { revalidate: 3600 }, // Cache POST requests for 1 hour
+      next: { revalidate: 3600 },
     });
 
     if (!response.ok) {
@@ -97,17 +104,140 @@ async function getStockData(
   }
 }
 
-export default async function StockCodePage({
+function StockCard({
+  stock,
+  variant,
+}: {
+  stock: StockInfo;
+  variant: 'gainer' | 'loser';
+}) {
+  const colorClass = variant === 'gainer' ? 'text-green-600' : 'text-red-600';
+
+  return (
+    <div className="flex items-center justify-between rounded-md bg-muted p-3">
+      <div>
+        <p className="font-semibold text-foreground">{stock.name}</p>
+        <p className="text-sm text-muted-foreground">{stock.price}</p>
+      </div>
+      <div className={`text-right text-sm font-medium ${colorClass}`}>
+        <p>{stock.change}</p>
+        <p>{stock.changePercent}%</p>
+      </div>
+    </div>
+  );
+}
+
+export default async function StocksPage({
   params,
 }: {
   params: { code: string };
 }) {
   const stockCode = params.code || 'PVRINOX';
-  const initialData = await getStockData(stockCode);
+  const overview = await getStockData(stockCode);
+
+  if (!overview) {
+    return (
+      <div className="container py-8">
+        <Alert variant="destructive" className="mx-auto max-w-2xl">
+          <LineChart className="h-4 w-4" />
+          <AlertTitle>Error Fetching Data</AlertTitle>
+          <AlertDescription>
+            Could not fetch stock market data. The service may be temporarily
+            unavailable or you have exceeded your API quota. Please try again
+            later.
+          </AlertDescription>
+        </Alert>
+        <WatchlistManager stockCode={stockCode} />
+      </div>
+    );
+  }
+
+  const sortedGainers = overview.topGainers
+    ? [...overview.topGainers].sort(
+        (a, b) => parseFloat(b.change) - parseFloat(a.change)
+      )
+    : [];
+
+  const sortedLosers = overview.topLosers
+    ? [...overview.topLosers].sort(
+        (a, b) => parseFloat(a.change) - parseFloat(b.change)
+      )
+    : [];
 
   return (
-    <Suspense fallback={<PageSkeleton />}>
-      <StocksPageClient initialData={initialData} stockCode={stockCode} />
-    </Suspense>
+    <div className="container py-8">
+      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-2 text-center md:pb-8">
+        <AreaChart className="h-16 w-16 text-primary" />
+        <h1 className="mt-4 text-3xl font-bold leading-tight tracking-tighter md:text-5xl lg:leading-[1.1]">
+          Stock Market Overview
+        </h1>
+        <p className="max-w-[750px] text-lg text-muted-foreground sm:text-xl">
+          Today's highlights from the National Stock Exchange (NSE).
+        </p>
+      </section>
+
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        {overview.watchedStock && (
+          <Card className="lg:col-span-3">
+            <CardHeader>
+              <CardTitle>
+                Watching:{' '}
+                <span className="text-primary">
+                  {overview.watchedStock.name}
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-around gap-4 text-center">
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground">Today's High</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {overview.watchedStock.high}
+                </p>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground">Today's Low</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {overview.watchedStock.low}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {sortedLosers.length > 0 && (
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ArrowDown className="h-6 w-6 text-red-600" />
+                Top 10 Losers
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 gap-3">
+              {sortedLosers.map((stock) => (
+                <StockCard key={stock.name} stock={stock} variant="loser" />
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {sortedGainers.length > 0 && (
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ArrowUp className="h-6 w-6 text-green-600" />
+                Top 10 Gainers
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {sortedGainers.map((stock) => (
+                <StockCard key={stock.name} stock={stock} variant="gainer" />
+              ))}
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      <WatchlistManager stockCode={stockCode} />
+    </div>
   );
 }
