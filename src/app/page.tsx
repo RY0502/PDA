@@ -23,26 +23,26 @@ function ArticleCard({ article }: { article: MediumArticle }) {
   return (
     <Card className="overflow-hidden rounded-lg transition-shadow duration-300 hover:shadow-xl">
       <CardContent className="p-3">
-        <div className="flex gap-3">
+        <div className="flex gap-4">
           <div className="flex-shrink-0">
             {article.imageUrl ? (
-              <div className="relative h-20 w-20 overflow-hidden rounded-md bg-muted">
+              <div className="relative h-24 w-24 overflow-hidden rounded-md bg-muted">
                 <Image
                   src={article.imageUrl}
                   alt={article.title}
                   fill
-                  sizes="80px"
+                  sizes="96px"
                   className="object-cover"
                   data-ai-hint="article cover"
                 />
               </div>
             ) : (
-              <div className="flex h-20 w-20 items-center justify-center rounded-md bg-muted">
-                <ImageIcon className="h-8 w-8 text-muted-foreground" />
+              <div className="flex h-24 w-24 items-center justify-center rounded-md bg-muted">
+                <ImageIcon className="h-10 w-10 text-muted-foreground" />
               </div>
             )}
             {article.author && (
-              <p className="mt-1 w-20 truncate text-center text-xs font-medium text-muted-foreground">
+              <p className="mt-1 w-24 truncate text-center text-xs font-medium text-muted-foreground">
                 {article.author}
               </p>
             )}
@@ -50,7 +50,7 @@ function ArticleCard({ article }: { article: MediumArticle }) {
 
           <div className="flex flex-grow flex-col">
             <div>
-              <CardTitle className="mb-1 line-clamp-2 text-base leading-tight">
+              <CardTitle className="mb-1 line-clamp-3 text-base leading-tight">
                 {article.title}
               </CardTitle>
               <CardDescription className="line-clamp-2 text-sm">

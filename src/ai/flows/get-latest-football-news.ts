@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -93,7 +94,7 @@ export async function getLatestFootballNews(): Promise<GetLatestFootballNewsOutp
     const matches = summary.match(clubNameRegex) || [];
     const allUniqueClubNames = Array.from(new Set(matches.map(name => name.replace(/\*\*/g, '').trim().replace(/:$/, ''))));
     const totalClubs = allUniqueClubNames.length;
-    const topClubNames = allUniqueClubNames.slice(0, 6);
+    const topClubNames = allUniqueClubNames.slice(0, 5);
     
     const logoPromises = topClubNames.map(name => 
       generateClubLogo({ clubName: name }).then(result => ({
