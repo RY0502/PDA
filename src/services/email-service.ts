@@ -21,6 +21,7 @@ export type MediumArticle = {
   source: string;
   description: string;
   imageUrl?: string;
+  author?: string;
 };
 
 export type MediumArticleResponse = {
@@ -118,13 +119,13 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
 
     const articles: MediumArticle[] = [];
     // Regex to find blocks containing an image and an article link with h2/h3 tags
-    const articleBlockRegex = /<a[^>]+href="[^"]+"[^>]*>[\s\S]*?<img[^>]+src="([^"]+)"[^>]*>[\s\S]*?<\/a>[\s\S]*?<a[^>]+href="([^"]+)"[^>]*>[\s\S]*?<h2[^>]*>([\s\S]*?)<\/h2>[\s\S]*?<h3[^>]*>([\s\S]*?)<\/h3>[\s\S]*?<\/a>/g;
+    const articleBlockRegex = /<a[^>]+href="([^"]+)"[^>]*>[\s\S]*?<img[^>]+src="([^"]+)"[\s\S]*?<\/a>[\s\S]*?<a[^>]+href="[^"]+"[\s\S]*?<h2[^>]*>([\s\S]*?)<\/h2>[\s\S]*?<h3[^>]*>([\s\S]*?)<\/h3>/g;
     const articleUrls = new Set<string>(); // To prevent duplicates
 
     let match;
     while ((match = articleBlockRegex.exec(emailBodyHtml)) !== null) {
-      const imageUrl = match[1];
-      const rawUrl = match[2];
+      const rawUrl = match[1];
+      const imageUrl = match[2];
       const titleHtml = match[3];
       const descriptionHtml = match[4];
       
@@ -178,15 +179,14 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
     return { articles, isMock: false };
   } catch (error: any) {
     if (error.message && error.message.includes('invalid_grant')) {
-      console.log(
+      console.error(
         'Gmail API Error: The refresh token is invalid or has been revoked. ' +
           'Please generate a new one by running `npm run get-token` and update your .env file. ' +
           'You may need to revoke app access in your Google Account settings first. ' +
           'Falling back to mock data.'
       );
     } else {
-      console.log('An error occurred while fetching from Gmail API:', error.message || error);
-      console.log('Falling back to mock data.');
+      console.error('An error occurred while fetching from Gmail API:', error.message || error);
     }
     return { articles: getMockMediumArticles(), isMock: true };
   }
@@ -204,6 +204,7 @@ function getMockMediumArticles(): MediumArticle[] {
       source: 'Towards Data Science',
       description: 'An overview of the recent breakthroughs in generative AI and what they mean for the future.',
       imageUrl: 'https://placehold.co/600x400.png',
+      author: 'John Doe',
     },
     {
       id: '2',
@@ -212,6 +213,7 @@ function getMockMediumArticles(): MediumArticle[] {
       source: 'UX Design Weekly',
       description: 'A step-by-step guide to creating and maintaining a design system for your team.',
       imageUrl: 'https://placehold.co/600x400.png',
+      author: 'Jane Smith',
     },
     {
       id: '3',
@@ -220,6 +222,7 @@ function getMockMediumArticles(): MediumArticle[] {
       source: 'The Startup',
       description: 'Principles and practices for writing readable, maintainable, and robust code.',
       imageUrl: 'https://placehold.co/600x400.png',
+      author: 'Al Coder',
     },
     {
       id: '4',
@@ -228,6 +231,7 @@ function getMockMediumArticles(): MediumArticle[] {
       source: 'JavaScript in Plain English',
       description: 'Explore advanced patterns and common pitfalls of the useEffect hook in React.',
       imageUrl: 'https://placehold.co/600x400.png',
+      author: 'React Dev',
     },
   ];
 }
