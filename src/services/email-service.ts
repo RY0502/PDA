@@ -118,16 +118,17 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
     const emailBodyHtml = base64UrlDecode(htmlPart.body.data);
 
     const articles: MediumArticle[] = [];
-    // Regex to find blocks containing an image and an article link with h2/h3 tags
-    const articleBlockRegex = /<a[^>]+href="([^"]+)"[^>]*>[\s\S]*?<img[^>]+src="([^"]+)"[\s\S]*?<\/a>[\s\S]*?<a[^>]+href="[^"]+"[\s\S]*?<h2[^>]*>([\s\S]*?)<\/h2>[\s\S]*?<h3[^>]*>([\s\S]*?)<\/h3>/g;
+    // Regex based on user-provided structure
+    const articleBlockRegex = /<a[^>]+href="([^"]+)"[^>]*>[\s\S]*?<img[^>]+src="([^"]+)"[\s\S]*?<\/a>\s*<\/div>[\s\S]*?<div[^>]+>[\s\S]*?<a[^>]+href="([^"]+)"[^>]*>[\s\S]*?<h2[^>]*>([\s\S]*?)<\/h2>[\s\S]*?<div[^>]*>[\s\S]*?<h3[^>]*>([\s\S]*?)<\/h3>/g;
     const articleUrls = new Set<string>(); // To prevent duplicates
 
     let match;
     while ((match = articleBlockRegex.exec(emailBodyHtml)) !== null) {
       const rawUrl = match[1];
       const imageUrl = match[2];
-      const titleHtml = match[3];
-      const descriptionHtml = match[4];
+      const extraHref = match[3];
+      const titleHtml = match[4];
+      const descriptionHtml = match[5];
       
       let url = rawUrl.replace(/&amp;/g, '&');
       if (url.startsWith('https://medium.r.axd.email/')) {
