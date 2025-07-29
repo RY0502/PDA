@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -119,59 +120,74 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
     const emailBodyHtml = base64UrlDecode(htmlPart.body.data);
 
     const articles: MediumArticle[] = [];
-    const articleBlockRegex =
-      /<a[^>]+href="([^"]+)"[^>]*>[\s\S]*?<img[^>]+src="([^"]+)"[\s\S]*?<\/a>\s*<\/div>[\s\S]*?<div[^>]+>[\s\S]*?<a[^>]+href="([^"]+)"[^>]*>[\s\S]*?<h2[^>]*>([\s\S]*?)<\/h2>[\s\S]*?<div[^>]*>[\s\S]*?<h3[^>]*>([\s\S]*?)<\/h3>/g;
     const articleUrls = new Set<string>();
 
-    const allMatches = Array.from(emailBodyHtml.matchAll(articleBlockRegex));
+    const articleBlockRegex =
+      /<h2[^>]*>([\s\S]*?)<\/h2>[\s\S]*?<h3[^>]*>([\s\S]*?)<\/h3>/g;
+    let match;
+    while ((match = articleBlockRegex.exec(emailBodyHtml)) !== null) {
+      const titleHtml = match[1];
+      const descriptionHtml = match[2];
 
-    for (const match of allMatches.reverse()) {
-      const rawUrl = match[1];
-      const imageUrl = match[2];
-      const extraHref = match[3];
-      const titleHtml = match[4];
-      const descriptionHtml = match[5];
+      const articleHtmlBlock = emailBodyHtml.substring(0, match.index);
+      const lastAnchorRegex = /<a[^>]+href="([^"]+)"[^>]*>[^<]*$/;
+      const anchorMatch = lastAnchorRegex.exec(articleHtmlBlock);
 
-      let url = rawUrl.replace(/&amp;/g, '&');
-      if (url.startsWith('https://medium.r.axd.email/')) {
-        try {
-          const urlObj = new URL(url);
-          const targetUrl = urlObj.searchParams.get('url');
-          if (targetUrl) {
-            url = decodeURIComponent(targetUrl);
+      if (anchorMatch) {
+        let rawUrl = anchorMatch[1];
+
+        // Handle Medium's tracking URLs
+        if (rawUrl.startsWith('https://medium.r.axd.email/')) {
+          try {
+            const urlObj = new URL(rawUrl);
+            const targetUrl = urlObj.searchParams.get('url');
+            if (targetUrl) {
+              rawUrl = decodeURIComponent(targetUrl);
+            }
+          } catch (e) {
+            // Ignore if URL parsing fails
           }
-        } catch (e) {
-          // Ignore if URL parsing fails
         }
-      }
-      const cleanUrl = url.split('?')[0].split('#')[0];
+        const cleanUrl = rawUrl.split('?')[0].split('#')[0];
 
-      const decode = (str: string) =>
-        str
-          .replace(/<[^>]+>/g, ' ')
-          .replace(/&amp;/g, '&')
-          .replace(/&lt;/g, '<')
-          .replace(/&gt;/g, '>')
-          .replace(/&quot;/g, '"')
-          .replace(/&#39;/g, "'")
-          .replace(/&nbsp;/g, ' ')
-          .replace(/—/g, '—')
-          .replace(/\s+/g, ' ')
-          .trim();
+        if (articleUrls.has(cleanUrl)) {
+          continue; // Skip duplicate articles
+        }
 
-      const title = decode(titleHtml);
-      const description = decode(descriptionHtml);
+        const decode = (str: string) =>
+          str
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .replace(/&nbsp;/g, ' ')
+            .replace(/—/g, '—')
+            .replace(/\s+/g, ' ')
+            .trim();
 
-      if (title && description && !articleUrls.has(cleanUrl)) {
-        articles.push({
-          id: `${latestMessageId}-${articles.length}`,
-          title,
-          description,
-          url: cleanUrl,
-          source,
-          imageUrl,
-        });
-        articleUrls.add(cleanUrl);
+        const title = decode(titleHtml);
+        const description = decode(descriptionHtml);
+
+        let imageUrl;
+        const imgRegex = /<img[^>]+src="([^"]+)"/;
+        const imgMatch = imgRegex.exec(articleHtmlBlock);
+        if (imgMatch) {
+          imageUrl = imgMatch[1];
+        }
+
+        if (title && description) {
+          articles.push({
+            id: `${latestMessageId}-${articles.length}`,
+            title,
+            description,
+            url: cleanUrl,
+            source,
+            imageUrl,
+          });
+          articleUrls.add(cleanUrl);
+        }
       }
     }
 
