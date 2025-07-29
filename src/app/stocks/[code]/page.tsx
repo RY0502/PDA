@@ -45,8 +45,15 @@ async function getStockData(
     'Content-Type': 'application/json',
   };
 
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
   const prompt = `
-      Provide a comprehensive overview of the Indian stock market (NSE) today.
+      Provide a comprehensive overview of the Indian stock market (NSE) for today, ${currentDate}.
       I need the following information in a structured JSON format only:
 
       1.  **watchedStock**: Get today's high and low price for the stock with the code: "${stockCode}". The object should contain 'name', 'high', and 'low'.
