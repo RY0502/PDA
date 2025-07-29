@@ -122,66 +122,70 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
     const articles: MediumArticle[] = [];
     const articleUrls = new Set<string>();
 
-    const articleBlockRegex =
-      /<h2[^>]*>([\s\S]*?)<\/h2>[\s\S]*?<h3[^>]*>([\s\S]*?)<\/h3>/g;
-    let match;
-    while ((match = articleBlockRegex.exec(emailBodyHtml)) !== null) {
-      const articleHtmlBlock = emailBodyHtml.substring(0, match.index);
-      const lastAnchorRegex = /<a[^>]+href="([^"]+)"[^>]*>[^<]*$/;
-      const anchorMatch = lastAnchorRegex.exec(articleHtmlBlock);
+    const articleBlocks = emailBodyHtml.split('<div class="cs"');
+    
+    // The first split item is the part before the first article, so we skip it.
+    for (let i = 1; i < articleBlocks.length; i++) {
+        const block = articleBlocks[i];
 
-      if (anchorMatch) {
-        let rawUrl = anchorMatch[1];
-        if (rawUrl.startsWith('https://medium.r.axd.email/')) {
-          try {
-            const urlObj = new URL(rawUrl);
-            const targetUrl = urlObj.searchParams.get('url');
-            if (targetUrl) {
-              rawUrl = decodeURIComponent(targetUrl);
-            }
-          } catch (e) {
-            // Ignore if URL parsing fails
-          }
-        }
-        const cleanUrl = rawUrl.split('?')[0].split('#')[0];
-
-        if (articleUrls.has(cleanUrl)) {
-          continue; // Skip duplicate articles
-        }
-
-        const decode = (str: string) =>
-          str
-            .replace(/<[^>]+>/g, ' ')
-            .replace(/&amp;/g, '&')
-            .replace(/&lt;/g, '<')
-            .replace(/&gt;/g, '>')
-            .replace(/&quot;/g, '"')
-            .replace(/&#39;/g, "'")
-            .replace(/&nbsp;/g, ' ')
-            .replace(/—/g, '—')
-            .replace(/\s+/g, ' ')
-            .trim();
-
-        const title = decode(match[1]);
-        const description = decode(match[2]);
-
+        const urlRegex = /<a[^>]+href="([^"]+)"/;
         const imgRegex = /<img[^>]+src="(https:\/\/miro\.medium\.com[^"]+)"/;
-        const imgMatch = imgRegex.exec(articleHtmlBlock);
-        const imageUrl = imgMatch ? imgMatch[1] : undefined;
+        const titleRegex = /<h2[^>]*>([\s\S]*?)<\/h2>/;
+        const descRegex = /<h3[^>]*>([\s\S]*?)<\/h3>/;
 
-        if (title && description) {
-          articles.push({
-            id: `${latestMessageId}-${articles.length}`,
-            title,
-            description,
-            url: cleanUrl,
-            source,
-            imageUrl,
-          });
-          articleUrls.add(cleanUrl);
+        const urlMatch = urlRegex.exec(block);
+        const imgMatch = imgRegex.exec(block);
+        const titleMatch = titleRegex.exec(block);
+        const descMatch = descRegex.exec(block);
+        
+        if (urlMatch && titleMatch && descMatch) {
+            let rawUrl = urlMatch[1];
+             if (rawUrl.startsWith('https://medium.r.axd.email/')) {
+              try {
+                const urlObj = new URL(rawUrl);
+                const targetUrl = urlObj.searchParams.get('url');
+                if (targetUrl) {
+                  rawUrl = decodeURIComponent(targetUrl);
+                }
+              } catch (e) {
+                // Ignore if URL parsing fails
+              }
+            }
+            const cleanUrl = rawUrl.split('?')[0].split('#')[0];
+
+            if (articleUrls.has(cleanUrl)) {
+              continue; // Skip duplicate articles
+            }
+
+            const decode = (str: string) =>
+              str
+                .replace(/<[^>]+>/g, ' ')
+                .replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"')
+                .replace(/&#39;/g, "'")
+                .replace(/&nbsp;/g, ' ')
+                .replace(/—/g, '—')
+                .replace(/\s+/g, ' ')
+                .trim();
+            
+            const title = decode(titleMatch[1]);
+            const description = decode(descMatch[1]);
+            const imageUrl = imgMatch ? imgMatch[1] : undefined;
+            
+            articles.push({
+              id: `${latestMessageId}-${articles.length}`,
+              title,
+              description,
+              url: cleanUrl,
+              source,
+              imageUrl,
+            });
+            articleUrls.add(cleanUrl);
         }
-      }
     }
+
 
     if (articles.length === 0) {
       console.log('No articles found matching the pattern.');
