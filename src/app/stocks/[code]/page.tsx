@@ -64,14 +64,14 @@ async function getStockData(
   });
 
   const prompt = `
-      Provide a comprehensive overview of the Indian stock market (NSE) for today, ${currentDate}.
-      I need the following information in a structured JSON format only:
+      Provide a stock market overview for the Indian stock market (NSE) for today, ${currentDate}.
+      You must return the following information in a structured JSON format only.
 
-      1.  **watchedStock**: Get today's high and low price for the stock with the code: "${stockCode}". The object should contain 'name', 'high', and 'low'.
+      1.  **watchedStock**: You must find today's high and low price for the stock with the code: "${stockCode}". The object must contain 'name', 'high', and 'low'. If you need to make a separate search to get this specific stock's data, do it. This field is mandatory.
       2.  **topGainers**: A list of the top 10 gainers on the NSE today. For each stock, provide its 'name', current 'price', price 'change', and percentage 'changePercent'.
       3.  **topLosers**: A list of the top 10 losers on the NSE today. For each stock, provide its 'name', current 'price', price 'change', and percentage 'changePercent'.
 
-      Ensure the output is a valid JSON object only, with no extra text or markdown. The final output should start with { and end with }.
+      Ensure the output is a valid JSON object only, with no extra text or markdown. The final output must start with { and end with }.
     `;
 
   const body = JSON.stringify({
