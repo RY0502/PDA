@@ -4,9 +4,6 @@ import {
   type StockInfo,
 } from '@/ai/flows/get-stock-market-overview';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AreaChart, ArrowDown, ArrowUp, LineChart } from 'lucide-react';
 import { GEMINI_API_KEY } from '@/lib/constants';
@@ -17,19 +14,16 @@ export const revalidate = 3600; // Revalidate the page every 1 hour
 function safeJsonParse(jsonString: string): any | null {
   if (!jsonString) return null;
   try {
-    // First, try to find a JSON block enclosed in markdown backticks
     const markdownMatch = jsonString.match(/```json\n([\s\S]*?)\n```/);
     if (markdownMatch && markdownMatch[1]) {
       return JSON.parse(markdownMatch[1]);
     }
 
-    // If no markdown block is found, try to find the first '{' and last '}'
     const braceMatch = jsonString.match(/\{[\s\S]*\}/);
     if (braceMatch) {
       return JSON.parse(braceMatch[0]);
     }
 
-    // If all else fails, return null
     return null;
   } catch (error) {
     console.error(
@@ -47,6 +41,7 @@ async function getStockData(
 ): Promise<StockMarketOverview | null> {
   if (!GEMINI_API_KEY) {
     console.error('GEMINI_API_KEY is not set.');
+    // Returning a specific structure for the component to handle
     return null;
   }
 
@@ -84,7 +79,8 @@ async function getStockData(
       method: 'POST',
       headers,
       body,
-      next: { revalidate: 3600 },
+      // Use a shorter timeout for the API call itself to prevent long hangs
+      signal: AbortSignal.timeout(15000), 
     });
 
     if (!response.ok) {
@@ -95,6 +91,7 @@ async function getStockData(
 
     const data = await response.json();
     const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
     if (!jsonText) {
       console.error('No JSON text found in API response:', data);
       return null;
@@ -106,7 +103,8 @@ async function getStockData(
       console.error('Parsed JSON is not a valid object:', overview);
       return null;
     }
-
+    
+    // Validate the presence of nested properties before returning
     if (overview.watchedStock && overview.topGainers && overview.topLosers) {
       return overview;
     } else {
@@ -114,8 +112,9 @@ async function getStockData(
         'API response was missing one or more required fields (watchedStock, topGainers, topLosers).',
         overview
       );
-      return null;
+      return null; // Return null if the structure is incomplete
     }
+
   } catch (error) {
     console.error('Error fetching stock market overview:', error);
     return null;
@@ -153,6 +152,7 @@ export default async function StocksPage({
   const stockCode = params.code || 'PVRINOX';
   const overview = await getStockData(stockCode);
 
+  // This is the critical change: check for null overview and render an error state.
   if (!overview) {
     return (
       <div className="container py-8">
