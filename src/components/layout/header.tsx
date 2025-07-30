@@ -4,16 +4,27 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useState, useEffect } from 'react';
 
 export function Header() {
   const pathname = usePathname();
+  const [stocksHref, setStocksHref] = useState('/stocks/PVRINOX');
 
-  // Determine if the current page is a stocks page
-  const isStocksPage = pathname.startsWith('/stocks/');
-  
-  // Set the stocks link dynamically. If on a stocks page, use the current path.
-  // Otherwise, default to the PVRINOX page.
-  const stocksHref = isStocksPage ? pathname : '/stocks/PVRINOX';
+  useEffect(() => {
+    const lastStockCode = localStorage.getItem('lastStockCode');
+    if (pathname.startsWith('/stocks/')) {
+      setStocksHref(pathname);
+      // Also update localStorage in case the user landed here directly
+      const currentCode = pathname.split('/').pop();
+      if (currentCode) {
+        localStorage.setItem('lastStockCode', currentCode);
+      }
+    } else if (lastStockCode) {
+      setStocksHref(`/stocks/${lastStockCode}`);
+    } else {
+      setStocksHref('/stocks/PVRINOX');
+    }
+  }, [pathname]);
 
   const navLinks = [
     { href: '/', label: 'Home' },
@@ -35,11 +46,10 @@ export function Header() {
           <nav className="flex items-center space-x-8 text-sm">
             {navLinks.map((link) => (
               <Link
-                key={link.href}
+                key={link.label}
                 href={link.href}
                 className={cn(
                   'transition-colors hover:text-foreground/80',
-                  // Highlight "Stocks" if the pathname starts with /stocks/
                   pathname.startsWith('/stocks') && link.label === 'Stocks'
                     ? 'font-bold text-foreground'
                     : pathname === link.href

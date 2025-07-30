@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,9 +11,15 @@ export function WatchlistManager({ stockCode }: { stockCode: string }) {
   const router = useRouter();
   const [code, setCode] = useState(stockCode);
 
+  useEffect(() => {
+    setCode(stockCode);
+  }, [stockCode]);
+
   const handleUpdate = () => {
-    if (code.trim()) {
-      router.push(`/stocks/${code.trim().toUpperCase()}`);
+    const newCode = code.trim().toUpperCase();
+    if (newCode) {
+      localStorage.setItem('lastStockCode', newCode);
+      router.push(`/stocks/${newCode}`);
     }
   };
 
