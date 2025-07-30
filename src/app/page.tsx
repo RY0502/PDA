@@ -50,11 +50,10 @@ function ArticleCard({ article }: { article: MediumArticle }) {
                 {article.description}
               </CardDescription>
             </div>
-            <div className="mt-2 flex items-end justify-between gap-2">
+            <div className="mt-2 flex items-start justify-between gap-2">
               <div className="flex-1">
                 {article.author && (
                   <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-                    <User className="h-3 w-3 flex-shrink-0" />
                     <span className="truncate font-medium">
                       {article.author}
                     </span>
