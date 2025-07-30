@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Terminal, Image as ImageIcon, User } from 'lucide-react';
+import { Terminal, Image as ImageIcon } from 'lucide-react';
 import type { MediumArticle } from '@/services/email-service';
 import { UrlOpener } from '@/components/url-opener';
 import Image from 'next/image';
@@ -50,7 +50,7 @@ function ArticleCard({ article }: { article: MediumArticle }) {
                 {article.description}
               </CardDescription>
             </div>
-            <div className="mt-2 flex items-start justify-between gap-2">
+            <div className="mt-2 flex items-center justify-between gap-2">
               <div className="flex-1">
                 {article.author && (
                   <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
