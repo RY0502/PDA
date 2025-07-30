@@ -207,16 +207,16 @@ export default async function StocksPage({
             </CardHeader>
             <CardContent className="flex justify-around gap-4 text-center">
               <div className="flex-1">
-                <p className="text-sm text-muted-foreground">Today's High</p>
                 <p className="text-2xl font-bold text-green-600">
                   {overview.watchedStock.high}
                 </p>
+                <p className="text-sm text-muted-foreground">Today's High</p>
               </div>
               <div className="flex-1">
-                <p className="text-sm text-muted-foreground">Today's Low</p>
                 <p className="text-2xl font-bold text-red-600">
                   {overview.watchedStock.low}
                 </p>
+                <p className="text-sm text-muted-foreground">Today's Low</p>
               </div>
             </CardContent>
           </Card>
