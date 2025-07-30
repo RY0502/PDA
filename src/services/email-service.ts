@@ -132,12 +132,15 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
         const imgRegex = /<img[^>]+src="(https:\/\/miro\.medium\.com[^"]+)"/;
         const titleRegex = /<h2[^>]*>([\s\S]*?)<\/h2>/;
         const descRegex = /<h3[^>]*>([\s\S]*?)<\/h3>/;
+        const authorRegex = /<p[^>]*class="[^"]*bz[^"]*"[^>]*>([\s\S]*?)<\/p>/;
+
 
         const urlMatch = urlRegex.exec(block);
         const imgMatch = imgRegex.exec(block);
         const titleMatch = titleRegex.exec(block);
         const descMatch = descRegex.exec(block);
-        
+        const authorMatch = authorRegex.exec(block);
+
         if (urlMatch && titleMatch && descMatch) {
             let rawUrl = urlMatch[1];
              if (rawUrl.startsWith('https://medium.r.axd.email/')) {
@@ -173,6 +176,7 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
             const title = decode(titleMatch[1]);
             const description = decode(descMatch[1]);
             const imageUrl = imgMatch ? imgMatch[1] : undefined;
+            const author = authorMatch ? decode(authorMatch[1]).replace(/in\s.*/, '').trim() : undefined;
             
             articles.push({
               id: `${latestMessageId}-${articles.length}`,
@@ -181,6 +185,7 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
               url: cleanUrl,
               source,
               imageUrl,
+              author
             });
             articleUrls.add(cleanUrl);
         }

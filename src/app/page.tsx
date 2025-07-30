@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Terminal, Image as ImageIcon } from 'lucide-react';
+import { Terminal, Image as ImageIcon, User } from 'lucide-react';
 import type { MediumArticle } from '@/services/email-service';
 import { UrlOpener } from '@/components/url-opener';
 import Image from 'next/image';
@@ -24,32 +24,25 @@ function ArticleCard({ article }: { article: MediumArticle }) {
     <Card className="overflow-hidden rounded-lg transition-shadow duration-300 hover:shadow-xl">
       <CardContent className="p-3">
         <div className="flex gap-4">
-          <div className="flex-shrink-0">
+          <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md bg-muted">
             {article.imageUrl ? (
-              <div className="relative h-24 w-24 overflow-hidden rounded-md bg-muted">
-                <Image
-                  src={article.imageUrl}
-                  alt={article.title}
-                  fill
-                  sizes="96px"
-                  className="object-cover"
-                  data-ai-hint="article cover"
-                />
-              </div>
+              <Image
+                src={article.imageUrl}
+                alt={article.title}
+                fill
+                sizes="96px"
+                className="object-cover"
+                data-ai-hint="article cover"
+              />
             ) : (
-              <div className="flex h-24 w-24 items-center justify-center rounded-md bg-muted">
+              <div className="flex h-full w-full items-center justify-center">
                 <ImageIcon className="h-10 w-10 text-muted-foreground" />
               </div>
-            )}
-            {article.author && (
-              <p className="mt-1 w-24 truncate text-center text-xs font-medium text-muted-foreground">
-                {article.author}
-              </p>
             )}
           </div>
 
           <div className="flex flex-grow flex-col">
-            <div>
+            <div className="flex-grow">
               <CardTitle className="mb-1 line-clamp-3 text-base leading-tight">
                 {article.title}
               </CardTitle>
@@ -57,15 +50,23 @@ function ArticleCard({ article }: { article: MediumArticle }) {
                 {article.description}
               </CardDescription>
             </div>
-            <div className="mt-2 flex flex-grow items-end justify-end">
-                <Link
-                  href={`https://freedium.cfd/${article.url}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={cn(buttonVariants({ size: 'sm' }))}
-                >
-                  Read More
-                </Link>
+            <div className="mt-2 flex items-end justify-between">
+              {article.author ? (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <User className="h-3 w-3" />
+                  <span className="truncate font-medium">{article.author}</span>
+                </div>
+              ) : (
+                <div /> 
+              )}
+              <Link
+                href={`https://freedium.cfd/${article.url}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(buttonVariants({ size: 'sm' }))}
+              >
+                Read More
+              </Link>
             </div>
           </div>
         </div>
