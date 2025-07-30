@@ -1,3 +1,4 @@
+
 import {
   type StockMarketOverview,
   type StockInfo,
@@ -14,11 +15,21 @@ import { WatchlistManager } from './watchlist-manager';
 export const revalidate = 3600; // Revalidate the page every 1 hour
 
 function safeJsonParse(jsonString: string): any | null {
+  if (!jsonString) return null;
   try {
-    const match = jsonString.match(/\{[\s\S]*\}/);
-    if (match) {
-      return JSON.parse(match[0]);
+    // First, try to find a JSON block enclosed in markdown backticks
+    const markdownMatch = jsonString.match(/```json\n([\s\S]*?)\n```/);
+    if (markdownMatch && markdownMatch[1]) {
+      return JSON.parse(markdownMatch[1]);
     }
+
+    // If no markdown block is found, try to find the first '{' and last '}'
+    const braceMatch = jsonString.match(/\{[\s\S]*\}/);
+    if (braceMatch) {
+      return JSON.parse(braceMatch[0]);
+    }
+
+    // If all else fails, return null
     return null;
   } catch (error) {
     console.error(
@@ -89,7 +100,7 @@ async function getStockData(
       return null;
     }
 
-    const overview: StockMarketOverview = safeJsonParse(jsonText);
+    const overview: StockMarketOverview | null = safeJsonParse(jsonText);
 
     if (!overview || typeof overview !== 'object') {
       console.error('Parsed JSON is not a valid object:', overview);
@@ -150,8 +161,8 @@ export default async function StocksPage({
           <AlertTitle>Error Fetching Data</AlertTitle>
           <AlertDescription>
             Could not fetch stock market data. The service may be temporarily
-            unavailable or you have exceeded your API quota. Please try again
-            later.
+            unavailable, the API may have returned an invalid response, or you
+            may have exceeded your API quota. Please try again later.
           </AlertDescription>
         </Alert>
         <WatchlistManager stockCode={stockCode} />
