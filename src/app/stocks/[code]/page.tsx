@@ -1,4 +1,5 @@
 
+import { unstable_cache } from 'next/cache';
 import {
   type StockMarketOverview,
   type StockInfo,
@@ -14,17 +15,20 @@ export const revalidate = 3600; // Revalidate the page every 1 hour
 function safeJsonParse(jsonString: string): any | null {
   if (!jsonString) return null;
   try {
+    // Most common failure mode: AI wraps the JSON in ```json ... ```.
     const markdownMatch = jsonString.match(/```json\n([\s\S]*?)\n```/);
     if (markdownMatch && markdownMatch[1]) {
       return JSON.parse(markdownMatch[1]);
     }
 
+    // Second most common failure mode: AI includes text before or after the JSON.
     const braceMatch = jsonString.match(/\{[\s\S]*\}/);
     if (braceMatch) {
       return JSON.parse(braceMatch[0]);
     }
 
-    return null;
+    // Fallback for when the string is just the JSON object itself.
+    return JSON.parse(jsonString);
   } catch (error) {
     console.error(
       'Failed to parse JSON string:',
@@ -36,90 +40,92 @@ function safeJsonParse(jsonString: string): any | null {
   }
 }
 
-async function getStockData(
-  stockCode: string
-): Promise<StockMarketOverview | null> {
-  if (!GEMINI_API_KEY) {
-    console.error('GEMINI_API_KEY is not set.');
-    // Returning a specific structure for the component to handle
-    return null;
-  }
+const getStockData = unstable_cache(
+  async (
+    stockCode: string
+  ): Promise<StockMarketOverview | null> => {
+    if (!GEMINI_API_KEY) {
+      console.error('GEMINI_API_KEY is not set.');
+      return null;
+    }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
-  const headers = {
-    'x-goog-api-key': GEMINI_API_KEY,
-    'Content-Type': 'application/json',
-  };
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
+    const headers = {
+      'x-goog-api-key': GEMINI_API_KEY,
+      'Content-Type': 'application/json',
+    };
 
-  const currentDate = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+    const currentDate = new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
 
-  const prompt = `
+    const prompt = `
       Provide a stock market overview for the Indian stock market (NSE) for today, ${currentDate}.
       You must return the following information in a structured JSON format only.
 
-      1.  **watchedStock**: You must find today's high and low price for the stock with the code: "${stockCode}". The object must contain 'name', 'high', and 'low'. If you need to make a separate search to get this specific stock's data, do it. This field is mandatory.
-      2.  **topGainers**: A list of the top 10 gainers on the NSE today. For each stock, provide its 'name', current 'price', price 'change', and percentage 'changePercent'.
-      3.  **topLosers**: A list of the top 10 losers on the NSE today. For each stock, provide its 'name', current 'price', price 'change', and percentage 'changePercent'.
+      1.  **watchedStock**: You must find today's high and low price for the stock with the code: "${stockCode}". The object must contain 'name', 'high', and 'low'. This field is mandatory.
+      2.  **topGainers**: A list of the top 10 gainers on the NSE. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
+      3.  **topLosers**: A list of the top 10 losers on the NSE. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
 
-      Ensure the output is a valid JSON object only, with no extra text or markdown. The final output must start with { and end with }.
+      IMPORTANT: Your entire response must be ONLY a single, valid, minified JSON object. Do not include any text, explanations, or markdown formatting like \`\`\`json before or after the JSON object. The response must start with { and end with }.
     `;
 
-  const body = JSON.stringify({
-    contents: [{ parts: [{ text: prompt }] }],
-    tools: [{ google_search: {} }],
-  });
-
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body,
-      // Use a shorter timeout for the API call itself to prevent long hangs
-      signal: AbortSignal.timeout(15000), 
+    const body = JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      tools: [{ google_search: {} }],
     });
 
-    if (!response.ok) {
-      const errorBody = await response.text();
-      console.error('API request failed:', response.status, errorBody);
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body,
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        console.error('API request failed:', response.status, errorBody);
+        return null;
+      }
+
+      const data = await response.json();
+      const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (!jsonText) {
+        console.error('No JSON text found in API response:', data);
+        return null;
+      }
+
+      const overview: StockMarketOverview | null = safeJsonParse(jsonText);
+
+      if (!overview || typeof overview !== 'object') {
+        console.error('Parsed JSON is not a valid object:', overview);
+        return null;
+      }
+
+      // Final validation: ensure all required nested properties exist before returning.
+      if (overview.watchedStock && overview.topGainers && overview.topLosers) {
+        return overview;
+      } else {
+        console.error(
+          'API response was parsed but is missing required fields (watchedStock, topGainers, or topLosers).',
+          overview
+        );
+        return null;
+      }
+
+    } catch (error) {
+      console.error('Error fetching stock market overview:', error);
       return null;
     }
+  },
+  ['stock-overview'], // Cache key
+  { revalidate: 3600 } // Revalidate every hour
+);
 
-    const data = await response.json();
-    const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!jsonText) {
-      console.error('No JSON text found in API response:', data);
-      return null;
-    }
-
-    const overview: StockMarketOverview | null = safeJsonParse(jsonText);
-
-    if (!overview || typeof overview !== 'object') {
-      console.error('Parsed JSON is not a valid object:', overview);
-      return null;
-    }
-    
-    // Validate the presence of nested properties before returning
-    if (overview.watchedStock && overview.topGainers && overview.topLosers) {
-      return overview;
-    } else {
-      console.error(
-        'API response was missing one or more required fields (watchedStock, topGainers, topLosers).',
-        overview
-      );
-      return null; // Return null if the structure is incomplete
-    }
-
-  } catch (error) {
-    console.error('Error fetching stock market overview:', error);
-    return null;
-  }
-}
 
 function StockCard({
   stock,
@@ -152,7 +158,6 @@ export default async function StocksPage({
   const stockCode = params.code || 'PVRINOX';
   const overview = await getStockData(stockCode);
 
-  // This is the critical change: check for null overview and render an error state.
   if (!overview) {
     return (
       <div className="container py-8">
@@ -161,7 +166,7 @@ export default async function StocksPage({
           <AlertTitle>Error Fetching Data</AlertTitle>
           <AlertDescription>
             Could not fetch stock market data. The service may be temporarily
-            unavailable, the API may have returned an invalid response, or you
+            unavailable, the AI may have returned an invalid response, or you
             may have exceeded your API quota. Please try again later.
           </AlertDescription>
         </Alert>
