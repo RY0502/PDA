@@ -14,7 +14,7 @@ import { generateClubLogo } from './generate-club-logo';
 
 const ClubWithLogoSchema = z.object({
   name: z.string(),
-  logoUrl: z.string(),
+  logoUrl: z.string().optional(),
 });
 
 const GetLatestFootballNewsOutputSchema = z.object({

@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Newspaper, Dot } from 'lucide-react';
 import Image from 'next/image';
+import { DEFAULT_FOOTBALL_LOGO_URI } from '@/lib/constants';
 
 export const revalidate = 5400; // Revalidate the page every 1.5 hours
 
@@ -19,7 +20,7 @@ interface NewsSection {
 
 interface ClubWithLogo {
   name: string;
-  logoUrl: string;
+  logoUrl?: string;
 }
 
 // A component to render a single news item, handling team name highlighting
@@ -58,8 +59,10 @@ function ClubLogos({ clubs, totalClubs }: { clubs: ClubWithLogo[], totalClubs: n
           <Tooltip key={club.name}>
             <TooltipTrigger asChild>
               <Avatar key={club.name} className="h-12 w-12 bg-muted">
-                <AvatarImage src={club.logoUrl} alt={`${club.name} logo`} />
-                <AvatarFallback>{club.name.substring(0, 2)}</AvatarFallback>
+                <AvatarImage src={club.logoUrl || DEFAULT_FOOTBALL_LOGO_URI} alt={`${club.name} logo`} />
+                <AvatarFallback>
+                  <Image src={DEFAULT_FOOTBALL_LOGO_URI} alt="Football logo" width={48} height={48} />
+                </AvatarFallback>
               </Avatar>
             </TooltipTrigger>
             <TooltipContent>
