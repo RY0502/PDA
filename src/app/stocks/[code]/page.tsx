@@ -216,7 +216,7 @@ export default async function StocksPage({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ArrowDown className="h-6 w-6 text-red-600" />
-                Top 10 Losers
+                Today's Losers
               </CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-3">
@@ -232,7 +232,7 @@ export default async function StocksPage({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ArrowUp className="h-6 w-6 text-green-600" />
-                Top 10 Gainers
+                Today's Gainers
               </CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
