@@ -6,7 +6,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Header } from '@/components/layout/header';
 
 export const metadata: Metadata = {
-  title: 'PersonalDigitalAssistant',
+  title: 'YourDailyBrief',
   description: 'Your personal digital assistant.',
 };
 
