@@ -67,8 +67,8 @@ const getStockData = unstable_cache(
       You must return the following information in a structured JSON format only.
 
       1.  **watchedStock**: You must find today's high and low price for the stock with the code: "${stockCode}". The object must contain 'name', 'high', and 'low'. This field is mandatory.
-      2.  **topGainers**: A list of the top 10 gainers on the NSE. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
-      3.  **topLosers**: A list of the top 10 losers on the NSE. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
+      2.  **topGainers**: Today's list of the top 10 gainers on the NSE. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
+      3.  **topLosers**: Today's list of the top 10 losers on the NSE. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
 
       IMPORTANT: Your entire response must be ONLY a single, valid, minified JSON object. Do not include any text, explanations, or markdown formatting like \`\`\`json before or after the JSON object. The response must start with { and end with }.
     `;
