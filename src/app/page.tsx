@@ -51,14 +51,14 @@ function ArticleCard({ article }: { article: MediumArticle }) {
               </CardDescription>
             </div>
             <div className="mt-2 flex items-end justify-between">
-              {article.author ? (
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <User className="h-3 w-3" />
-                  <span className="truncate font-medium">{article.author}</span>
-                </div>
-              ) : (
-                <div /> 
-              )}
+              <div className="flex-1">
+                {article.author && (
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <User className="h-3 w-3" />
+                    <span className="truncate font-medium">{article.author}</span>
+                  </div>
+                )}
+              </div>
               <Link
                 href={`https://freedium.cfd/${article.url}`}
                 target="_blank"
