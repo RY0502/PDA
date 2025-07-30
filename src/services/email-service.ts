@@ -124,7 +124,6 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
 
     const articleBlocks = emailBodyHtml.split('<div class="cs"');
     
-    // The first split item is the part before the first article, so we skip it.
     for (let i = 1; i < articleBlocks.length; i++) {
         const block = articleBlocks[i];
 
@@ -132,7 +131,7 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
         const imgRegex = /<img[^>]+src="(https:\/\/miro\.medium\.com[^"]+)"/;
         const titleRegex = /<h2[^>]*>([\s\S]*?)<\/h2>/;
         const descRegex = /<h3[^>]*>([\s\S]*?)<\/h3>/;
-        const authorRegex = /<p[^>]*class="[^"]*bz[^"]*"[^>]*>([\s\S]*?)<\/p>/;
+        const authorRegex = /<a[^>]+href="[^"]+\/@.+"[^>]+>([\s\S]*?)<\/a>/;
 
 
         const urlMatch = urlRegex.exec(block);
@@ -140,7 +139,7 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
         const titleMatch = titleRegex.exec(block);
         const descMatch = descRegex.exec(block);
         const authorMatch = authorRegex.exec(block);
-
+        
         if (urlMatch && titleMatch && descMatch) {
             let rawUrl = urlMatch[1];
              if (rawUrl.startsWith('https://medium.r.axd.email/')) {
@@ -176,7 +175,7 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
             const title = decode(titleMatch[1]);
             const description = decode(descMatch[1]);
             const imageUrl = imgMatch ? imgMatch[1] : undefined;
-            const author = authorMatch ? decode(authorMatch[1]).replace(/in\s.*/, '').trim() : undefined;
+            const author = authorMatch ? decode(authorMatch[1]) : undefined;
             
             articles.push({
               id: `${latestMessageId}-${articles.length}`,
