@@ -118,11 +118,10 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
       return { articles: [], isMock: false };
     }
     const emailBodyHtml = base64UrlDecode(htmlPart.body.data);
-
     const articles: MediumArticle[] = [];
     const articleUrls = new Set<string>();
 
-    const articleBlocks = emailBodyHtml.split('<div class="cs"');
+    const articleBlocks = emailBodyHtml.split('<div class="cr"');
     
     for (let i = 1; i < articleBlocks.length; i++) {
         const block = articleBlocks[i];
