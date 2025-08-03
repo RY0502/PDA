@@ -121,7 +121,7 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
     const articles: MediumArticle[] = [];
     const articleUrls = new Set<string>();
 
-    const articleBlocks = emailBodyHtml.split('<div class="cr"');
+    const articleBlocks = emailBodyHtml.split('style="margin-top: 16px;"');
     
     for (let i = 1; i < articleBlocks.length; i++) {
         const block = articleBlocks[i];
