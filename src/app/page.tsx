@@ -20,6 +20,11 @@ import { cn } from '@/lib/utils';
 export const revalidate = 14400;
 
 function ArticleCard({ article }: { article: MediumArticle }) {
+  const truncatedAuthor =
+    article.author && article.author.length > 25
+      ? `${article.author.substring(0, 25)}...`
+      : article.author;
+
   return (
     <Card className="overflow-hidden rounded-lg transition-shadow duration-300 hover:shadow-xl">
       <CardContent className="p-3">
@@ -51,12 +56,10 @@ function ArticleCard({ article }: { article: MediumArticle }) {
               </CardDescription>
             </div>
             <div className="mt-2 flex items-center justify-between gap-2">
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 {article.author && (
-                  <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-                    <span className="truncate font-medium">
-                      {article.author}
-                    </span>
+                  <div className="text-xs text-muted-foreground">
+                    <span className="font-medium">{truncatedAuthor}</span>
                   </div>
                 )}
               </div>
