@@ -10,7 +10,7 @@ import { AreaChart, ArrowDown, ArrowUp, LineChart } from 'lucide-react';
 import { GEMINI_API_KEY } from '@/lib/constants';
 import { WatchlistManager } from './watchlist-manager';
 
-export const revalidate = 7200; // Revalidate the page every 2 hours
+export const revalidate = 3600; // Revalidate the page every 1 hour
 
 function safeJsonParse(jsonString: string): any | null {
   if (!jsonString) return null;
@@ -124,7 +124,7 @@ const getStockData = unstable_cache(
     }
   },
   ['stock-overview', stockCode], // Cache key
-  { revalidate: 7200 } // Revalidate every 2 hours
+  { revalidate: 3600 } // Revalidate every 1 hour
 );
 
 
