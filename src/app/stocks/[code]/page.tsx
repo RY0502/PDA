@@ -123,7 +123,7 @@ const getStockData = unstable_cache(
       return null;
     }
   },
-  ['stock-overview', stockCode], // Cache key
+  ['stock-overview'], // Cache key prefix
   { revalidate: 3600 } // Revalidate every 1 hour
 );
 
