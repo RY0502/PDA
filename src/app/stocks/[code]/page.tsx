@@ -10,7 +10,7 @@ import { AreaChart, ArrowDown, ArrowUp, LineChart } from 'lucide-react';
 import { GEMINI_API_KEY } from '@/lib/constants';
 import { WatchlistManager } from './watchlist-manager';
 
-export const revalidate = 3600; // Revalidate the page every 1 hour
+export const revalidate = 7200; // Revalidate the page every 2 hours
 
 function safeJsonParse(jsonString: string): any | null {
   if (!jsonString) return null;
@@ -71,7 +71,7 @@ const getStockData = unstable_cache(
       2.  **topGainers**: Today's list of the top 10 gainers on the NSE. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
       3.  **topLosers**: Today's list of the top 10 losers on the NSE. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
 
-      IMPORTANT: Your entire response must be ONLY a single, valid, minified JSON object. Do not include any text, explanations, or markdown formatting like \`\`\`json before or after the JSON object. The response must start with { and end with }.
+      IMPORTANT: Your entire response must be ONLY a single, valid, minified JSON object. Do not include any text, explanations, or markdown formatting like \`\`\`json before or after the JSON object. The response must start with { and end with }. The 'name', 'high' and 'low' values for the watchedStock are mandatory and must contain the correct values.
     `;
 
     const body = JSON.stringify({
@@ -123,8 +123,8 @@ const getStockData = unstable_cache(
       return null;
     }
   },
-  ['stock-overview'], // Cache key
-  { revalidate: 3600 } // Revalidate every hour
+  ['stock-overview', stockCode], // Cache key
+  { revalidate: 7200 } // Revalidate every 2 hours
 );
 
 
