@@ -55,7 +55,7 @@ const getStockData = unstable_cache(
       'Content-Type': 'application/json',
     };
 
-    const currentDate = new Date().toLocaleDateString('en-US', {
+    const currentDate = new Date().toLocaleDateString('en-IN', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
