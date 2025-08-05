@@ -67,7 +67,7 @@ const getStockData = unstable_cache(
       If it is an NSE holiday today, then give the data from the last working day when the market operated.
       You must return the following information in a structured JSON format only.
 
-      1.  **watchedStock**: You must find today's high and low price for the stock with the code: "${stockCode}". The object must contain 'name', 'high', and 'low'. This field is mandatory and a value must always be returned.
+      1.  **watchedStock**: You must find today's high and low price for the stock with the code: "${stockCode}". The object must contain 'name', 'high', and 'low'. This field is mandatory and a value must always be returned. The 'high' and 'low' values should reflect the actual trading range and should not be the same unless trading volume was zero.
       2.  **topGainers**: Today's list of the top 10 gainers on the NSE. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
       3.  **topLosers**: Today's list of the top 10 losers on the NSE. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
 
