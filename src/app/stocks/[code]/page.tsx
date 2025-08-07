@@ -15,16 +15,18 @@ export const revalidate = 3600; // Revalidate the page every 1 hour
 function safeJsonParse(jsonString: string): any | null {
   if (!jsonString) return null;
   try {
-    // Most common failure mode: AI wraps the JSON in ```json ... ```.
+    // First, try to find a JSON block wrapped in markdown
     const markdownMatch = jsonString.match(/```json\n([\s\S]*?)\n```/);
     if (markdownMatch && markdownMatch[1]) {
       return JSON.parse(markdownMatch[1]);
     }
 
-    // Second most common failure mode: AI includes text before or after the JSON.
-    const braceMatch = jsonString.match(/\{[\s\S]*\}/);
-    if (braceMatch) {
-      return JSON.parse(braceMatch[0]);
+    // If no markdown block, find the first '{' and last '}'
+    const startIndex = jsonString.indexOf('{');
+    const endIndex = jsonString.lastIndexOf('}');
+    if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
+      const potentialJson = jsonString.substring(startIndex, endIndex + 1);
+      return JSON.parse(potentialJson);
     }
 
     // Fallback for when the string is just the JSON object itself.
@@ -39,6 +41,7 @@ function safeJsonParse(jsonString: string): any | null {
     return null;
   }
 }
+
 
 const getStockData = unstable_cache(
   async (
