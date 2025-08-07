@@ -29,7 +29,7 @@ export type GenerateClubLogoOutput = z.infer<
 export async function generateClubLogo(
   input: GenerateClubLogoInput
 ): Promise<GenerateClubLogoOutput> {
-  const prompt = `Generate a logo for the football club: "${input.clubName}". The design should be a modern, minimalist, circular interpretation that is as close as possible to the actual official club logo. The logo must be on a transparent background.`;
+  const prompt = `Generate a logo for the football club: "${input.clubName}". The design should be a modern, minimalist, circular interpretation that is as close as possible to the actual official club logo. The logo must be on a transparent background. If there is any error during football club logo generation  or you are unable to generate the logo for the football club, generate a logo of an actual football image instead in the same format.`;
 
   try {
     const {media} = await ai.generate({
