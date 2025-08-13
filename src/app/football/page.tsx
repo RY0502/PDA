@@ -105,11 +105,12 @@ export default async function FootballPage() {
         title: trimmedLine.slice(2, -2),
         items: [],
       };
-    } else if (
-      currentSection &&
-      (trimmedLine.startsWith('*') || trimmedLine.startsWith('-'))
-    ) {
-      currentSection.items.push({ text: trimmedLine.slice(1).trim() });
+    } else if (currentSection) {
+      // Treat any line that is not a title as a news item.
+      const text = trimmedLine.startsWith('*') || trimmedLine.startsWith('-') 
+        ? trimmedLine.slice(1).trim() 
+        : trimmedLine;
+      currentSection.items.push({ text });
     }
   });
 
