@@ -72,16 +72,57 @@ const getStockData = unstable_cache(
     });
 
     const prompt = `
-      Provide a stock market overview for the Indian stock market (NSE) for today, ${currentDate} IST.
-      If it is an NSE holiday today, then give the data from the last working day when the market operated.
-      You must return the following information in a structured JSON format only.
+You are a financial data extractor for the Indian NSE. Work in IST.
 
-      1.  **watchedStock**: You must find today's ${currentDate} IST high and low price for the stock with the code: "${stockCode}". The object must contain 'name', 'high', and 'low'. This field is mandatory and a value must always be returned. There is another high and low which are 52 week high and low. Don't mistakenly pick them.
-      2.  **topGainers**: Today's ${currentDate} IST list of the top 10 gainers on the NSE. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
-      3.  **topLosers**: Today's ${currentDate} IST list of the top 10 losers on the NSE. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
+Task date: ${currentDate} (IST). If today is an NSE holiday, use the most recent trading day before today. Always state the date you used in the JSON under asOfDate.
 
-      IMPORTANT: Your entire response must be ONLY a single, valid, minified JSON object. Do not include any text, explanations, or markdown formatting like \`\`\`json before or after the JSON object. The response must start with { and end with }. The 'name', 'high' and 'low' values for the watchedStock are mandatory and must contain the correct values.
-    `;
+Data requirements (must-haves):
+1) watchedStock:
+   - Use the NSE stock code: "${stockCode}".
+   - Return TODAY’S session high and low (NOT 52-week). If holiday, use last trading day’s session high/low.
+   - Fields (required):
+     - name: Official company name for the code on NSE (string)
+     - high: session high price (string numeric, no commas/symbols, 2 decimals, e.g. "1234.50")
+     - low: session low price (string numeric, no commas/symbols, 2 decimals)
+2) topGainers (exactly 10 distinct NSE-listed equities):
+   - TODAY’S session top 10 gainers by % change (descending).
+   - Each item fields (required):
+     - name (string)
+     - price: last traded price (string numeric, 2 decimals, no commas/symbols)
+     - change: absolute price change (string numeric, 2 decimals, sign allowed, e.g. "+12.30" or "-5.10")
+     - changePercent: percent change (string numeric, 2 decimals, NO % symbol, e.g. "3.45")
+3) topLosers (exactly 10 distinct NSE-listed equities):
+   - TODAY’S session bottom 10 by % change (ascending).
+   - Same fields and formats as topGainers.
+
+Hard constraints (must follow):
+- Instruments: equities only. Exclude indices, ETFs, derivatives.
+- No duplicates across each list.
+- Use Indian number format internally if needed, but output MUST be numeric strings as specified (no commas, no currency symbol).
+- Time zone: IST session data only (or last trading day if holiday).
+- Sorting: topGainers by changePercent desc, topLosers by changePercent asc.
+- For watchedStock, DO NOT use 52-week values. Use intraday session high/low.
+
+Grounding and sources:
+- Use web search to verify values. Preferred sources in order:
+  1) Official: nseindia.com
+  2) Reputable financial sites: moneycontrol.com, reuters.com, bloomberg.com, investing.com
+- If sources disagree, prefer NSE. If still ambiguous, prefer majority among reputable sources.
+- Include a root-level sources array with unique URLs used.
+
+Output format:
+- Output ONLY one minified JSON object, no markdown, no commentary.
+- JSON schema (extra keys allowed, but required keys must be present):
+  {"asOfDate":"YYYY-MM-DD","isHoliday":boolean,"watchedStock":{"name":string,"high":string,"low":string},"topGainers":[{"name":string,"price":string,"change":string,"changePercent":string},...x10],"topLosers":[{"name":string,"price":string,"change":string,"changePercent":string},...x10],"sources":[string,...]}
+
+Validation (perform internally before finalizing output):
+- watchedStock.high > watchedStock.low (both parseable as floats).
+- topGainers length = 10, topLosers length = 10.
+- All price/change/changePercent strings parse as floats when removing leading '+'. changePercent has NO % sign.
+- No duplicate names in each list.
+- All names correspond to NSE-listed equities (not indices/ETFs).
+
+Remember: Return only the single JSON object (minified). Start with { and end with }.`;
 
     const body = JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
@@ -182,9 +223,10 @@ function StockCard({
 export default async function StocksPage({
   params,
 }: {
-  params: { code: string };
+  params: Promise<{ code: string }>;
 }) {
-  const stockCode = params.code || 'PVRINOX';
+  const { code } = await params;
+  const stockCode = code || 'PVRINOX';
   const overview = await getStockData(stockCode);
 
   if (!overview) {
