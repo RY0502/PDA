@@ -8,7 +8,7 @@ import { Footer } from '@/components/layout/footer';
 import { AuthGate } from '@/components/auth/auth-gate';
 
 export const metadata: Metadata = {
-  title: 'YourDailyBrief',
+  title: 'PDA',
   description: 'Your personal digital assistant.',
 };
 

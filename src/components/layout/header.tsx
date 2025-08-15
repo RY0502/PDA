@@ -89,7 +89,7 @@ export function Header() {
           <Link href="/" className="mr-9 sm:mr-10 flex items-center space-x-2">
             <Bot className="h-6 w-6 text-primary" />
             <span className="hidden font-bold sm:inline-block">
-              YourDailyBrief
+              PersonalDigitalAssistant
             </span>
           </Link>
           <nav className="flex items-center space-x-7 sm:space-x-8 text-sm">
