@@ -9,7 +9,7 @@ import { AuthGate } from '@/components/auth/auth-gate';
 
 export const metadata: Metadata = {
   title: 'PDA',
-  description: 'Your personal digital assistant.',
+  description: 'RYaxn personal digital assistant.',
 };
 
 export default function RootLayout({

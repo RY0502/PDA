@@ -1,4 +1,4 @@
-# **App Name**: YourDailyBrief
+# **App Name**: PDA- Personal Digital Assistant
 
 ## Core Features:
 
