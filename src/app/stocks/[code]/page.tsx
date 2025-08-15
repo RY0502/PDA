@@ -43,6 +43,12 @@ function safeJsonParse(jsonString: string): any | null {
 }
 
 
+// Simple sleep utility for retry backoff
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+
 const getStockData = unstable_cache(
   async (
     stockCode: string
@@ -83,15 +89,34 @@ const getStockData = unstable_cache(
     });
 
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers,
-        body,
-      });
+      let response: Response | null = null;
 
-      if (!response.ok) {
-        const errorBody = await response.text();
-        console.error('API request failed:', response.status, errorBody);
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          response = await fetch(url, {
+            method: 'POST',
+            headers,
+            body,
+          });
+
+          if (response.ok) {
+            break; // success
+          } else {
+            const errorBody = await response.text();
+            console.error(
+              `API request failed (attempt ${attempt}/3):`,
+              response.status,
+              errorBody
+            );
+            if (attempt < 3) await sleep(5000);
+          }
+        } catch (err) {
+          console.error(`API request error (attempt ${attempt}/3):`, err);
+          if (attempt < 3) await sleep(5000);
+        }
+      }
+
+      if (!response || !response.ok) {
         return null;
       }
 
@@ -170,8 +195,7 @@ export default async function StocksPage({
           <AlertTitle>Error Fetching Data</AlertTitle>
           <AlertDescription>
             Could not fetch stock market data. The service may be temporarily
-            unavailable, the AI may have returned an invalid response, or you
-            may have exceeded your API quota. Please try again later.
+            unavailable.Please try again later.
           </AlertDescription>
         </Alert>
         <WatchlistManager stockCode={stockCode} />
