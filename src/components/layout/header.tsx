@@ -86,13 +86,13 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
         <div className="flex items-center w-full">
-          <Link href="/" className="mr-8 sm:mr-10 flex items-center space-x-2">
+          <Link href="/" className="mr-9 sm:mr-10 flex items-center space-x-2">
             <Bot className="h-6 w-6 text-primary" />
             <span className="hidden font-bold sm:inline-block">
               YourDailyBrief
             </span>
           </Link>
-          <nav className="flex items-center space-x-6 sm:space-x-8 text-sm">
+          <nav className="flex items-center space-x-7 sm:space-x-8 text-sm">
             {navLinks.map((link) => (
               <Link
                 key={link.label}
