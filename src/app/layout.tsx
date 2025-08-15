@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
+import { AuthGate } from '@/components/auth/auth-gate';
 
 export const metadata: Metadata = {
   title: 'YourDailyBrief',
@@ -19,6 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={cn('min-h-screen bg-background font-body antialiased flex flex-col')}>
+        <AuthGate />
         <Header />
         <main className="flex-grow">{children}</main>
         <Footer />
