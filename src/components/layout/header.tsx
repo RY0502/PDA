@@ -117,7 +117,7 @@ export function Header() {
                 <DropdownMenuTrigger asChild>
                   <button
                     aria-label="User menu"
-                    className="inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 select-none"
+                    className="inline-flex items-center justify-center rounded-full bg-primary/90 text-primary-foreground h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 select-none"
                   >
                     <span className="text-xs sm:text-sm font-semibold">
                       {(userName ?? userEmail ?? 'U')
