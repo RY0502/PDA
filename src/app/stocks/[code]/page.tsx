@@ -73,19 +73,19 @@ const getStockData = unstable_cache(
 
     const prompt = `
       Provide a stock market overview for the Indian stock market (NSE) for today, ${currentDate} IST.
-      If it is an NSE holiday today, then give the data from the last working day when the market operated.
+      If it is a NSE holiday today, then give the data from the last working day when the market operated.
       You must return the following information in a structured JSON format only.
 
-      1.  **watchedStock**: You must find today's ${currentDate} IST high and low price for the stock with the code: "${stockCode}" from this link: https://finance.yahoo.com/quote/"${stockCode}".NS/. The object must contain 'name', 'high', and 'low'. This field is mandatory and a value must always be returned. There is another high and low which are 52 week high and low. Don't mistakenly pick them.
-      2.  **topGainers**: Get Today's ${currentDate} IST list of the top 10 gainers on the NSE from this link: https://groww.in/markets/top-gainers. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
-      3.  **topLosers**: Get Today's ${currentDate} IST list of the top 10 losers on the NSE from this link: https://groww.in/markets/top-losers. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
+      1.  **watchedStock**: Get today's ${currentDate} IST latest high and low price for the stock with the code: ${stockCode} based on https://www.equitypandit.com/historical-data/${stockCode}. The object must contain 'name', 'high', and 'low'. This field is mandatory and a value must always be returned. There is another high and low which are 52 week high and low. Don't mistakenly pick them.
+      2.  **topGainers**: Get Today's ${currentDate} IST latest list of the top 10 gainers on the NSE based on https://www.hdfcsec.com/market/equity/top-gainer-nse?indicesCode=76394. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
+      3.  **topLosers**: Get Today's ${currentDate} IST latest list of the top 10 losers on the NSE based on https://www.hdfcsec.com/market/equity/top-loser-nse?indicesCode=76394. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
 
       IMPORTANT: Your entire response must be ONLY a single, valid, minified JSON object. Do not include any text, explanations, or markdown formatting like \`\`\`json before or after the JSON object. The response must start with { and end with }. The 'name', 'high' and 'low' values for the watchedStock are mandatory and must contain the correct values.
     `;
 
     const body = JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      tools: [{ google_search: {} }],
+      tools: [{url_context: {} },{ google_search: {} }],
     });
 
     try {
