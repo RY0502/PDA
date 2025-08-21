@@ -87,7 +87,7 @@ export function Header() {
       <div className="container flex h-14 items-center">
         <div className="flex items-center w-full">
           <Link href="/" className="mr-9 sm:mr-10 flex items-center space-x-2">
-            <Bot className="h-8 w-8 text-primary" />
+            <Bot className="h-7 w-7 text-primary" />
             <span className="hidden font-bold sm:inline-block">
               PersonalDigitalAssistant
             </span>
