@@ -15,11 +15,36 @@ export function WatchlistManager({ stockCode }: { stockCode: string }) {
     setCode(stockCode);
   }, [stockCode]);
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     const newCode = code.trim().toUpperCase();
     if (newCode) {
       localStorage.setItem('lastStockCode', newCode);
       router.push(`/stocks/${newCode}`);
+
+      try {
+        const response = await fetch(
+          `https://usdiugdjvlmeteiwsrwg.supabase.co/functions/v1/upsert-stock-code?stockcode=${newCode}`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization:
+                'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzZGl1Z2RqdmxtZXRlaXdzcndnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzMzg4MzQsImV4cCI6MjA2ODkxNDgzNH0.xUIStCZCHOrrS2iOIPCmA6OusJmmBs7nPc4kTxn2TQc',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name: 'Functions' }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.text();
+          console.error('Supabase function call failed:', errorData);
+        } else {
+          const data = await response.json();
+          console.log('Supabase function call successful:', data);
+        }
+      } catch (error) {
+        console.error('Error calling Supabase function:', error);
+      }
     }
   };
 
