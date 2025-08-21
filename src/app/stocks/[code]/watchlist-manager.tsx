@@ -22,13 +22,18 @@ export function WatchlistManager({ stockCode }: { stockCode: string }) {
       router.push(`/stocks/${newCode}`);
 
       try {
+        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+        if (!supabaseAnonKey) {
+          console.error('Supabase anon key is not configured.');
+          return;
+        }
+
         const response = await fetch(
           `https://usdiugdjvlmeteiwsrwg.supabase.co/functions/v1/upsert-stock-code?stockcode=${newCode}`,
           {
             method: 'POST',
             headers: {
-              Authorization:
-                'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzZGl1Z2RqdmxtZXRlaXdzcndnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzMzg4MzQsImV4cCI6MjA2ODkxNDgzNH0.xUIStCZCHOrrS2iOIPCmA6OusJmmBs7nPc4kTxn2TQc',
+              Authorization: `Bearer ${supabaseAnonKey}`,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({ name: 'Functions' }),
