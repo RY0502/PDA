@@ -245,4 +245,98 @@ export default async function StocksPage({
           <AlertDescription>
             Could not fetch stock market data. The service may be temporarily
             unavailable.Please try again later.
-          </Aler ...
+            </AlertDescription>
+        </Alert>
+        <WatchlistManager stockCode={stockCode} />
+      </div>
+    );
+  }
+  const sortedGainers = overview.topGainers
+    ? [...overview.topGainers].sort(
+        (a, b) => parseFloat(b.change) - parseFloat(a.change)
+      )
+    : [];
+
+  const sortedLosers = overview.topLosers
+    ? [...overview.topLosers].sort(
+        (a, b) => parseFloat(a.change) - parseFloat(b.change)
+      )
+    : [];
+
+  return (
+    <div className="container py-8">
+      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-2 text-center md:pb-8">
+        <AreaChart className="h-16 w-16 text-primary" />
+        <h1 className="mt-4 text-3xl font-bold leading-tight tracking-tighter md:text-5xl lg:leading-[1.1]">
+          Stock Market Overview
+        </h1>
+        <p className="max-w-[750px] text-lg text-muted-foreground sm:text-xl">
+          Today's highlights from the National Stock Exchange (NSE).
+        </p>
+      </section>
+
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        {overview.watchedStock && (
+          <Card className="lg:col-span-3">
+            <CardHeader>
+              <CardTitle>
+                Watching:{' '}
+                <span className="text-primary">
+                  {overview.watchedStock.name}
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-around gap-4 text-center">
+              <div className="flex-1">
+                <p className="text-2xl font-bold text-green-600">
+                  {overview.watchedStock.high}
+                </p>
+                <p className="text-sm text-muted-foreground">Today's High</p>
+              </div>
+              <div className="flex-1">
+                <p className="text-2xl font-bold text-red-600">
+                  {overview.watchedStock.low}
+                </p>
+                <p className="text-sm text-muted-foreground">Today's Low</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {sortedLosers.length > 0 && (
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ArrowDown className="h-6 w-6 text-red-600" />
+                Today's Losers
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 gap-3">
+              {sortedLosers.map((stock) => (
+                <StockCard key={stock.name} stock={stock} variant="loser" />
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {sortedGainers.length > 0 && (
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ArrowUp className="h-6 w-6 text-green-600" />
+                Today's Gainers
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {sortedGainers.map((stock) => (
+                <StockCard key={stock.name} stock={stock} variant="gainer" />
+              ))}
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      <WatchlistManager stockCode={stockCode} />
+    </div>
+  );
+}
