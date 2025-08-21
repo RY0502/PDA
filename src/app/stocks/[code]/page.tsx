@@ -7,7 +7,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AreaChart, ArrowDown, ArrowUp, LineChart } from 'lucide-react';
-import { GEMINI_API_KEY } from '@/lib/constants';
+import { GEMINI_API_KEY, ANYCRAWL_API_KEY } from '@/lib/constants';
 import { WatchlistManager } from './watchlist-manager';
 
 export const revalidate = 3600; // Revalidate the page every 1 hour
@@ -42,10 +42,52 @@ function safeJsonParse(jsonString: string): any | null {
   }
 }
 
-
 // Simple sleep utility for retry backoff
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Function to fetch markdown from AnyCrawl API with retries
+async function getEquityPanditMarkdown(stockCode: string): Promise<string | null> {
+  if (!ANYCRAWL_API_KEY) {
+    console.error('ANYCRAWL_API_KEY is not set.');
+    return null;
+  }
+  const anycrawlUrl = "https://api.anycrawl.dev/v1/scrape";
+  const headers = {
+    'Authorization': `Bearer ${ANYCRAWL_API_KEY}`,
+    'Content-Type': 'application/json',
+  };
+  const urlToScrape = `https://www.equitypandit.com/historical-data/${stockCode}`;
+
+  const engines = ['playwright', 'puppeteer'];
+
+  for (const engine of engines) {
+    try {
+      console.log(`Attempting to scrape with ${engine}...`);
+      const response = await fetch(anycrawlUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          url: urlToScrape,
+          engine: engine,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.data?.markdown) {
+          return result.data.markdown;
+        }
+      }
+      console.error(`AnyCrawl request with ${engine} failed:`, response.status, await response.text());
+    } catch (error) {
+      console.error(`Error during AnyCrawl request with ${engine}:`, error);
+    }
+  }
+
+  console.error('All AnyCrawl attempts failed.');
+  return null;
 }
 
 
@@ -53,6 +95,13 @@ const getStockData = unstable_cache(
   async (
     stockCode: string
   ): Promise<StockMarketOverview | null> => {
+    
+    const markdown = await getEquityPanditMarkdown(stockCode);
+
+    if (!markdown) {
+      return null;
+    }
+
     if (!GEMINI_API_KEY) {
       console.error('GEMINI_API_KEY is not set.');
       return null;
@@ -73,19 +122,18 @@ const getStockData = unstable_cache(
 
     const prompt = `
       Provide a stock market overview for the Indian stock market (NSE) for today, ${currentDate} IST.
-      If it is a NSE holiday today, then give the data from the last working day when the market operated.
-      You must return the following information in a structured JSON format only.
+      You are an expert data extractor and must return the following information in a structured JSON format only.
 
-      1.  **watchedStock**: Get today's ${currentDate} IST latest high and low price for the stock with the code: ${stockCode} based on https://www.equitypandit.com/historical-data/${stockCode}. The object must contain 'name', 'high', and 'low'. This field is mandatory and a value must always be returned. There is another high and low which are 52 week high and low. Don't mistakenly pick them.
+      1.  **watchedStock**: Extract only ${currentDate} IST Today's' Low / High price and name for the stock with the code: ${stockCode} from this markdown ${markdown}. The object must contain 'name', 'high', and 'low'.
       2.  **topGainers**: Get Today's ${currentDate} IST latest list of the top 10 gainers on the NSE based on https://www.hdfcsec.com/market/equity/top-gainer-nse?indicesCode=76394. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
       3.  **topLosers**: Get Today's ${currentDate} IST latest list of the top 10 losers on the NSE based on https://www.hdfcsec.com/market/equity/top-loser-nse?indicesCode=76394. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
 
-      IMPORTANT: Your entire response must be ONLY a single, valid, minified JSON object. Do not include any text, explanations, or markdown formatting like \`\`\`json before or after the JSON object. The response must start with { and end with }. The 'name', 'high' and 'low' values for the watchedStock are mandatory and must contain the correct values.
+      IMPORTANT: Your entire response must be ONLY a single, valid, minified JSON object. Do not include any text, explanations, or markdown formatting like \`\`\`json before or after the JSON object. The response must start with { and end with }.
     `;
 
     const body = JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      tools: [{url_context: {} },{ google_search: {} }],
+      tools: [{ google_search: {} }],
     });
 
     try {
