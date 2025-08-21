@@ -62,17 +62,17 @@ export function Header() {
 
   const handleNavClick = async (e: React.MouseEvent, targetHref: string) => {
     // Skip checks for Supabase referrer (e.g., right after OAuth redirect)
-    // if (isSupabaseReferrer()) return;
-    // // If not logged in, initiate Google OAuth and redirect back to desired page
-    // const { data } = await supabase.auth.getUser();
-    // if (!data.user) {
-    //   e.preventDefault();
-    //   const redirectTo = `${window.location.origin}${targetHref}`;
-    //   await supabase.auth.signInWithOAuth({
-    //     provider: 'google',
-    //     options: { redirectTo },
-    //   });
-    // }
+    if (isSupabaseReferrer()) return;
+    // If not logged in, initiate Google OAuth and redirect back to desired page
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) {
+      e.preventDefault();
+      const redirectTo = `${window.location.origin}${targetHref}`;
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo },
+      });
+    }
   };
 
   const navLinks = [
@@ -87,7 +87,7 @@ export function Header() {
       <div className="container flex h-14 items-center">
         <div className="flex items-center w-full">
           <Link href="/" className="mr-9 sm:mr-10 flex items-center space-x-2">
-            <Bot className="h-7 w-7 text-primary" />
+            <Bot className="h-8 w-8 text-primary" />
             <span className="hidden font-bold sm:inline-block">
               PersonalDigitalAssistant
             </span>
