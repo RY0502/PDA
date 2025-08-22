@@ -1,4 +1,3 @@
-
 import { getMediumArticles } from '@/services/email-service';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
@@ -16,8 +15,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
-// Revalidate the page every 4 hours
-export const revalidate = 14400;
+// Revalidate the page every 6 hours
+export const revalidate = 21600;
 
 function ArticleCard({ article }: { article: MediumArticle }) {
   const truncatedAuthor =
