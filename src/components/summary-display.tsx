@@ -8,16 +8,23 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from './ui/skeleton';
 
 export function SummaryDisplay({ children }: { children: React.ReactNode }) {
+  const [isClient, setIsClient] = useState(false);
   const [displayHtml, setDisplayHtml] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isConverted, setIsConverted] = useState(false);
   const { toast } = useToast();
   const initialContentRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const handleConvertClick = async () => {
     if (!initialContentRef.current) return;
     
-    const initialHtml = initialContentRef.current.innerHTML;
+    const initialHtml = ReactDOMServer.renderToStaticMarkup(
+        <>{children}</>
+    );
     
     setIsLoading(true);
     try {
@@ -37,7 +44,21 @@ export function SummaryDisplay({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
     }
   };
-  
+
+  const renderLoadingSkeleton = () => (
+    <div className="space-y-4">
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-5/6" />
+      <Skeleton className="h-4 w-3/4" />
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-5/6" />
+    </div>
+  );
+
+  if (!isClient) {
+    return renderLoadingSkeleton();
+  }
+
   const contentToShow = isConverted && displayHtml ? (
     <div dangerouslySetInnerHTML={{ __html: displayHtml }} />
   ) : (
@@ -57,17 +78,7 @@ export function SummaryDisplay({ children }: { children: React.ReactNode }) {
         </div>
       )}
       
-      {isLoading ? (
-        <div className="space-y-4">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-5/6" />
-          <Skeleton className="h-4 w-3/4" />
-           <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-5/6" />
-        </div>
-      ) : (
-        contentToShow
-      )}
+      {isLoading ? renderLoadingSkeleton() : contentToShow}
     </div>
   );
 }
