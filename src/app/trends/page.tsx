@@ -44,14 +44,10 @@ export default async function TrendsPage() {
 
       <div className="mx-auto max-w-3xl py-10">
         <Card>
-          <CardHeader>
-            <CardTitle>Today's Top Trends</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <SummaryDisplay>
-                <TrendContent summary={summary} />
-            </SummaryDisplay>
-          </CardContent>
+          <SummaryDisplay 
+            title="Today's Top Trends"
+            content={<TrendContent summary={summary} />} 
+          />
         </Card>
       </div>
     </div>
