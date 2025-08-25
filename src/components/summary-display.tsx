@@ -92,10 +92,10 @@ export function SummaryDisplay({
             size="sm"
             onClick={handleConvertClick}
             disabled={isLoading}
-            className="text-primary hover:text-primary relative right-[-12px] sm:right-0"
+            className="text-primary hover:text-primary relative right-[-21px] sm:right-0"
           >
-            <PlayIcon className="h-3 w-3 fill-current mr-1" />
-            <span className="text-xs">To Search Links</span>
+            <PlayIcon className="h-2.5 w-2.5 fill-current mr-0" />
+            <span className="text-xs -ml-0.5">To Search Links</span>
           </Button>
         )}
       </div>
