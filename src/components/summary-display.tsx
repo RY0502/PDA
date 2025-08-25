@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, type ReactNode, useEffect } from 'react';
+import { useState, useRef, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { convertSummaryToLinks } from '@/ai/flows/convert-summary-to-links';
@@ -18,15 +18,8 @@ export function SummaryDisplay({ initialContent, title }: SummaryDisplayProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const contentRef = useRef<HTMLDivElement>(null);
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const handleConvertClick = async () => {
-    if (!isClient) return;
-
     setIsLoading(true);
     if (!contentRef.current) {
       setIsLoading(false);
@@ -48,7 +41,7 @@ export function SummaryDisplay({ initialContent, title }: SummaryDisplayProps) {
                 window.open(target.href, '_blank', 'noopener,noreferrer');
               }
             }}
-           />
+          />
         );
         setIsConverted(true);
       } else {
@@ -67,8 +60,8 @@ export function SummaryDisplay({ initialContent, title }: SummaryDisplayProps) {
   };
 
   return (
-    <>
-      <div className="flex items-center justify-between">
+    <div>
+      <div className="flex items-center justify-between p-6">
         <h3 className="text-lg font-semibold tracking-tight text-foreground">
           {title}
         </h3>
@@ -77,22 +70,22 @@ export function SummaryDisplay({ initialContent, title }: SummaryDisplayProps) {
             variant="ghost"
             size="sm"
             onClick={handleConvertClick}
-            disabled={isLoading || !isClient}
+            disabled={isLoading}
           >
             {isLoading ? (
               <Skeleton className="h-5 w-24" />
             ) : (
               <>
-                <PlayIcon className="mr-1 h-3 w-3 rotate-90" />
+                <PlayIcon className="mr-1 h-3 w-3 -rotate-90" />
                 <span className="text-xs">To Search Links</span>
               </>
             )}
           </Button>
         )}
       </div>
-      <div ref={contentRef} className="mt-2 space-y-2">
+      <div ref={contentRef} className="px-6 pb-6 pt-0 space-y-2">
         {content}
       </div>
-    </>
+    </div>
   );
 }

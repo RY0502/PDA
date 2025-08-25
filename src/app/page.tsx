@@ -14,6 +14,7 @@ import type { MediumArticle } from '@/services/email-service';
 import { UrlOpener } from '@/components/url-opener';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 // Revalidate the page every 4 hours
 export const revalidate = 14400;
@@ -30,10 +31,12 @@ function ArticleCard({ article }: { article: MediumArticle }) {
         <div className="flex gap-4">
           <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md bg-muted">
             {article.imageUrl ? (
-              <img
+              <Image
                 src={article.imageUrl}
                 alt={article.title}
-                className="h-full w-full object-cover"
+                fill
+                className="object-cover"
+                sizes="96px"
                 data-ai-hint="article cover"
               />
             ) : (
