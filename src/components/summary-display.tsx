@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useRef, type ReactNode, useEffect } from 'react';
+import { useState, useRef, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { convertSummaryToLinks } from '@/app/actions';
@@ -20,13 +19,8 @@ export function SummaryDisplay({
   const [content, setContent] = useState<ReactNode>(initialContent);
   const [isConverted, setIsConverted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
   const contentRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   const handleConvertClick = async () => {
     setIsLoading(true);
@@ -37,8 +31,16 @@ export function SummaryDisplay({
 
     const initialHtml = contentRef.current.innerHTML;
 
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('timeout')), 30000)
+    );
+
     try {
-      const result = await convertSummaryToLinks({ summaryHtml: initialHtml });
+      const result = (await Promise.race([
+        convertSummaryToLinks({ summaryHtml: initialHtml }),
+        timeoutPromise,
+      ])) as { linkedSummaryHtml: string };
+
       if (result.linkedSummaryHtml) {
         setContent(
           <div
@@ -56,21 +58,26 @@ export function SummaryDisplay({
       } else {
         throw new Error('Conversion failed to return content.');
       }
-    } catch (error) {
-      console.error('Error converting summary:', error);
-      toast({
-        title: 'Error',
-        description: 'Unable to convert to search links.',
-        variant: 'destructive',
-      });
+    } catch (error: any) {
+      if (error.message === 'timeout') {
+        toast({
+          title: 'Error',
+          description: 'Timed out. Please try later',
+          variant: 'destructive',
+        });
+        setContent(initialContent); // Revert to original content
+      } else {
+        console.error('Error converting summary:', error);
+        toast({
+          title: 'Error',
+          description: 'Unable to convert to search links.',
+          variant: 'destructive',
+        });
+      }
     } finally {
       setIsLoading(false);
     }
   };
-
-  if (!isMounted) {
-    return <Skeleton className="h-48 w-full" />;
-  }
 
   return (
     <div className="relative">
@@ -112,4 +119,3 @@ export function SummaryDisplay({
     </div>
   );
 }
-
