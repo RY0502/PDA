@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, type ReactNode, useEffect } from 'react';
@@ -83,8 +84,9 @@ export function SummaryDisplay({
             size="sm"
             onClick={handleConvertClick}
             disabled={isLoading}
+            className="text-primary hover:text-primary"
           >
-            <PlayIcon className="mr-1 h-3 w-3 -rotate-90" />
+            <PlayIcon className="h-3 w-3 fill-current mr-0.5" />
             <span className="text-xs">To Search Links</span>
           </Button>
         )}
@@ -110,3 +112,4 @@ export function SummaryDisplay({
     </div>
   );
 }
+
