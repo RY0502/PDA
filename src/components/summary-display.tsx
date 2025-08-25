@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, type ReactNode } from 'react';
@@ -91,9 +92,9 @@ export function SummaryDisplay({
             size="sm"
             onClick={handleConvertClick}
             disabled={isLoading}
-            className="text-primary hover:text-primary"
+            className="text-primary hover:text-primary relative right-[-12px] sm:right-0"
           >
-            <PlayIcon className="h-3 w-3 fill-current mr-0.5" />
+            <PlayIcon className="h-3 w-3 fill-current mr-1" />
             <span className="text-xs">To Search Links</span>
           </Button>
         )}
