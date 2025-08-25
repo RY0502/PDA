@@ -3,7 +3,7 @@
 import { useState, useRef, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { convertSummaryToLinks } from '@/ai/flows/convert-summary-to-links';
+import { convertSummaryToLinks } from '../app/actions';
 import { PlayIcon } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
