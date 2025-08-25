@@ -11,21 +11,27 @@ function isSupabaseReferrer() {
 
 export function AuthGate() {
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      if (isSupabaseReferrer()) return;
-      const { data } = await supabase.auth.getUser();
-      if (!mounted) return;
-      if (!data.user) {
-        const redirectTo = window.location.href;
-        await supabase.auth.signInWithOAuth({
-          provider: "google",
-          options: { redirectTo },
-        });
+    // Avoid triggering OAuth immediately after returning from Supabase
+    if (isSupabaseReferrer()) return;
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Wait for Supabase to recover the persisted session from storage.
+      // This fires once on mount with the current (possibly recovered) session.
+      if (event === "INITIAL_SESSION") {
+        if (!session) {
+          const redirectTo = window.location.href;
+          await supabase.auth.signInWithOAuth({
+            provider: "google",
+            options: { redirectTo },
+          });
+        }
       }
-    })();
+    });
+
     return () => {
-      mounted = false;
+      subscription.unsubscribe();
     };
   }, []);
 
