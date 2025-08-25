@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useRef, type ReactNode } from 'react';
+import { useState, useRef, type ReactNode, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { convertSummaryToLinks } from '../app/actions';
+import { convertSummaryToLinks } from '@/app/actions';
 import { PlayIcon } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -12,12 +12,20 @@ interface SummaryDisplayProps {
   title: string;
 }
 
-export function SummaryDisplay({ initialContent, title }: SummaryDisplayProps) {
+export function SummaryDisplay({
+  initialContent,
+  title,
+}: SummaryDisplayProps) {
   const [content, setContent] = useState<ReactNode>(initialContent);
   const [isConverted, setIsConverted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
   const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleConvertClick = async () => {
     setIsLoading(true);
@@ -58,6 +66,10 @@ export function SummaryDisplay({ initialContent, title }: SummaryDisplayProps) {
       setIsLoading(false);
     }
   };
+  
+  if (!isMounted) {
+    return <Skeleton className="h-48 w-full" />;
+  }
 
   return (
     <div>

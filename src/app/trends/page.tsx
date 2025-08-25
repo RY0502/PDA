@@ -1,5 +1,5 @@
 import { fetchTrendingSearches } from '@/ai/flows/fetch-trending-searches';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { SummaryDisplay } from '@/components/summary-display';
 import { TrendingUp } from 'lucide-react';
 
@@ -40,7 +40,7 @@ export default async function TrendsPage() {
 
       <div className="mx-auto max-w-3xl py-10">
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="p-0">
             <SummaryDisplay
               title="Today's Top Trends"
               initialContent={<TrendsSummary summary={summary} />}

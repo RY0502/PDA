@@ -175,10 +175,7 @@ export default async function FootballPage() {
       <div className="py-10">
         <ClubLogos clubs={clubsWithLogos} totalClubs={totalClubs} />
         <Card className="mx-auto max-w-3xl">
-          <CardHeader>
-            <CardTitle>Today's Top Stories</CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             <SummaryDisplay
               title="Today's Top Stories"
               initialContent={<NewsSummary newsSections={newsSections} />}
