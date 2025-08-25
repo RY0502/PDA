@@ -23,10 +23,11 @@ const conversionPrompt = ai.definePrompt({
   input: {schema: ConvertSummaryInputSchema},
   output: {schema: ConvertSummaryOutputSchema},
   prompt: `
-    You are an AI assistant that enhances text by converting important people, places, and topics into Google search links.
-    For the given HTML, identify key terms and wrap them in anchor tags that link to a Google search for that term.
+    You are an AI assistant that enhances text by converting important news events and topics into Google search links.
+    For the given HTML, identify key terms that represent significant news items and wrap them in anchor tags that link to a Google search for that term.
     
     IMPORTANT: 
+    - Prioritize linking to actual news topics over simple nouns like people's names or places, unless they are central to a specific news event mentioned.
     - Only link the text part of the summary.
     - Ensure the response is a single, valid JSON object.
     - The final HTML should be wrapped in a single root element, like a <div>.

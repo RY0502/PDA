@@ -66,13 +66,13 @@ export function SummaryDisplay({
       setIsLoading(false);
     }
   };
-  
+
   if (!isMounted) {
     return <Skeleton className="h-48 w-full" />;
   }
 
   return (
-    <div>
+    <div className="relative">
       <div className="flex items-center justify-between p-6">
         <h3 className="text-lg font-semibold tracking-tight text-foreground">
           {title}
@@ -84,20 +84,29 @@ export function SummaryDisplay({
             onClick={handleConvertClick}
             disabled={isLoading}
           >
-            {isLoading ? (
-              <Skeleton className="h-5 w-24" />
-            ) : (
-              <>
-                <PlayIcon className="mr-1 h-3 w-3 -rotate-90" />
-                <span className="text-xs">To Search Links</span>
-              </>
-            )}
+            <PlayIcon className="mr-1 h-3 w-3 -rotate-90" />
+            <span className="text-xs">To Search Links</span>
           </Button>
         )}
       </div>
-      <div ref={contentRef} className="px-6 pb-6 pt-0 space-y-2">
+      <div
+        ref={contentRef}
+        className="px-6 pb-6 pt-0 space-y-2"
+      >
         {content}
       </div>
+       {isLoading && (
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center">
+            <div className="w-full h-full p-6 space-y-4">
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-6 w-2/4" />
+                <Skeleton className="h-4 w-full" />
+                 <Skeleton className="h-4 w-full" />
+            </div>
+        </div>
+      )}
     </div>
   );
 }
