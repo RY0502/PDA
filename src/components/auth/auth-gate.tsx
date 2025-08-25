@@ -11,22 +11,22 @@ function isSupabaseReferrer() {
 
 export function AuthGate() {
   useEffect(() => {
-    // let mounted = true;
-    // (async () => {
-    //   if (isSupabaseReferrer()) return;
-    //   const { data } = await supabase.auth.getUser();
-    //   if (!mounted) return;
-    //   if (!data.user) {
-    //     const redirectTo = window.location.href;
-    //     await supabase.auth.signInWithOAuth({
-    //       provider: "google",
-    //       options: { redirectTo },
-    //     });
-    //   }
-    // })();
-    // return () => {
-    //   mounted = false;
-    // };
+    let mounted = true;
+    (async () => {
+      if (isSupabaseReferrer()) return;
+      const { data } = await supabase.auth.getUser();
+      if (!mounted) return;
+      if (!data.user) {
+        const redirectTo = window.location.href;
+        await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: { redirectTo },
+        });
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return null;
