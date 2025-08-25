@@ -6,7 +6,6 @@ import { Newspaper } from 'lucide-react';
 import Image from 'next/image';
 import { DEFAULT_FOOTBALL_LOGO_URI } from '@/lib/constants';
 import { SummaryDisplay } from '@/components/summary-display';
-import { renderToStaticMarkup } from 'react-dom/server';
 
 export const revalidate = 5400; // Revalidate the page every 1.5 hours
 
@@ -103,6 +102,33 @@ function ClubLogos({ clubs, totalClubs }: { clubs: ClubWithLogo[], totalClubs: n
   );
 }
 
+function NewsContent({ newsSections }: { newsSections: NewsSection[] }) {
+  return (
+    <>
+      {newsSections.length > 0 ? (
+        <div className="space-y-6">
+          {newsSections.map((section, index) => (
+            <div key={index}>
+              <h3 className="text-lg font-semibold tracking-tight text-foreground">
+                {section.title}
+              </h3>
+              <ul className="mt-2 space-y-2">
+                {section.items.map((item, itemIndex) => (
+                  <NewsListItem key={itemIndex} item={item} />
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-muted-foreground">
+          No news to display at the moment.
+        </p>
+      )}
+    </>
+  );
+}
+
 
 export default async function FootballPage() {
   const { summary, clubsWithLogos, totalClubs } = await getLatestFootballNews();
@@ -134,31 +160,6 @@ export default async function FootballPage() {
     newsSections.push(currentSection);
   }
 
-  const initialHtml = renderToStaticMarkup(
-    <>
-      {newsSections.length > 0 ? (
-        <div className="space-y-6">
-          {newsSections.map((section, index) => (
-            <div key={index}>
-              <h3 className="text-lg font-semibold tracking-tight text-foreground">
-                {section.title}
-              </h3>
-              <ul className="mt-2 space-y-2">
-                {section.items.map((item, itemIndex) => (
-                  <NewsListItem key={itemIndex} item={item} />
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-muted-foreground">
-          No news to display at the moment.
-        </p>
-      )}
-    </>
-  );
-  
   return (
     <div className="container py-8">
       <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-2 text-center md:pb-8">
@@ -179,7 +180,9 @@ export default async function FootballPage() {
             <CardTitle>Today's Top Stories</CardTitle>
           </CardHeader>
           <CardContent>
-            <SummaryDisplay initialHtml={initialHtml} />
+            <SummaryDisplay>
+              <NewsContent newsSections={newsSections} />
+            </SummaryDisplay>
           </CardContent>
         </Card>
       </div>

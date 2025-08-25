@@ -1,21 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import ReactDOMServer from 'react-dom/server';
 import { convertSummaryToLinks } from '@/ai/flows/convert-summary-to-links';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from './ui/skeleton';
 
-export function SummaryDisplay({ initialHtml }: { initialHtml: string }) {
-  const [displayHtml, setDisplayHtml] = useState(initialHtml);
+export function SummaryDisplay({ children }: { children: React.ReactNode }) {
+  const [displayHtml, setDisplayHtml] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isConverted, setIsConverted] = useState(false);
   const { toast } = useToast();
+  const initialContentRef = useRef<HTMLDivElement>(null);
 
   const handleConvertClick = async () => {
+    if (!initialContentRef.current) return;
+    
+    const initialHtml = initialContentRef.current.innerHTML;
+    
     setIsLoading(true);
     try {
-      const result = await convertSummaryToLinks({ summaryHtml: displayHtml });
+      const result = await convertSummaryToLinks({ summaryHtml: initialHtml });
       // This is a workaround to make links open in a new tab.
       const finalHtml = result.linkedSummaryHtml.replace(/<a /g, '<a target="_blank" rel="noopener noreferrer" ');
       setDisplayHtml(finalHtml);
@@ -31,6 +37,12 @@ export function SummaryDisplay({ initialHtml }: { initialHtml: string }) {
       setIsLoading(false);
     }
   };
+  
+  const contentToShow = isConverted && displayHtml ? (
+    <div dangerouslySetInnerHTML={{ __html: displayHtml }} />
+  ) : (
+    <div ref={initialContentRef}>{children}</div>
+  );
 
   return (
     <div>
@@ -54,7 +66,7 @@ export function SummaryDisplay({ initialHtml }: { initialHtml: string }) {
           <Skeleton className="h-4 w-5/6" />
         </div>
       ) : (
-        <div dangerouslySetInnerHTML={{ __html: displayHtml }} />
+        contentToShow
       )}
     </div>
   );
