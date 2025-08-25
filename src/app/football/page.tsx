@@ -2,9 +2,11 @@ import { getLatestFootballNews } from '@/ai/flows/get-latest-football-news';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Newspaper, Dot } from 'lucide-react';
+import { Newspaper } from 'lucide-react';
 import Image from 'next/image';
 import { DEFAULT_FOOTBALL_LOGO_URI } from '@/lib/constants';
+import { SummaryDisplay } from '@/components/summary-display';
+import { renderToStaticMarkup } from 'react-dom/server';
 
 export const revalidate = 5400; // Revalidate the page every 1.5 hours
 
@@ -28,7 +30,21 @@ function NewsListItem({ item }: { item: NewsItem }) {
   const parts = item.text.split(/(\*\*.*?\*\*)/g).filter((part) => part);
   return (
     <li className="flex items-start gap-2">
-      <Dot className="h-5 w-5 flex-shrink-0 text-primary" />
+      <svg
+        className="h-5 w-5 flex-shrink-0 text-primary"
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <circle cx="12" cy="12" r="4" />
+      </svg>
       <span className="flex-1 text-base text-muted-foreground">
         {parts.map((part, i) =>
           part.startsWith('**') && part.endsWith('**') ? (
@@ -117,6 +133,31 @@ export default async function FootballPage() {
   if (currentSection) {
     newsSections.push(currentSection);
   }
+
+  const initialHtml = renderToStaticMarkup(
+    <>
+      {newsSections.length > 0 ? (
+        <div className="space-y-6">
+          {newsSections.map((section, index) => (
+            <div key={index}>
+              <h3 className="text-lg font-semibold tracking-tight text-foreground">
+                {section.title}
+              </h3>
+              <ul className="mt-2 space-y-2">
+                {section.items.map((item, itemIndex) => (
+                  <NewsListItem key={itemIndex} item={item} />
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-muted-foreground">
+          No news to display at the moment.
+        </p>
+      )}
+    </>
+  );
   
   return (
     <div className="container py-8">
@@ -138,26 +179,7 @@ export default async function FootballPage() {
             <CardTitle>Today's Top Stories</CardTitle>
           </CardHeader>
           <CardContent>
-            {newsSections.length > 0 ? (
-              <div className="space-y-6">
-                {newsSections.map((section, index) => (
-                  <div key={index}>
-                    <h3 className="text-lg font-semibold tracking-tight text-foreground">
-                      {section.title}
-                    </h3>
-                    <ul className="mt-2 space-y-2">
-                      {section.items.map((item, itemIndex) => (
-                        <NewsListItem key={itemIndex} item={item} />
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted-foreground">
-                No news to display at the moment.
-              </p>
-            )}
+            <SummaryDisplay initialHtml={initialHtml} />
           </CardContent>
         </Card>
       </div>

@@ -1,6 +1,8 @@
 import { fetchTrendingSearches } from '@/ai/flows/fetch-trending-searches';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp } from 'lucide-react';
+import { SummaryDisplay } from '@/components/summary-display';
+import { renderToStaticMarkup } from 'react-dom/server';
 
 // Revalidate the page every hour
 export const revalidate = 14400;
@@ -26,6 +28,8 @@ function TrendContent({ summary }: { summary: string }) {
 export default async function TrendsPage() {
   const { summary } = await fetchTrendingSearches();
 
+  const initialHtml = summary ? renderToStaticMarkup(<TrendContent summary={summary} />) : '<p class="text-muted-foreground">Could not fetch trending topics at this time.</p>';
+
   return (
     <div className="container py-8">
       <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-2 text-center md:pb-8">
@@ -44,13 +48,7 @@ export default async function TrendsPage() {
             <CardTitle>Today's Top Trends</CardTitle>
           </CardHeader>
           <CardContent>
-            {summary ? (
-              <TrendContent summary={summary} />
-            ) : (
-              <p className="text-muted-foreground">
-                Could not fetch trending topics at this time.
-              </p>
-            )}
+            <SummaryDisplay initialHtml={initialHtml} />
           </CardContent>
         </Card>
       </div>
