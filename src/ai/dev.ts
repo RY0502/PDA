@@ -7,4 +7,3 @@ import '@/ai/flows/get-latest-football-news.ts';
 import '@/ai/flows/fetch-trending-searches.ts';
 import '@/ai/flows/generate-club-logo.ts';
 import '@/ai/flows/get-stock-market-overview.ts';
-import '@/ai/flows/convert-summary-to-links.ts';

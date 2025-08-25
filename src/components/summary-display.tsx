@@ -1,100 +1,98 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import ReactDOMServer from 'react-dom/server';
-import { convertSummaryToLinks } from '@/ai/flows/convert-summary-to-links';
+import { useState, useRef, type ReactNode, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Skeleton } from './ui/skeleton';
-import { CardHeader, CardTitle, CardContent } from './ui/card';
+import { convertSummaryToLinks } from '@/ai/flows/convert-summary-to-links';
+import { PlayIcon } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface SummaryDisplayProps {
+  initialContent: ReactNode;
   title: string;
-  content: React.ReactNode;
 }
 
-export function SummaryDisplay({ title, content }: SummaryDisplayProps) {
-  const [isClient, setIsClient] = useState(false);
-  const [displayHtml, setDisplayHtml] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+export function SummaryDisplay({ initialContent, title }: SummaryDisplayProps) {
+  const [content, setContent] = useState<ReactNode>(initialContent);
   const [isConverted, setIsConverted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const contentRef = useRef<HTMLDivElement>(null);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
   const handleConvertClick = async () => {
-    if (!contentRef.current) return;
-
-    const initialHtml = ReactDOMServer.renderToStaticMarkup(
-      <>{contentRef.current.children}</>
-    );
+    if (!isClient) return;
 
     setIsLoading(true);
+    if (!contentRef.current) {
+      setIsLoading(false);
+      return;
+    }
+
+    const initialHtml = contentRef.current.innerHTML;
+
     try {
       const result = await convertSummaryToLinks({ summaryHtml: initialHtml });
-      const finalHtml = result.linkedSummaryHtml.replace(/<a /g, '<a target="_blank" rel="noopener noreferrer" ');
-      setDisplayHtml(finalHtml);
-      setIsConverted(true);
+      if (result.linkedSummaryHtml) {
+        setContent(
+          <div
+            dangerouslySetInnerHTML={{ __html: result.linkedSummaryHtml }}
+            onClick={(e) => {
+              const target = e.target as HTMLAnchorElement;
+              if (target.tagName === 'A' && target.href) {
+                e.preventDefault();
+                window.open(target.href, '_blank', 'noopener,noreferrer');
+              }
+            }}
+           />
+        );
+        setIsConverted(true);
+      } else {
+        throw new Error('Conversion failed to return content.');
+      }
     } catch (error) {
-      console.error('Failed to convert summary to links:', error);
+      console.error('Error converting summary:', error);
       toast({
-        variant: 'destructive',
         title: 'Error',
-        description: 'Unable to convert to search links',
+        description: 'Unable to convert to search links.',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const renderLoadingSkeleton = () => (
-    <div className="space-y-4 p-6 pt-0">
-      <Skeleton className="h-4 w-full" />
-      <Skeleton className="h-4 w-5/6" />
-      <Skeleton className="h-4 w-3/4" />
-      <Skeleton className="h-4 w-full" />
-      <Skeleton className="h-4 w-5/6" />
-    </div>
-  );
-  
-  if (!isClient) {
-    return (
-      <>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {content}
-          {renderLoadingSkeleton()}
-        </CardContent>
-      </>
-    );
-  }
-
   return (
     <>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>{title}</CardTitle>
-        {!isConverted && !isLoading && (
-          <button onClick={handleConvertClick} className="flex items-center text-sm font-medium text-primary hover:underline p-0 h-auto bg-transparent">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="mr-1" viewBox="0 0 16 16">
-              <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V4.204c0-.86.996-1.32 1.658-.753l5.482 4.796z"/>
-            </svg>
-            To Search Links
-          </button>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold tracking-tight text-foreground">
+          {title}
+        </h3>
+        {!isConverted && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleConvertClick}
+            disabled={isLoading || !isClient}
+          >
+            {isLoading ? (
+              <Skeleton className="h-5 w-24" />
+            ) : (
+              <>
+                <PlayIcon className="mr-1 h-3 w-3 rotate-90" />
+                <span className="text-xs">To Search Links</span>
+              </>
+            )}
+          </Button>
         )}
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          renderLoadingSkeleton()
-        ) : isConverted && displayHtml ? (
-          <div dangerouslySetInnerHTML={{ __html: displayHtml }} />
-        ) : (
-          <div ref={contentRef}>{content}</div>
-        )}
-      </CardContent>
+      </div>
+      <div ref={contentRef} className="mt-2 space-y-2">
+        {content}
+      </div>
     </>
   );
 }

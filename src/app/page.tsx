@@ -12,7 +12,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal, Image as ImageIcon } from 'lucide-react';
 import type { MediumArticle } from '@/services/email-service';
 import { UrlOpener } from '@/components/url-opener';
-import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
@@ -31,12 +30,10 @@ function ArticleCard({ article }: { article: MediumArticle }) {
         <div className="flex gap-4">
           <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md bg-muted">
             {article.imageUrl ? (
-              <Image
+              <img
                 src={article.imageUrl}
                 alt={article.title}
-                fill
-                sizes="96px"
-                className="object-cover"
+                className="h-full w-full object-cover"
                 data-ai-hint="article cover"
               />
             ) : (

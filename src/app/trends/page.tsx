@@ -1,17 +1,13 @@
 import { fetchTrendingSearches } from '@/ai/flows/fetch-trending-searches';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp } from 'lucide-react';
 import { SummaryDisplay } from '@/components/summary-display';
+import { TrendingUp } from 'lucide-react';
 
 // Revalidate the page every hour
-export const revalidate = 14400;
+export const revalidate = 3600;
 
-function TrendContent({ summary }: { summary: string }) {
-  if (!summary) {
-    return <p className="text-muted-foreground">Could not fetch trending topics at this time.</p>;
-  }
+function TrendsSummary({ summary }: { summary: string }) {
   const parts = summary.split(/(\*\*.*?\*\*)/g).filter(part => part);
-
   return (
     <div className="whitespace-pre-line text-base text-muted-foreground">
       {parts.map((part, i) =>
@@ -44,10 +40,12 @@ export default async function TrendsPage() {
 
       <div className="mx-auto max-w-3xl py-10">
         <Card>
-          <SummaryDisplay 
-            title="Today's Top Trends"
-            content={<TrendContent summary={summary} />} 
-          />
+          <CardContent className="pt-6">
+            <SummaryDisplay
+              title="Today's Top Trends"
+              initialContent={<TrendsSummary summary={summary} />}
+            />
+          </CardContent>
         </Card>
       </div>
     </div>

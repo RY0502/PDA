@@ -102,7 +102,7 @@ function ClubLogos({ clubs, totalClubs }: { clubs: ClubWithLogo[], totalClubs: n
   );
 }
 
-function NewsContent({ newsSections }: { newsSections: NewsSection[] }) {
+function NewsSummary({ newsSections }: { newsSections: NewsSection[] }) {
   return (
     <>
       {newsSections.length > 0 ? (
@@ -128,7 +128,6 @@ function NewsContent({ newsSections }: { newsSections: NewsSection[] }) {
     </>
   );
 }
-
 
 export default async function FootballPage() {
   const { summary, clubsWithLogos, totalClubs } = await getLatestFootballNews();
@@ -176,10 +175,15 @@ export default async function FootballPage() {
       <div className="py-10">
         <ClubLogos clubs={clubsWithLogos} totalClubs={totalClubs} />
         <Card className="mx-auto max-w-3xl">
-          <SummaryDisplay 
-            title="Today's Top Stories"
-            content={<NewsContent newsSections={newsSections} />} 
-          />
+          <CardHeader>
+            <CardTitle>Today's Top Stories</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SummaryDisplay
+              title="Today's Top Stories"
+              initialContent={<NewsSummary newsSections={newsSections} />}
+            />
+          </CardContent>
         </Card>
       </div>
     </div>
