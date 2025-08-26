@@ -134,7 +134,7 @@ const getStockData = unstable_cache(
 
     const body = JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      tools: [{ google_search: {} }],
+      tools: [{ url_context: {}}],
     });
 
     try {
