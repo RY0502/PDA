@@ -31,7 +31,7 @@ export async function generateClubLogo(
 ): Promise<GenerateClubLogoOutput> {
   // Some inputs might be like "Club A, Country". Use only the first segment for generation.
   const sanitizedClubName = input.clubName.split(',')[0].trim();
-  const prompt = `Generate a logo for the football club: "${sanitizedClubName}". The design should be a modern, minimalist, circular interpretation that is as close as possible to the actual official club logo. The logo must be on a transparent background. If there is any error during football club logo generation or you are unable to generate the logo for the football club, generate a logo of an actual football image instead in the same format.`;
+  const prompt = `Generate a logo for the football club: "${sanitizedClubName}". The design should be a modern, minimalist, circular interpretation that is as close as possible to the actual official club logo. The logo must be on a transparent background. Sometimes there could be additional text as well with the football club name. You will have to extract the football club name before generating the logo. If there is any error during football club logo generation or you are unable to generate the logo for the football club, generate a logo of an actual football image instead in the same format.`;
 
   try {
     const {media} = await ai.generate({
