@@ -152,11 +152,13 @@ const getStockData = unstable_cache(
             break; // success
           } else {
             const errorBody = await response.text();
+            if(attempt==3) {
             console.error(
               `API request failed (attempt ${attempt}/3):`,
               response.status,
               errorBody
             );
+          }
             if (attempt < 3) await sleep(5000);
           }
         } catch (err) {
