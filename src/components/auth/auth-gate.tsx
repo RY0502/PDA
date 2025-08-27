@@ -24,57 +24,72 @@ function isOAuthCallbackUrl() {
 
 export function AuthGate() {
   useEffect(() => {
-    // Avoid triggering during OAuth callback handling
-    if (isSupabaseReferrer() || isOAuthCallbackUrl()) return;
-
-    const RATE_LIMIT_KEY = "auth_in_progress_at";
-    const RATE_LIMIT_MS = 60_000; // 1 minute guard to prevent loops
+    // Skip if we're in SSR or during OAuth callback
+    if (typeof window === 'undefined' || isSupabaseReferrer() || isOAuthCallbackUrl()) {
+      return;
+    }
 
     let isMounted = true;
+    let authSubscription: { unsubscribe: () => void } | null = null;
+    let timeoutId: NodeJS.Timeout;
 
-    // Subscribe to clear rate-limit flag on successful sign-in
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN") {
-        try {
-          localStorage.removeItem(RATE_LIMIT_KEY);
-        } catch {}
-      }
-    });
-
-    (async () => {
+    const checkAuth = async () => {
       try {
-        const { data } = await supabase.auth.getSession();
+        // Check for existing session
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
         if (!isMounted) return;
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          return;
+        }
 
-        if (data.session) return; // already signed in
-
-        // Simple rate limit to avoid rapid re-entries
-        const last = parseInt(localStorage.getItem(RATE_LIMIT_KEY) || "0", 10);
-        const now = Date.now();
-        if (now - last < RATE_LIMIT_MS) return;
-
-        localStorage.setItem(RATE_LIMIT_KEY, String(now));
-
-        // Clean redirect target (drop search/hash to avoid reusing old code/state)
-        const redirectTo = `${window.location.origin}${window.location.pathname}`;
-
-        await supabase.auth.signInWithOAuth({
-          provider: "google",
-          options: { redirectTo },
-        });
-      } catch {
-        // noop; avoid throwing in effect
+        // If no session, initiate sign in
+        if (!session) {
+          // Clean redirect target (drop search/hash to avoid reusing old code/state)
+          const redirectTo = `${window.location.origin}${window.location.pathname}`;
+          
+          const { error: signInError } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: { redirectTo },
+          });
+          
+          if (signInError) {
+            console.error('Error signing in:', signInError);
+          }
+        }
+      } catch (err) {
+        console.error('Authentication error:', err);
       }
-    })();
+    };
+
+    // Set up auth state change listener
+    authSubscription = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        // User just signed in, no action needed as the app will handle the redirect
+        return;
+      }
+      
+      if (event === 'SIGNED_OUT') {
+        // If user signs out, check auth again after a short delay
+        // This handles the case where the session expires
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(checkAuth, 1000);
+      }
+    }).data.subscription;
+
+    // Initial auth check with a small delay to allow for session restoration
+    timeoutId = setTimeout(checkAuth, 500);
 
     return () => {
       isMounted = false;
-      subscription.unsubscribe();
+      clearTimeout(timeoutId);
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+      }
     };
   }, []);
 
   return null;
 }
-

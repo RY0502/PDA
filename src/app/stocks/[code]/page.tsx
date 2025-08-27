@@ -170,10 +170,27 @@ const getStockData = unstable_cache(
       }
 
       const data = await response.json();
-      const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      
+      // Handle the Gemini API response format
+      const content = data.candidates?.[0]?.content;
+      let jsonText = '';
+
+      // Try to get text from parts if available (Gemini 1.5+ format)
+      if (content?.parts?.[0]?.text) {
+        jsonText = content.parts[0].text;
+      } 
+      // If no text in parts, try to get it directly from the content (older format)
+      else if (content?.text) {
+        jsonText = content.text;
+      }
+      // If still no text, try to stringify the entire response as a last resort
+      else {
+        console.warn('No text found in expected format, trying to use full response');
+        jsonText = JSON.stringify(data);
+      }
 
       if (!jsonText) {
-        console.error('No JSON text found in API response:', data);
+        console.error('No valid response content found in API response:', data);
         return null;
       }
 
@@ -233,7 +250,9 @@ export default async function StocksPage({
 }: {
   params: { code: string };
 }) {
-  const stockCode = params.code || 'PVRINOX';
+   const paramAwait = await params;
+   const stockCodeAwait = await paramAwait.code;
+  const stockCode = stockCodeAwait || 'PVRINOX';
   const overview = await getStockData(stockCode);
 
   if (!overview) {
