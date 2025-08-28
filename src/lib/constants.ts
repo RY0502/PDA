@@ -3,6 +3,7 @@ export const GMAIL_CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET;
 export const GMAIL_REFRESH_TOKEN = process.env.GMAIL_REFRESH_TOKEN;
 export const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 export const ANYCRAWL_API_KEY = process.env.ANYCRAWL_API_KEY;
+export const WATERCRAWL_API_KEY = process.env.WATERCRAWL_API_KEY;
 
 // A static, Base64-encoded PNG of a classic football to be used as a fallback logo.
 export const DEFAULT_FOOTBALL_LOGO_URI =
