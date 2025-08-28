@@ -60,7 +60,7 @@ async function getEquityPanditMarkdown(stockCode: string): Promise<string | null
   };
   const urlToScrape = `https://www.equitypandit.com/historical-data/${stockCode}`;
 
-  const engines = ['playwright', 'puppeteer', 'cheerio'];
+  const engines = ['playwright', 'puppeteer'];
 
   for (const engine of engines) {
     try {
@@ -279,9 +279,11 @@ export default async function StocksPage({
     : [];
 
   const sortedLosers = overview.topLosers
-    ? [...overview.topLosers].sort(
-        (a, b) => parseFloat(a.change) - parseFloat(b.change)
-      )
+    ? [...overview.topLosers]
+        .filter(
+          (stock) => stock.name.toLowerCase() !== 'hdfc bank ltd'
+        )
+        .sort((a, b) => parseFloat(a.change) - parseFloat(b.change))
     : [];
 
   return (
