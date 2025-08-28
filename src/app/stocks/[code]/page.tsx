@@ -139,8 +139,7 @@ async function getEquityPanditMarkdown(stockCode: string): Promise<string | null
 
   if (watercrawlRequestUuid) {
     try {
-      console.log('Waiting for Watercrawl to process...');
-      await sleep(15000); // Wait 15 seconds for the crawl to hopefully complete
+      console.log('Checking for Watercrawl results...');
 
       const resultsUrl = `https://app.watercrawl.dev/api/v1/core/crawl-requests/${watercrawlRequestUuid}/results/`;
       const resultsResponse = await fetch(resultsUrl, {
