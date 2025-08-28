@@ -60,7 +60,7 @@ async function getEquityPanditMarkdown(stockCode: string): Promise<string | null
   };
   const urlToScrape = `https://www.equitypandit.com/historical-data/${stockCode}`;
 
-  const engines = ['playwright', 'puppeteer'];
+  const engines = ['playwright', 'puppeteer', 'cheerio'];
 
   for (const engine of engines) {
     try {
