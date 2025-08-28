@@ -24,71 +24,71 @@ function isOAuthCallbackUrl() {
 
 export function AuthGate() {
   useEffect(() => {
-    // // Skip if we're in SSR or during OAuth callback
-    // if (typeof window === 'undefined' || isSupabaseReferrer() || isOAuthCallbackUrl()) {
-    //   return;
-    // }
+    // Skip if we're in SSR or during OAuth callback
+    if (typeof window === 'undefined' || isSupabaseReferrer() || isOAuthCallbackUrl()) {
+      return;
+    }
 
-    // let isMounted = true;
-    // let authSubscription: { unsubscribe: () => void } | null = null;
-    // let timeoutId: NodeJS.Timeout;
+    let isMounted = true;
+    let authSubscription: { unsubscribe: () => void } | null = null;
+    let timeoutId: NodeJS.Timeout;
 
-    // const checkAuth = async () => {
-    //   try {
-    //     // Check for existing session
-    //     const { data: { session }, error } = await supabase.auth.getSession();
+    const checkAuth = async () => {
+      try {
+        // Check for existing session
+        const { data: { session }, error } = await supabase.auth.getSession();
         
-    //     if (!isMounted) return;
+        if (!isMounted) return;
         
-    //     if (error) {
-    //       console.error('Error getting session:', error);
-    //       return;
-    //     }
+        if (error) {
+          console.error('Error getting session:', error);
+          return;
+        }
 
-    //     // If no session, initiate sign in
-    //     if (!session) {
-    //       // Clean redirect target (drop search/hash to avoid reusing old code/state)
-    //       const redirectTo = `${window.location.origin}${window.location.pathname}`;
+        // If no session, initiate sign in
+        if (!session) {
+          // Clean redirect target (drop search/hash to avoid reusing old code/state)
+          const redirectTo = `${window.location.origin}${window.location.pathname}`;
           
-    //       const { error: signInError } = await supabase.auth.signInWithOAuth({
-    //         provider: 'google',
-    //         options: { redirectTo },
-    //       });
+          const { error: signInError } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: { redirectTo },
+          });
           
-    //       if (signInError) {
-    //         console.error('Error signing in:', signInError);
-    //       }
-    //     }
-    //   } catch (err) {
-    //     console.error('Authentication error:', err);
-    //   }
-    // };
+          if (signInError) {
+            console.error('Error signing in:', signInError);
+          }
+        }
+      } catch (err) {
+        console.error('Authentication error:', err);
+      }
+    };
 
-    // // Set up auth state change listener
-    // authSubscription = supabase.auth.onAuthStateChange(async (event, session) => {
-    //   if (event === 'SIGNED_IN' && session) {
-    //     // User just signed in, no action needed as the app will handle the redirect
-    //     return;
-    //   }
+    // Set up auth state change listener
+    authSubscription = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        // User just signed in, no action needed as the app will handle the redirect
+        return;
+      }
       
-    //   if (event === 'SIGNED_OUT') {
-    //     // If user signs out, check auth again after a short delay
-    //     // This handles the case where the session expires
-    //     clearTimeout(timeoutId);
-    //     timeoutId = setTimeout(checkAuth, 1000);
-    //   }
-    // }).data.subscription;
+      if (event === 'SIGNED_OUT') {
+        // If user signs out, check auth again after a short delay
+        // This handles the case where the session expires
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(checkAuth, 1000);
+      }
+    }).data.subscription;
 
-    // // Initial auth check with a small delay to allow for session restoration
-    // timeoutId = setTimeout(checkAuth, 500);
+    // Initial auth check with a small delay to allow for session restoration
+    timeoutId = setTimeout(checkAuth, 500);
 
-    // return () => {
-    //   isMounted = false;
-    //   clearTimeout(timeoutId);
-    //   if (authSubscription) {
-    //     authSubscription.unsubscribe();
-    //   }
-    // };
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+      }
+    };
   }, []);
 
   return null;
