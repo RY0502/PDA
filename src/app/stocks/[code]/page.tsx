@@ -1,4 +1,5 @@
 
+
 import { unstable_cache } from 'next/cache';
 import {
   type StockMarketOverview,
@@ -7,7 +8,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AreaChart, ArrowDown, ArrowUp, LineChart } from 'lucide-react';
-import { GEMINI_API_KEY, ANYCRAWL_API_KEY } from '@/lib/constants';
+import { GEMINI_API_KEY, ANYCRAWL_API_KEY, WATERCRAWL_API_KEY } from '@/lib/constants';
 import { WatchlistManager } from './watchlist-manager';
 
 export const revalidate = 3600; // Revalidate the page every 1 hour
@@ -47,46 +48,141 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Function to fetch markdown from AnyCrawl API with retries
+// Function to fetch markdown from AnyCrawl/Watercrawl APIs with retries and fallbacks
 async function getEquityPanditMarkdown(stockCode: string): Promise<string | null> {
-  if (!ANYCRAWL_API_KEY) {
-    console.error('ANYCRAWL_API_KEY is not set.');
-    return null;
-  }
-  const anycrawlUrl = "https://api.anycrawl.dev/v1/scrape";
-  const headers = {
-    'Authorization': `Bearer ${ANYCRAWL_API_KEY}`,
-    'Content-Type': 'application/json',
-  };
-  const urlToScrape = `https://www.equitypandit.com/historical-data/${stockCode}`;
-
-  const engines = ['playwright', 'puppeteer', 'cheerio'];
-
-  for (const engine of engines) {
+  let watercrawlRequestUuid: string | null = null;
+  if (WATERCRAWL_API_KEY) {
     try {
-      console.log(`Attempting to scrape with ${engine}...`);
-      const response = await fetch(anycrawlUrl, {
+      console.log('Initiating Watercrawl request...');
+      const watercrawlPostResponse = await fetch("https://app.watercrawl.dev/api/v1/core/crawl-requests/", {
         method: 'POST',
-        headers,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': WATERCRAWL_API_KEY,
+        },
         body: JSON.stringify({
-          url: urlToScrape,
-          engine: engine,
-        }),
+          url: `https://www.equitypandit.com/share-price/${stockCode}`,
+          options: {
+            spider_options: {
+              max_depth: 1,
+              page_limit: 1,
+            },
+            page_options: {
+              wait_time: 1000,
+              only_main_content: true,
+              timeout: 15000,
+            },
+            plugin_options: {
+              openai_extract: {
+                is_active: true,
+                llm_model: "gpt-4o",
+                extractor_schema: {
+                  type: "object",
+                  properties: { title: { type: "string" } },
+                  required: ["title"],
+                },
+                prompt: "Extract the stock name, Today's High and Today's low value in markdown format",
+              },
+            },
+          },
+        })
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        if (result.data?.markdown) {
-          return result.data.markdown;
-        }
+      if (watercrawlPostResponse.ok) {
+        const responseData = await watercrawlPostResponse.json();
+        watercrawlRequestUuid = responseData.uuid;
+        console.log(`Watercrawl request initiated with UUID: ${watercrawlRequestUuid}`);
+      } else {
+        console.error('Failed to initiate Watercrawl request:', watercrawlPostResponse.status, await watercrawlPostResponse.text());
       }
-      console.error(`AnyCrawl request with ${engine} failed:`, response.status, await response.text());
     } catch (error) {
-      console.error(`Error during AnyCrawl request with ${engine}:`, error);
+      console.error('Error initiating Watercrawl request:', error);
     }
   }
 
-  console.error('All AnyCrawl attempts failed.');
+  if (ANYCRAWL_API_KEY) {
+    const anycrawlUrl = "https://api.anycrawl.dev/v1/scrape";
+    const headers = {
+      'Authorization': `Bearer ${ANYCRAWL_API_KEY}`,
+      'Content-Type': 'application/json',
+    };
+    const urlToScrape = `https://www.equitypandit.com/historical-data/${stockCode}`;
+    const engines = ['playwright', 'puppeteer'];
+
+    for (const engine of engines) {
+      try {
+        console.log(`Attempting to scrape with anycrawl engine: ${engine}...`);
+        const response = await fetch(anycrawlUrl, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            url: urlToScrape,
+            engine: engine,
+          }),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.data?.markdown) {
+            console.log(`Anyncrawl (${engine}) succeeded.`);
+            return result.data.markdown;
+          }
+        }
+        console.error(`AnyCrawl request with ${engine} failed:`, response.status, await response.text());
+      } catch (error) {
+        console.error(`Error during AnyCrawl request with ${engine}:`, error);
+      }
+    }
+  }
+
+  console.error('All AnyCrawl attempts failed. Falling back to Watercrawl results.');
+
+  if (watercrawlRequestUuid) {
+    try {
+      console.log('Waiting for Watercrawl to process...');
+      await sleep(15000); // Wait 15 seconds for the crawl to hopefully complete
+
+      const resultsUrl = `https://app.watercrawl.dev/api/v1/core/crawl-requests/${watercrawlRequestUuid}/results/`;
+      const resultsResponse = await fetch(resultsUrl, {
+        headers: { 'X-API-Key': WATERCRAWL_API_KEY },
+      });
+
+      if (resultsResponse.ok) {
+        const resultsData = await resultsResponse.json();
+        const resultUrl = resultsData.results?.[0]?.result;
+        if (resultUrl) {
+          console.log('Fetching Watercrawl result content...');
+          const contentResponse = await fetch(resultUrl);
+          if (contentResponse.ok) {
+            const contentData = await contentResponse.json();
+             // The prompt asks the model to extract in markdown format.
+             // The result of openai_extract is a JSON object with the extracted data.
+             // We need to find the markdown within this object.
+            const openAiResult = contentData?.plugins_results?.openai_extract?.[0]?.data;
+            if (openAiResult) {
+                // Assuming the markdown is the first value in the extracted object.
+                const markdown = Object.values(openAiResult)[0] as string;
+                 if(markdown){
+                    console.log('Successfully retrieved markdown from Watercrawl.');
+                    return markdown;
+                 }
+            }
+             console.error('Markdown not found in Watercrawl result:', contentData);
+          } else {
+             console.error('Failed to fetch Watercrawl result content:', contentResponse.status, await contentResponse.text());
+          }
+        } else {
+           console.error('Watercrawl result URL not found in API response:', resultsData);
+        }
+      } else {
+         console.error('Failed to fetch Watercrawl results:', resultsResponse.status, await resultsResponse.text());
+      }
+    } catch (error) {
+      console.error('Error fetching Watercrawl results:', error);
+    }
+  }
+  
+  console.error('All scraping attempts failed.');
   return null;
 }
 
