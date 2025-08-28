@@ -136,7 +136,6 @@ async function getEquityPanditMarkdown(stockCode: string): Promise<string | null
   }
 
   console.error('All AnyCrawl attempts failed. Falling back to Watercrawl results.');
-
   if (watercrawlRequestUuid) {
     try {
       console.log('Checking for Watercrawl results...');
@@ -157,15 +156,11 @@ async function getEquityPanditMarkdown(stockCode: string): Promise<string | null
              // The prompt asks the model to extract in markdown format.
              // The result of openai_extract is a JSON object with the extracted data.
              // We need to find the markdown within this object.
-            const openAiResult = contentData?.plugins_results?.openai_extract?.[0]?.data;
-            if (openAiResult) {
-                // Assuming the markdown is the first value in the extracted object.
-                const markdown = Object.values(openAiResult)[0] as string;
+            const markdown = contentData.markdown;
                  if(markdown){
                     console.log('Successfully retrieved markdown from Watercrawl.');
                     return markdown;
                  }
-            }
              console.error('Markdown not found in Watercrawl result:', contentData);
           } else {
              console.error('Failed to fetch Watercrawl result content:', contentResponse.status, await contentResponse.text());
