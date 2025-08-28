@@ -36,44 +36,44 @@ export function Header() {
   }, [pathname]);
 
   // Load Supabase user session
-  useEffect(() => {
-    let isMounted = true;
-    (async () => {
-      const { data } = await supabase.auth.getUser();
-      if (!isMounted) return;
-      setUserName(data.user?.user_metadata?.name ?? null);
-      setUserEmail(data.user?.email ?? null);
-    })();
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUserName(session?.user?.user_metadata?.name ?? null);
-      setUserEmail(session?.user?.email ?? null);
-    });
-    return () => {
-      isMounted = false;
-      sub.subscription.unsubscribe();
-    };
-  }, []);
+  // useEffect(() => {
+  //   let isMounted = true;
+  //   (async () => {
+  //     const { data } = await supabase.auth.getUser();
+  //     if (!isMounted) return;
+  //     setUserName(data.user?.user_metadata?.name ?? null);
+  //     setUserEmail(data.user?.email ?? null);
+  //   })();
+  //   const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+  //     setUserName(session?.user?.user_metadata?.name ?? null);
+  //     setUserEmail(session?.user?.email ?? null);
+  //   });
+  //   return () => {
+  //     isMounted = false;
+  //     sub.subscription.unsubscribe();
+  //   };
+  // }, []);
 
-  const isSupabaseReferrer = () => {
-    if (typeof document === 'undefined') return false;
-    const ref = document.referrer || '';
-    return /supabase\.(co|com)/i.test(ref);
-  };
+  // const isSupabaseReferrer = () => {
+  //   if (typeof document === 'undefined') return false;
+  //   const ref = document.referrer || '';
+  //   return /supabase\.(co|com)/i.test(ref);
+  // };
 
-  const handleNavClick = async (e: React.MouseEvent, targetHref: string) => {
-    // Skip checks for Supabase referrer (e.g., right after OAuth redirect)
-    if (isSupabaseReferrer()) return;
-    // If not logged in, initiate Google OAuth and redirect back to desired page
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) {
-      e.preventDefault();
-      const redirectTo = `${window.location.origin}${targetHref}`;
-      await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo },
-      });
-    }
-  };
+  // const handleNavClick = async (e: React.MouseEvent, targetHref: string) => {
+  //   // Skip checks for Supabase referrer (e.g., right after OAuth redirect)
+  //   if (isSupabaseReferrer()) return;
+  //   // If not logged in, initiate Google OAuth and redirect back to desired page
+  //   const { data } = await supabase.auth.getUser();
+  //   if (!data.user) {
+  //     e.preventDefault();
+  //     const redirectTo = `${window.location.origin}${targetHref}`;
+  //     await supabase.auth.signInWithOAuth({
+  //       provider: 'google',
+  //       options: { redirectTo },
+  //     });
+  //   }
+  // };
 
   const navLinks = [
     { href: '/', label: 'Home' },
@@ -97,7 +97,7 @@ export function Header() {
               <Link
                 key={link.label}
                 href={link.href}
-                onClick={(e) => handleNavClick(e, link.href)}
+                // onClick={(e) => handleNavClick(e, link.href)}
                 className={cn(
                   'transition-colors hover:text-foreground/80',
                   pathname.startsWith('/stocks') && link.label === 'Stocks'
