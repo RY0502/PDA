@@ -18,6 +18,11 @@ export type TrendingSearchesOutput = z.infer<
   typeof TrendingSearchesOutputSchema
 >;
 
+// Simple sleep utility for retry backoff
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export async function fetchTrendingSearches(): Promise<TrendingSearchesOutput> {
   if (!GEMINI_API_KEY) {
     console.error('GEMINI_API_KEY is not set.');
@@ -45,36 +50,67 @@ export async function fetchTrendingSearches(): Promise<TrendingSearchesOutput> {
     ],
   });
 
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body,
-    });
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body,
+      });
 
-    if (!response.ok) {
-      const errorBody = await response.text();
-      console.error('API request failed:', response.status, errorBody);
-      return {
-        summary: `**API Error**\n* Could not fetch trends. Status: ${response.status}`,
-      };
+      if (!response.ok) {
+        const errorBody = await response.text();
+        console.error(
+          `API request failed (attempt ${attempt}/3):`,
+          response.status,
+          errorBody
+        );
+        if (attempt === 3) {
+          return {
+            summary: `**API Error**\n* Could not fetch trends. Status: ${response.status}`,
+          };
+        }
+        await sleep(2000); // Wait for 2 seconds before retrying
+        continue;
+      }
+
+      const data = await response.json();
+      const summary = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (!summary) {
+        console.error(
+          `No summary found in API response (attempt ${attempt}/3):`,
+          data
+        );
+        if (attempt === 3) {
+          return {
+            summary:
+              '**API Error**\n* No trends summary was returned from the API.',
+          };
+        }
+        await sleep(2000); // Wait for 2 seconds before retrying
+        continue;
+      }
+      
+      // If we got here, it was successful, so we return.
+      return {summary};
+      
+    } catch (error: any) {
+      console.error(
+        `Error fetching trending searches (attempt ${attempt}/3):`,
+        error.message || error
+      );
+      if (attempt === 3) {
+        return {
+          summary: `**Network Error**\n* There was an error fetching the trends. Please check your connection.`,
+        };
+      }
+      await sleep(2000); // Wait for 2 seconds before retrying
     }
-
-    const data = await response.json();
-    const summary = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!summary) {
-      console.error('No summary found in API response:', data);
-      return {
-        summary: '**API Error**\n* No trends summary was returned from the API.',
-      };
-    }
-
-    return {summary};
-  } catch (error) {
-    console.error('Error fetching trending searches:', error);
-    return {
-      summary: `**Network Error**\n* There was an error fetching the trends. Please check your connection.`,
-    };
   }
+
+  // This part should not be reachable, but is here as a final fallback.
+  return {
+    summary: `**Network Error**\n* There was an error fetching the trends. Please check your connection.`,
+  };
 }
