@@ -56,12 +56,12 @@ function ClubLogos({ clubs, totalClubs }: { clubs: ClubWithLogo[], totalClubs: n
   const remainingClubs = totalClubs - clubs.length;
 
   return (
-    <div className="mx-auto mb-10 flex max-w-4xl flex-wrap items-center justify-center gap-4">
+    <div className="mx-auto mb-10 flex max-w-4xl flex-wrap items-center justify-center gap-3 sm:gap-4">
       <TooltipProvider>
         {clubs.map((club) => (
           <Tooltip key={club.name}>
             <TooltipTrigger asChild>
-              <Avatar className="h-14 w-14 bg-gradient-to-br from-muted to-muted/50 border-2 border-border/50 hover:border-primary/50 transition-all hover:scale-110 cursor-pointer shadow-sm">
+              <Avatar className="h-12 w-12 sm:h-14 sm:w-14 bg-gradient-to-br from-muted to-muted/50 border-2 border-border/50 hover:border-primary/50 transition-all hover:scale-110 cursor-pointer shadow-sm flex-shrink-0">
                 <AvatarImage src={club.logoUrl || DEFAULT_FOOTBALL_LOGO_URI} alt={`${club.name} logo`} />
                 <AvatarFallback>
                   <Image src={DEFAULT_FOOTBALL_LOGO_URI} alt="Football logo" width={48} height={48} />
@@ -76,8 +76,8 @@ function ClubLogos({ clubs, totalClubs }: { clubs: ClubWithLogo[], totalClubs: n
         {remainingClubs > 0 && (
            <Tooltip>
             <TooltipTrigger asChild>
-              <Avatar className="h-14 w-14 bg-gradient-to-br from-primary/10 to-accent/10 border-2 border-dashed border-primary/30 hover:border-primary/60 transition-all hover:scale-110 cursor-pointer">
-                <AvatarFallback className="text-primary font-bold">+{remainingClubs}</AvatarFallback>
+              <Avatar className="h-12 w-12 sm:h-14 sm:w-14 bg-gradient-to-br from-primary/10 to-accent/10 border-2 border-dashed border-primary/30 hover:border-primary/60 transition-all hover:scale-110 cursor-pointer flex-shrink-0">
+                <AvatarFallback className="text-primary font-bold text-sm">+{remainingClubs}</AvatarFallback>
               </Avatar>
             </TooltipTrigger>
             <TooltipContent>

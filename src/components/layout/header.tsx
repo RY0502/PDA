@@ -84,9 +84,9 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 glass-effect">
-      <div className="container flex h-16 items-center">
-        <div className="flex items-center w-full">
-          <Link href="/" className="mr-10 sm:mr-12 flex items-center space-x-3 group">
+      <div className="container flex h-16 items-center px-4">
+        <div className="flex items-center w-full gap-2">
+          <Link href="/" className="mr-4 sm:mr-10 md:mr-12 flex items-center space-x-3 group flex-shrink-0">
             <div className="relative">
               <div className="absolute inset-0 bg-primary/20 rounded-lg blur-md group-hover:blur-lg transition-all"></div>
               <Bot className="h-8 w-8 text-primary relative" />
@@ -95,7 +95,7 @@ export function Header() {
               PDA
             </span>
           </Link>
-          <nav className="flex items-center space-x-1 sm:space-x-2 text-sm font-medium">
+          <nav className="flex items-center space-x-1 sm:space-x-2 text-sm font-medium flex-1 overflow-x-auto">
             {navLinks.map((link) => (
               <Link
                 key={link.label}
@@ -114,7 +114,7 @@ export function Header() {
               </Link>
             ))}
           </nav>
-          <div className="ml-auto flex items-center">
+          <div className="ml-auto flex items-center flex-shrink-0">
             {userName || userEmail ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
