@@ -95,14 +95,14 @@ export function Header() {
               PDA
             </span>
           </Link>
-          <nav className="flex items-center space-x-1 sm:space-x-2 text-sm font-medium flex-1 overflow-x-auto">
+          <nav className="flex items-center space-x-1 sm:space-x-2 text-sm font-medium flex-1">
             {navLinks.map((link) => (
               <Link
                 key={link.label}
                 href={link.href}
                 onClick={(e) => handleNavClick(e, link.href)}
                 className={cn(
-                  'px-4 py-2 rounded-lg transition-all duration-200',
+                  'px-3 py-2 sm:px-4 sm:py-2 rounded-lg transition-all duration-200',
                   pathname.startsWith('/stocks') && link.label === 'Stocks'
                     ? 'bg-primary text-primary-foreground font-semibold'
                     : pathname === link.href
