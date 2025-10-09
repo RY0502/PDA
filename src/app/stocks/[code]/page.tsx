@@ -321,17 +321,27 @@ function StockCard({
   stock: StockInfo;
   variant: 'gainer' | 'loser';
 }) {
-  const colorClass = variant === 'gainer' ? 'text-green-600' : 'text-red-600';
+  const isGainer = variant === 'gainer';
+  const colorClass = isGainer ? 'text-green-600' : 'text-red-600';
+  const bgClass = isGainer ? 'bg-green-50 dark:bg-green-950/20' : 'bg-red-50 dark:bg-red-950/20';
+  const borderClass = isGainer ? 'border-green-200 dark:border-green-900/30' : 'border-red-200 dark:border-red-900/30';
 
   return (
-    <div className="flex items-center justify-between rounded-md bg-muted p-3">
-      <div>
-        <p className="font-semibold text-foreground">{stock.name}</p>
-        <p className="text-sm text-muted-foreground">{stock.price}</p>
+    <div className={`flex items-center justify-between rounded-xl border ${borderClass} ${bgClass} p-4 transition-all hover:shadow-md group`}>
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-foreground text-sm mb-1 truncate group-hover:text-primary transition-colors">{stock.name}</p>
+        <p className="text-lg font-bold text-foreground">{stock.price}</p>
       </div>
-      <div className={`text-right text-sm font-medium ${colorClass}`}>
-        <p>{stock.change}</p>
-        <p>{stock.changePercent}%</p>
+      <div className={`text-right font-semibold ${colorClass} flex flex-col items-end gap-1`}>
+        <div className="flex items-center gap-1">
+          {isGainer ? (
+            <ArrowUp className="h-4 w-4" />
+          ) : (
+            <ArrowDown className="h-4 w-4" />
+          )}
+          <span className="text-base">{stock.change}</span>
+        </div>
+        <span className="text-sm font-bold">{stock.changePercent}%</span>
       </div>
     </div>
   );
@@ -349,16 +359,18 @@ export default async function StocksPage({
 
   if (!overview) {
     return (
-      <div className="container py-8">
-        <Alert variant="destructive" className="mx-auto max-w-2xl">
-          <LineChart className="h-4 w-4" />
-          <AlertTitle>Error Fetching Data</AlertTitle>
-          <AlertDescription>
+      <div className="container py-12 md:py-16">
+        <Alert variant="destructive" className="mx-auto max-w-2xl shadow-lg">
+          <LineChart className="h-5 w-5" />
+          <AlertTitle className="text-base font-semibold">Error Fetching Data</AlertTitle>
+          <AlertDescription className="text-sm">
             Could not fetch stock market data. The service may be temporarily
-            unavailable.Please try again later.
-            </AlertDescription>
+            unavailable. Please try again later.
+          </AlertDescription>
         </Alert>
-        <WatchlistManager stockCode={stockCode} />
+        <div className="mt-8">
+          <WatchlistManager stockCode={stockCode} />
+        </div>
       </div>
     );
   }
@@ -377,50 +389,55 @@ export default async function StocksPage({
     : [];
 
   return (
-    <div className="container py-8">
-      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-2 text-center md:pb-8">
-        <AreaChart className="h-16 w-16 text-primary" />
-        <h1 className="mt-4 text-3xl font-bold leading-tight tracking-tighter md:text-5xl lg:leading-[1.1]">
+    <div className="container py-12 md:py-16">
+      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4 text-center mb-12">
+        <div className="relative">
+          <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-2xl"></div>
+          <AreaChart className="h-20 w-20 text-primary relative" />
+        </div>
+        <h1 className="font-headline gradient-text">
           Stock Market Overview
         </h1>
-        <p className="max-w-[750px] text-lg text-muted-foreground sm:text-xl">
+        <p className="max-w-2xl text-xl text-muted-foreground leading-relaxed text-balance">
           Today's highlights from the National Stock Exchange (NSE).
         </p>
       </section>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 max-w-7xl mx-auto">
         {overview.watchedStock && (
-          <Card className="lg:col-span-3">
-            <CardHeader>
-              <CardTitle>
+          <Card className="lg:col-span-3 card-hover border-border/50 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl font-headline">
                 Watching:{' '}
-                <span className="text-primary">
+                <span className="gradient-text">
                   {overview.watchedStock.name}
                 </span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex justify-around gap-4 text-center">
-              <div className="flex-1">
-                <p className="text-2xl font-bold text-green-600">
+            <CardContent className="flex justify-around gap-6 text-center">
+              <div className="flex-1 p-6 rounded-xl bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 border border-green-200 dark:border-green-900/30">
+                <p className="text-sm font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Today's High</p>
+                <p className="text-3xl md:text-4xl font-bold text-green-600 font-headline">
                   {overview.watchedStock.high}
                 </p>
-                <p className="text-sm text-muted-foreground">Today's High</p>
               </div>
-              <div className="flex-1">
-                <p className="text-2xl font-bold text-red-600">
+              <div className="flex-1 p-6 rounded-xl bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-950/20 dark:to-red-900/10 border border-red-200 dark:border-red-900/30">
+                <p className="text-sm font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Today's Low</p>
+                <p className="text-3xl md:text-4xl font-bold text-red-600 font-headline">
                   {overview.watchedStock.low}
                 </p>
-                <p className="text-sm text-muted-foreground">Today's Low</p>
               </div>
             </CardContent>
           </Card>
         )}
 
         {sortedLosers.length > 0 && (
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ArrowDown className="h-6 w-6 text-red-600" />
+          <Card className="lg:col-span-1 card-hover border-border/50 bg-card/80 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-3 text-xl font-headline">
+                <div className="p-2 rounded-lg bg-red-100 dark:bg-red-950/30">
+                  <ArrowDown className="h-5 w-5 text-red-600" />
+                </div>
                 Today's Losers
               </CardTitle>
             </CardHeader>
@@ -433,10 +450,12 @@ export default async function StocksPage({
         )}
 
         {sortedGainers.length > 0 && (
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ArrowUp className="h-6 w-6 text-green-600" />
+          <Card className="lg:col-span-2 card-hover border-border/50 bg-card/80 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-3 text-xl font-headline">
+                <div className="p-2 rounded-lg bg-green-100 dark:bg-green-950/30">
+                  <ArrowUp className="h-5 w-5 text-green-600" />
+                </div>
                 Today's Gainers
               </CardTitle>
             </CardHeader>

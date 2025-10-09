@@ -25,10 +25,10 @@ function ArticleCard({ article }: { article: MediumArticle }) {
       : article.author;
 
   return (
-    <Card className="overflow-hidden rounded-lg transition-shadow duration-300 hover:shadow-xl">
-      <CardContent className="p-3">
+    <Card className="overflow-hidden card-hover border-border/50 bg-card/80 backdrop-blur-sm">
+      <CardContent className="p-4">
         <div className="flex gap-4">
-          <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md bg-muted">
+          <div className="relative h-28 w-28 flex-shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-muted to-muted/50">
             {article.imageUrl ? (
               <Image
                 src={article.imageUrl}
@@ -47,18 +47,18 @@ function ArticleCard({ article }: { article: MediumArticle }) {
 
           <div className="flex flex-grow flex-col">
             <div className="flex-grow">
-              <CardTitle className="mb-1 line-clamp-3 text-base leading-tight">
+              <CardTitle className="mb-2 line-clamp-3 text-lg leading-tight font-headline">
                 {article.title}
               </CardTitle>
-              <CardDescription className="line-clamp-2 text-sm">
+              <CardDescription className="line-clamp-2 text-sm leading-relaxed">
                 {article.description}
               </CardDescription>
             </div>
-            <div className="mt-2 flex items-center justify-between gap-2">
+            <div className="mt-3 flex items-center justify-between gap-2">
               <div className="flex-1 min-w-0">
                 {article.author && (
-                  <div className="text-xs text-muted-foreground">
-                    <span className="font-medium">{truncatedAuthor}</span>
+                  <div className="text-xs text-muted-foreground flex items-center gap-1">
+                    <span className="font-semibold text-foreground/80">{truncatedAuthor}</span>
                   </div>
                 )}
               </div>
@@ -66,7 +66,10 @@ function ArticleCard({ article }: { article: MediumArticle }) {
                 href={`https://freedium.cfd/${article.url}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={cn(buttonVariants({ size: 'sm' }), 'flex-shrink-0')}
+                className={cn(
+                  buttonVariants({ size: 'sm' }), 
+                  'flex-shrink-0 shadow-sm hover:shadow-md transition-all'
+                )}
               >
                 Read More
               </Link>
@@ -85,36 +88,36 @@ export default async function Home() {
   const isMock = response?.isMock;
 
   return (
-    <div className="container py-8">
-      <header className="mb-8 text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+    <div className="container py-12 md:py-16">
+      <header className="mb-12 text-center max-w-3xl mx-auto">
+        <h1 className="font-headline gradient-text mb-4">
           Your Daily Brief
         </h1>
-        <p className="mt-4 text-lg text-muted-foreground">
-          The latest articles from Medium, powered by AI.
+        <p className="text-xl text-muted-foreground leading-relaxed text-balance">
+          Discover the latest articles from Medium, curated and powered by AI.
         </p>
       </header>
 
       {isMock && (
-        <Alert className="mb-8">
-          <Terminal className="h-4 w-4" />
-          <AlertTitle>Displaying Mock Data</AlertTitle>
-          <AlertDescription>
+        <Alert className="mb-10 max-w-3xl mx-auto border-primary/20 bg-primary/5">
+          <Terminal className="h-5 w-5 text-primary" />
+          <AlertTitle className="text-base font-semibold">Displaying Mock Data</AlertTitle>
+          <AlertDescription className="text-sm">
             The Gmail API is not configured. To see your latest Medium
             articles, please follow the setup instructions.
           </AlertDescription>
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8 max-w-6xl mx-auto">
         {articles?.map((article) => (
           <ArticleCard key={article.id} article={article} />
         ))}
       </div>
 
       {response && articles?.length === 0 && (
-        <div className="py-12 text-center">
-          <p className="text-muted-foreground">
+        <div className="py-16 text-center">
+          <p className="text-lg text-muted-foreground">
             No articles found in your latest Medium email.
           </p>
         </div>

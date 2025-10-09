@@ -83,28 +83,31 @@ export function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 glass-effect">
+      <div className="container flex h-16 items-center">
         <div className="flex items-center w-full">
-          <Link href="/" className="mr-9 sm:mr-10 flex items-center space-x-2">
-            <Bot className="h-7 w-7 text-primary" />
-            <span className="hidden font-bold sm:inline-block">
-              PersonalDigitalAssistant
+          <Link href="/" className="mr-10 sm:mr-12 flex items-center space-x-3 group">
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary/20 rounded-lg blur-md group-hover:blur-lg transition-all"></div>
+              <Bot className="h-8 w-8 text-primary relative" />
+            </div>
+            <span className="hidden font-bold text-lg sm:inline-block font-headline">
+              PDA
             </span>
           </Link>
-          <nav className="flex items-center space-x-7 sm:space-x-8 text-sm">
+          <nav className="flex items-center space-x-1 sm:space-x-2 text-sm font-medium">
             {navLinks.map((link) => (
               <Link
                 key={link.label}
                 href={link.href}
                 onClick={(e) => handleNavClick(e, link.href)}
                 className={cn(
-                  'transition-colors hover:text-foreground/80',
+                  'px-4 py-2 rounded-lg transition-all duration-200',
                   pathname.startsWith('/stocks') && link.label === 'Stocks'
-                    ? 'font-bold text-foreground'
+                    ? 'bg-primary text-primary-foreground font-semibold'
                     : pathname === link.href
-                    ? 'font-bold text-foreground'
-                    : 'font-medium text-foreground/60'
+                    ? 'bg-primary text-primary-foreground font-semibold'
+                    : 'text-foreground/70 hover:text-foreground hover:bg-secondary/50'
                 )}
               >
                 {link.label}
@@ -117,9 +120,9 @@ export function Header() {
                 <DropdownMenuTrigger asChild>
                   <button
                     aria-label="User menu"
-                    className="inline-flex items-center justify-center rounded-full bg-primary/90 text-primary-foreground h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 select-none"
+                    className="inline-flex items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground h-9 w-9 sm:h-10 sm:w-10 md:h-11 md:w-11 select-none shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
                   >
-                    <span className="text-xs sm:text-sm font-semibold">
+                    <span className="text-sm sm:text-base font-semibold">
                       {(userName ?? userEmail ?? 'U')
                         .split(' ')
                         .slice(0, 2)
