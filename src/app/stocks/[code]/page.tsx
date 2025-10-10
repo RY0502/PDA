@@ -12,6 +12,7 @@ import { GEMINI_API_KEY, ANYCRAWL_API_KEY, WATERCRAWL_API_KEY } from '@/lib/cons
 import { WatchlistManager } from './watchlist-manager';
 
 export const revalidate = 3600; // Revalidate the page every 1 hour
+export const dynamic = 'force-static';
 
 function safeJsonParse(jsonString: string): any | null {
   if (!jsonString) return null;
@@ -60,6 +61,7 @@ async function getEquityPanditMarkdown(stockCode: string): Promise<string | null
           'Content-Type': 'application/json',
           'X-API-Key': WATERCRAWL_API_KEY,
         },
+        next: { revalidate: 3600 },
         body: JSON.stringify({
           url: `https://www.equitypandit.com/share-price/${stockCode}`,
           options: {
@@ -115,6 +117,7 @@ async function getEquityPanditMarkdown(stockCode: string): Promise<string | null
         const response = await fetch(anycrawlUrl, {
           method: 'POST',
           headers,
+          next: { revalidate: 3600 },
           body: JSON.stringify({
             url: urlToScrape,
             engine: engine,
