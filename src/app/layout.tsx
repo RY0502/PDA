@@ -20,8 +20,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head />
-      <body className={cn('min-h-screen bg-background font-body antialiased flex flex-col')}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className={cn('min-h-screen gradient-bg font-body antialiased flex flex-col')}>
         <AuthGate />
         <Header />
         <main className="flex-grow">{children}</main>

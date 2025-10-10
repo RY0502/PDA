@@ -28,26 +28,14 @@ interface ClubWithLogo {
 function NewsListItem({ item }: { item: NewsItem }) {
   const parts = item.text.split(/(\*\*.*?\*\*)/g).filter((part) => part);
   return (
-    <li className="flex items-start gap-2">
-      <svg
-        className="h-5 w-5 flex-shrink-0 text-primary"
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <circle cx="12" cy="12" r="10" />
-        <circle cx="12" cy="12" r="4" />
-      </svg>
-      <span className="flex-1 text-base text-muted-foreground">
+    <li className="flex items-start gap-3 group">
+      <div className="mt-[0.4rem] flex-shrink-0">
+        <div className="h-2 w-2 rounded-full bg-primary group-hover:scale-125 transition-transform"></div>
+      </div>
+      <span className="flex-1 text-base text-foreground/80 leading-relaxed">
         {parts.map((part, i) =>
           part.startsWith('**') && part.endsWith('**') ? (
-            <strong key={i} className="font-semibold text-primary">
+            <strong key={i} className="font-bold text-primary">
               {part.slice(2, -2)}
             </strong>
           ) : (
@@ -68,12 +56,12 @@ function ClubLogos({ clubs, totalClubs }: { clubs: ClubWithLogo[], totalClubs: n
   const remainingClubs = totalClubs - clubs.length;
 
   return (
-    <div className="mx-auto mb-8 flex max-w-3xl flex-wrap items-center justify-center gap-4">
+    <div className="mx-auto mb-10 flex max-w-4xl flex-wrap items-center justify-center gap-3 sm:gap-4">
       <TooltipProvider>
         {clubs.map((club) => (
           <Tooltip key={club.name}>
             <TooltipTrigger asChild>
-              <Avatar key={club.name} className="h-12 w-12 bg-muted">
+              <Avatar className="h-12 w-12 sm:h-14 sm:w-14 bg-gradient-to-br from-muted to-muted/50 border-2 border-border/50 hover:border-primary/50 transition-all hover:scale-110 cursor-pointer shadow-sm flex-shrink-0">
                 <AvatarImage src={club.logoUrl || DEFAULT_FOOTBALL_LOGO_URI} alt={`${club.name} logo`} />
                 <AvatarFallback>
                   <Image src={DEFAULT_FOOTBALL_LOGO_URI} alt="Football logo" width={48} height={48} />
@@ -88,8 +76,8 @@ function ClubLogos({ clubs, totalClubs }: { clubs: ClubWithLogo[], totalClubs: n
         {remainingClubs > 0 && (
            <Tooltip>
             <TooltipTrigger asChild>
-              <Avatar className="h-12 w-12 bg-muted">
-                <AvatarFallback>+{remainingClubs}</AvatarFallback>
+              <Avatar className="h-12 w-12 sm:h-14 sm:w-14 bg-gradient-to-br from-primary/10 to-accent/10 border-2 border-dashed border-primary/30 hover:border-primary/60 transition-all hover:scale-110 cursor-pointer flex-shrink-0">
+                <AvatarFallback className="text-primary font-bold text-sm">+{remainingClubs}</AvatarFallback>
               </Avatar>
             </TooltipTrigger>
             <TooltipContent>
@@ -108,11 +96,11 @@ function NewsSummary({ newsSections }: { newsSections: NewsSection[] }) {
       {newsSections.length > 0 ? (
         <div className="space-y-6">
           {newsSections.map((section, index) => (
-            <div key={index}>
-              <h3 className="text-lg font-semibold tracking-tight text-foreground">
+            <div key={index} className="pb-6 last:pb-0">
+              <h3 className="text-xl font-bold tracking-tight text-foreground mb-4 font-headline">
                 {section.title}
               </h3>
-              <ul className="mt-2 space-y-2">
+              <ul className="space-y-3">
                 {section.items.map((item, itemIndex) => (
                   <NewsListItem key={itemIndex} item={item} />
                 ))}
@@ -160,21 +148,24 @@ export default async function FootballPage() {
   }
 
   return (
-    <div className="container py-8">
-      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-2 text-center md:pb-8">
-        <Newspaper className="h-16 w-16 text-primary" />
-        <h1 className="mt-4 text-3xl font-bold leading-tight tracking-tighter md:text-5xl lg:leading-[1.1]">
+    <div className="container py-12 md:py-16">
+      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4 text-center mb-12">
+        <div className="relative">
+          <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-2xl"></div>
+          <Newspaper className="h-20 w-20 text-primary relative" />
+        </div>
+        <h1 className="font-headline gradient-text">
           Football News
         </h1>
-        <p className="max-w-[750px] text-lg text-muted-foreground sm:text-xl">
+        <p className="max-w-2xl text-xl text-muted-foreground leading-relaxed text-balance">
           The latest headlines and transfer talk from the world of football,
           powered by AI.
         </p>
       </section>
 
-      <div className="py-10">
+      <div className="py-8">
         <ClubLogos clubs={clubsWithLogos} totalClubs={totalClubs} />
-        <Card className="mx-auto max-w-3xl">
+        <Card className="mx-auto max-w-4xl card-hover border-border/50 bg-card/80 backdrop-blur-sm">
           <CardContent className="p-0">
             <SummaryDisplay
               title="Today's Top Stories"
