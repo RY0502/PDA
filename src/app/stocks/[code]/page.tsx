@@ -1,5 +1,3 @@
-
-
 import { unstable_cache } from 'next/cache';
 import {
   type StockMarketOverview,
@@ -16,13 +14,11 @@ export const revalidate = 3600; // Revalidate the page every 1 hour
 function safeJsonParse(jsonString: string): any | null {
   if (!jsonString) return null;
   try {
-    // First, try to find a JSON block wrapped in markdown
     const markdownMatch = jsonString.match(/```json\n([\s\S]*?)\n```/);
     if (markdownMatch && markdownMatch[1]) {
       return JSON.parse(markdownMatch[1]);
     }
 
-    // If no markdown block, find the first '{' and last '}'
     const startIndex = jsonString.indexOf('{');
     const endIndex = jsonString.lastIndexOf('}');
     if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
@@ -30,7 +26,6 @@ function safeJsonParse(jsonString: string): any | null {
       return JSON.parse(potentialJson);
     }
 
-    // Fallback for when the string is just the JSON object itself.
     return JSON.parse(jsonString);
   } catch (error) {
     console.error(
@@ -43,12 +38,11 @@ function safeJsonParse(jsonString: string): any | null {
   }
 }
 
-// Simple sleep utility for retry backoff
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Function to fetch markdown from AnyCrawl/Watercrawl APIs with retries and fallbacks
+// Move this INSIDE the cached function so it's also cached
 async function getEquityPanditMarkdown(stockCode: string): Promise<string | null> {
   let watercrawlRequestUuid: string | null = null;
   if (WATERCRAWL_API_KEY) {
@@ -139,7 +133,6 @@ async function getEquityPanditMarkdown(stockCode: string): Promise<string | null
   if (watercrawlRequestUuid) {
     try {
       console.log('Checking for Watercrawl results...');
-
       const resultsUrl = `https://app.watercrawl.dev/api/v1/core/crawl-requests/${watercrawlRequestUuid}/results/`;
       const resultsResponse = await fetch(resultsUrl, {
         headers: { 'X-API-Key': WATERCRAWL_API_KEY },
@@ -153,7 +146,6 @@ async function getEquityPanditMarkdown(stockCode: string): Promise<string | null
             return markdown;
         }
         console.error('Markdown not found in Watercrawl result:', resultsData);
-
       } else {
          console.error('Failed to fetch Watercrawl results:', resultsResponse.status, await resultsResponse.text());
       }
@@ -166,139 +158,133 @@ async function getEquityPanditMarkdown(stockCode: string): Promise<string | null
   return null;
 }
 
+const getStockData = async (stockCode: string): Promise<StockMarketOverview | null> => {
+  return unstable_cache(
+    async () => {
+      console.log(`Cache MISS for stock: ${stockCode}`);
+      
+      const markdown = await getEquityPanditMarkdown(stockCode);
+      const truncatedMarkdown = markdown ? markdown.substring(0, 5000) : null;
 
-const getStockData = unstable_cache(
-  async (
-    stockCode: string
-  ): Promise<StockMarketOverview | null> => {
-    
-    const markdown = await getEquityPanditMarkdown(stockCode);
-    const truncatedMarkdown = markdown ? markdown.substring(0, 5000) : null;
+      if (!truncatedMarkdown) {
+        return null;
+      }
 
-    if (!truncatedMarkdown) {
-      return null;
-    }
+      if (!GEMINI_API_KEY) {
+        console.error('GEMINI_API_KEY is not set.');
+        return null;
+      }
 
-    if (!GEMINI_API_KEY) {
-      console.error('GEMINI_API_KEY is not set.');
-      return null;
-    }
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
+      const headers = {
+        'x-goog-api-key': GEMINI_API_KEY,
+        'Content-Type': 'application/json',
+      };
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
-    const headers = {
-      'x-goog-api-key': GEMINI_API_KEY,
-      'Content-Type': 'application/json',
-    };
+      const currentDate = new Date().toLocaleDateString('en-IN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
 
-    const currentDate = new Date().toLocaleDateString('en-IN', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+      const prompt = `
+        Provide a stock market overview for the Indian stock market (NSE) for today, ${currentDate} IST.
+        You are an expert data extractor and must return the following information in a structured JSON format only.
 
-    const prompt = `
-      Provide a stock market overview for the Indian stock market (NSE) for today, ${currentDate} IST.
-      You are an expert data extractor and must return the following information in a structured JSON format only.
+        1.  **watchedStock**: Extract only ${currentDate} IST Today's' Low / High price and name for the stock with the code: ${stockCode} from this markdown ${truncatedMarkdown}. The object must contain 'name', 'high', and 'low'.
+        2.  **topGainers**: Get Today's ${currentDate} IST latest list of the top 10 gainers on the NSE based on https://www.hdfcsec.com/market/equity/top-gainer-nse?indicesCode=76394. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
+        3.  **topLosers**: Get Today's ${currentDate} IST latest list of the top 10 losers on the NSE based on https://www.hdfcsec.com/market/equity/top-loser-nse?indicesCode=76394. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
 
-      1.  **watchedStock**: Extract only ${currentDate} IST Today's' Low / High price and name for the stock with the code: ${stockCode} from this markdown ${truncatedMarkdown}. The object must contain 'name', 'high', and 'low'.
-      2.  **topGainers**: Get Today's ${currentDate} IST latest list of the top 10 gainers on the NSE based on https://www.hdfcsec.com/market/equity/top-gainer-nse?indicesCode=76394. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
-      3.  **topLosers**: Get Today's ${currentDate} IST latest list of the top 10 losers on the NSE based on https://www.hdfcsec.com/market/equity/top-loser-nse?indicesCode=76394. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
+        IMPORTANT: Your entire response must be ONLY a single, valid, minified JSON object. Do not include any text, explanations, or markdown formatting like \`\`\`json before or after the JSON object. The response must start with { and end with }.
+      `;
 
-      IMPORTANT: Your entire response must be ONLY a single, valid, minified JSON object. Do not include any text, explanations, or markdown formatting like \`\`\`json before or after the JSON object. The response must start with { and end with }.
-    `;
+      const body = JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        tools: [{ url_context: {}}],
+      });
 
-    const body = JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      tools: [{ url_context: {}}],
-    });
+      try {
+        let response: Response | null = null;
 
-    try {
-      let response: Response | null = null;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          try {
+            response = await fetch(url, {
+              method: 'POST',
+              headers,
+              body,
+            });
 
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        try {
-          response = await fetch(url, {
-            method: 'POST',
-            headers,
-            body,
-          });
-
-          if (response.ok) {
-            break; // success
-          } else {
-            const errorBody = await response.text();
-            if(attempt==3) {
-            console.error(
-              `API request failed (attempt ${attempt}/3):`,
-              response.status,
-              errorBody
-            );
-          }
+            if (response.ok) {
+              break;
+            } else {
+              const errorBody = await response.text();
+              if(attempt==3) {
+                console.error(
+                  `API request failed (attempt ${attempt}/3):`,
+                  response.status,
+                  errorBody
+                );
+              }
+              if (attempt < 3) await sleep(5000);
+            }
+          } catch (err) {
+            console.error(`API request error (attempt ${attempt}/3):`, err);
             if (attempt < 3) await sleep(5000);
           }
-        } catch (err) {
-          console.error(`API request error (attempt ${attempt}/3):`, err);
-          if (attempt < 3) await sleep(5000);
         }
-      }
 
-      if (!response || !response.ok) {
+        if (!response || !response.ok) {
+          return null;
+        }
+
+        const data = await response.json();
+        
+        const content = data.candidates?.[0]?.content;
+        let jsonText = '';
+
+        if (content?.parts?.[0]?.text) {
+          jsonText = content.parts[0].text;
+        } else if (content?.text) {
+          jsonText = content.text;
+        } else {
+          console.warn('No text found in expected format, trying to use full response');
+          jsonText = JSON.stringify(data);
+        }
+
+        if (!jsonText) {
+          console.error('No valid response content found in API response:', data);
+          return null;
+        }
+
+        const overview: StockMarketOverview | null = safeJsonParse(jsonText);
+
+        if (!overview || typeof overview !== 'object') {
+          console.error('Parsed JSON is not a valid object:', overview);
+          return null;
+        }
+
+        if (overview.watchedStock && overview.topGainers && overview.topLosers) {
+          return overview;
+        } else {
+          console.error(
+            'API response was parsed but is missing required fields (watchedStock, topGainers, or topLosers).',
+            overview
+          );
+          return null;
+        }
+
+      } catch (error) {
+        console.error('Error fetching stock market overview:', error);
         return null;
       }
-
-      const data = await response.json();
-      
-      // Handle the Gemini API response format
-      const content = data.candidates?.[0]?.content;
-      let jsonText = '';
-
-      // Try to get text from parts if available (Gemini 1.5+ format)
-      if (content?.parts?.[0]?.text) {
-        jsonText = content.parts[0].text;
-      } 
-      // If no text in parts, try to get it directly from the content (older format)
-      else if (content?.text) {
-        jsonText = content.text;
-      }
-      // If still no text, try to stringify the entire response as a last resort
-      else {
-        console.warn('No text found in expected format, trying to use full response');
-        jsonText = JSON.stringify(data);
-      }
-
-      if (!jsonText) {
-        console.error('No valid response content found in API response:', data);
-        return null;
-      }
-
-      const overview: StockMarketOverview | null = safeJsonParse(jsonText);
-
-      if (!overview || typeof overview !== 'object') {
-        console.error('Parsed JSON is not a valid object:', overview);
-        return null;
-      }
-
-      // Final validation: ensure all required nested properties exist before returning.
-      if (overview.watchedStock && overview.topGainers && overview.topLosers) {
-        return overview;
-      } else {
-        console.error(
-          'API response was parsed but is missing required fields (watchedStock, topGainers, or topLosers).',
-          overview
-        );
-        return null;
-      }
-
-    } catch (error) {
-      console.error('Error fetching stock market overview:', error);
-      return null;
+    },
+    ['stock-overview'], // Cache key prefix
+    { 
+      revalidate: 3600 // Cache for 1 hour
     }
-  },
-  ['stock-overview'], // Cache key prefix
-  { revalidate: 3600 } // Revalidate every 1 hour
-);
-
+  )();
+};
 
 function StockCard({
   stock,
@@ -336,11 +322,12 @@ function StockCard({
 export default async function StocksPage({
   params,
 }: {
-  params: { code: string };
+  params: Promise<{ code: string }>;
 }) {
-   const paramAwait = await params;
-   const stockCodeAwait = await paramAwait.code;
-  const stockCode = stockCodeAwait || 'PVRINOX';
+  const resolvedParams = await params;
+  const stockCode = resolvedParams.code || 'PVRINOX';
+  
+  console.log(`Fetching data for stock: ${stockCode}`);
   const overview = await getStockData(stockCode);
 
   if (!overview) {
@@ -360,6 +347,7 @@ export default async function StocksPage({
       </div>
     );
   }
+  
   const sortedGainers = overview.topGainers
     ? [...overview.topGainers].sort(
         (a, b) => parseFloat(b.change) - parseFloat(a.change)
