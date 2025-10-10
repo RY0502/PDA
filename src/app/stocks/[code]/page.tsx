@@ -147,27 +147,13 @@ async function getEquityPanditMarkdown(stockCode: string): Promise<string | null
 
       if (resultsResponse.ok) {
         const resultsData = await resultsResponse.json();
-        const resultUrl = resultsData.results?.[0]?.result;
-        if (resultUrl) {
-          console.log('Fetching Watercrawl result content...');
-          const contentResponse = await fetch(resultUrl);
-          if (contentResponse.ok) {
-            const contentData = await contentResponse.json();
-             // The prompt asks the model to extract in markdown format.
-             // The result of openai_extract is a JSON object with the extracted data.
-             // We need to find the markdown within this object.
-            const markdown = contentData.markdown;
-                 if(markdown){
-                    console.log('Successfully retrieved markdown from Watercrawl.');
-                    return markdown;
-                 }
-             console.error('Markdown not found in Watercrawl result:', contentData);
-          } else {
-             console.error('Failed to fetch Watercrawl result content:', contentResponse.status, await contentResponse.text());
-          }
-        } else {
-           console.error('Watercrawl result URL not found in API response:', resultsData);
+        const markdown = resultsData.results?.[0]?.markdown
+        if (markdown) {
+            console.log('Successfully retrieved markdown from Watercrawl.');
+            return markdown;
         }
+        console.error('Markdown not found in Watercrawl result:', resultsData);
+
       } else {
          console.error('Failed to fetch Watercrawl results:', resultsResponse.status, await resultsResponse.text());
       }
