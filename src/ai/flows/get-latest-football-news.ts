@@ -56,7 +56,8 @@ export async function getLatestFootballNews(): Promise<GetLatestFootballNewsOutp
   const body = JSON.stringify({
     contents: [
       {
-        parts: [{text: 'Football transfer news and general football news today'}],
+        //parts: [{text: 'Football transfer news and general football news today'}],
+        parts: [{text: 'Football news from top 5 football leagues today'}],
       },
     ],
     tools: [
