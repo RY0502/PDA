@@ -281,9 +281,9 @@ async function getTopGainersLosers(): Promise<{ topGainers: StockInfo[]; topLose
 
   // Only ask for gainers/losers now
   const prompt = `
-    Provide following information for today's ${currentDate} IST NSE stocks:
-    1.  topGainers: Today's latest top 10 gainers on the NSE based on https://www.hdfcsec.com/market/equity/top-gainer-nse?indicesCode=76394. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
-    2.  topLosers: Today's latest top 10 losers on the NSE based on https://www.hdfcsec.com/market/equity/top-loser-nse?indicesCode=76394. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
+    Provide following information for today's ${currentDate} IST NSE stocks data:
+    1.  topGainers: Today's gainers from https://www.hdfcsec.com/market/equity/top-gainer-nse?indicesCode=76394.Extract only first 10. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
+    2.  topLosers: Today's losers from https://www.hdfcsec.com/market/equity/top-loser-nse?indicesCode=76394.Extract only first 10 For each stock, provide 'name', 'price', 'change', and 'changePercent'.
 
     IMPORTANT: Your entire response must be ONLY a single, valid, minified JSON object with two arrays: {"topGainers":[...],"topLosers":[...]}.
     Do not include any text, explanations, or markdown formatting. The response must start with { and end with }.

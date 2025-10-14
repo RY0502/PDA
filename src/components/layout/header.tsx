@@ -16,8 +16,8 @@ import {
 export function Header() {
   const pathname = usePathname();
   const [stocksHref, setStocksHref] = useState('/stocks/PVRINOX');
-  // const [userName, setUserName] = useState<string | null>(null);
-  // const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
     const lastStockCode = localStorage.getItem('lastStockCode');
@@ -35,24 +35,24 @@ export function Header() {
     }
   }, [pathname]);
 
-  // // Load Supabase user session
-  // useEffect(() => {
-  //   let isMounted = true;
-  //   (async () => {
-  //     const { data } = await supabase.auth.getUser();
-  //     if (!isMounted) return;
-  //     setUserName(data.user?.user_metadata?.name ?? null);
-  //     setUserEmail(data.user?.email ?? null);
-  //   })();
-  //   const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
-  //     setUserName(session?.user?.user_metadata?.name ?? null);
-  //     setUserEmail(session?.user?.email ?? null);
-  //   });
-  //   return () => {
-  //     isMounted = false;
-  //     sub.subscription.unsubscribe();
-  //   };
-  // }, []);
+  // Load Supabase user session
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!isMounted) return;
+      setUserName(data.user?.user_metadata?.name ?? null);
+      setUserEmail(data.user?.email ?? null);
+    })();
+    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setUserName(session?.user?.user_metadata?.name ?? null);
+      setUserEmail(session?.user?.email ?? null);
+    });
+    return () => {
+      isMounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
 
   const isSupabaseReferrer = () => {
     if (typeof document === 'undefined') return false;
@@ -62,17 +62,17 @@ export function Header() {
 
   const handleNavClick = async (e: React.MouseEvent, targetHref: string) => {
     // Skip checks for Supabase referrer (e.g., right after OAuth redirect)
-    // if (isSupabaseReferrer()) return;
-    // // If not logged in, initiate Google OAuth and redirect back to desired page
-    // const { data } = await supabase.auth.getUser();
-    // if (!data.user) {
-    //   e.preventDefault();
-    //   const redirectTo = `${window.location.origin}${targetHref}`;
-    //   await supabase.auth.signInWithOAuth({
-    //     provider: 'google',
-    //     options: { redirectTo },
-    //   });
-    // }
+    if (isSupabaseReferrer()) return;
+    // If not logged in, initiate Google OAuth and redirect back to desired page
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) {
+      e.preventDefault();
+      const redirectTo = `${window.location.origin}${targetHref}`;
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo },
+      });
+    }
   };
 
   const navLinks = [
@@ -114,7 +114,7 @@ export function Header() {
               </Link>
             ))}
           </nav>
-          {/* <div className="ml-auto flex items-center flex-shrink-0">
+          <div className="ml-auto flex items-center flex-shrink-0">
             {userName || userEmail ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -145,7 +145,7 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : null}
-          </div> */}
+          </div>
         </div>
       </div>
     </header>
