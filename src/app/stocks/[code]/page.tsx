@@ -1,4 +1,3 @@
-
 import { unstable_cache } from 'next/cache';
 import {
   type StockMarketOverview,
@@ -16,16 +15,21 @@ export const dynamic = 'force-static';
 function safeJsonParse(jsonString: string): any | null {
   if (!jsonString) return null;
   try {
+    // First, try to find a JSON block wrapped in markdown
     const markdownMatch = jsonString.match(/```json\n([\s\S]*?)\n```/);
     if (markdownMatch && markdownMatch[1]) {
       return JSON.parse(markdownMatch[1]);
     }
+
+    // If no markdown block, find the first '{' and last '}'
     const startIndex = jsonString.indexOf('{');
     const endIndex = jsonString.lastIndexOf('}');
     if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
       const potentialJson = jsonString.substring(startIndex, endIndex + 1);
       return JSON.parse(potentialJson);
     }
+
+    // Fallback for when the string is just the JSON object itself.
     return JSON.parse(jsonString);
   } catch (error) {
     console.error(
@@ -38,8 +42,29 @@ function safeJsonParse(jsonString: string): any | null {
   }
 }
 
+// Simple sleep utility for retry backoff
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Fetch with timeout using AbortController (default 45s)
+async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit & { timeoutMs?: number } = {}) {
+  const { timeoutMs = 45000, ...rest } = init;
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(input, { ...rest, signal: controller.signal });
+  } catch (err: any) {
+    const urlStr = typeof input === 'string' ? input : (input as URL).toString();
+    if (err?.name === 'AbortError') {
+      console.error('Request timed out:', urlStr);
+    } else {
+      console.error('Request failed:', urlStr, err);
+    }
+    throw err;
+  } finally {
+    clearTimeout(id);
+  }
 }
 
 type ScrapeResult = {
@@ -47,22 +72,21 @@ type ScrapeResult = {
   text: string;
 } | null;
 
-// Function to fetch text from AnyCrawl/Watercrawl with retries and fallbacks
+// Function to fetch markdown/text from AnyCrawl/Watercrawl APIs with retries and fallbacks
 async function getEquityPanditContent(stockCode: string): Promise<ScrapeResult> {
   let watercrawlRequestUuid: string | null = null;
 
-  // Prepare Watercrawl request (initiate first, use as fallback)
   if (WATERCRAWL_API_KEY) {
     try {
       console.log('Initiating Watercrawl request...');
-      const watercrawlPostResponse = await fetch("https://app.watercrawl.dev/api/v1/core/crawl-requests/", {
+      const watercrawlPostResponse = await fetchWithTimeout("https://app.watercrawl.dev/api/v1/core/crawl-requests/", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-API-Key': WATERCRAWL_API_KEY,
         },
         next: { revalidate: 3600 },
-        keepalive: true,
+        timeoutMs: 45000,
         body: JSON.stringify({
           url: `https://www.equitypandit.com/share-price/${stockCode}`,
           options: {
@@ -103,24 +127,23 @@ async function getEquityPanditContent(stockCode: string): Promise<ScrapeResult> 
     }
   }
 
-  // Try AnyCrawl first with two engines
   if (ANYCRAWL_API_KEY) {
     const anycrawlUrl = "https://api.anycrawl.dev/v1/scrape";
     const headers = {
       'Authorization': `Bearer ${ANYCRAWL_API_KEY}`,
       'Content-Type': 'application/json',
     };
-    const urlToScrape = `https://www.equitypandit.com/historical-data/${stockCode}`;
+    const urlToScrape = `https://www.equitypandit.com/share-price/${stockCode}`;
     const engines = ['playwright', 'puppeteer'];
 
     for (const engine of engines) {
       try {
         console.log(`Attempting to scrape with anycrawl engine: ${engine}...`);
-        const response = await fetch(anycrawlUrl, {
+        const response = await fetchWithTimeout(anycrawlUrl, {
           method: 'POST',
           headers,
           next: { revalidate: 3600 },
-          keepalive: true,
+          timeoutMs: 45000,
           body: JSON.stringify({
             url: urlToScrape,
             engine: engine,
@@ -130,7 +153,7 @@ async function getEquityPanditContent(stockCode: string): Promise<ScrapeResult> 
         if (response.ok) {
           const result = await response.json();
           if (result.data?.markdown) {
-            console.log(`Anyncrawl (${engine}) succeeded.`);
+            console.log(`AnyCrawl (${engine}) succeeded.`);
             return { source: 'anycrawl', text: result.data.markdown as string };
           }
         }
@@ -141,16 +164,15 @@ async function getEquityPanditContent(stockCode: string): Promise<ScrapeResult> 
     }
   }
 
-  // Fallback to Watercrawl results if we initiated a job
   console.error('All AnyCrawl attempts failed. Falling back to Watercrawl results.');
   if (watercrawlRequestUuid) {
     try {
       console.log('Checking for Watercrawl results...');
 
       const resultsUrl = `https://app.watercrawl.dev/api/v1/core/crawl-requests/${watercrawlRequestUuid}/results/`;
-      const resultsResponse = await fetch(resultsUrl, {
+      const resultsResponse = await fetchWithTimeout(resultsUrl, {
         headers: { 'X-API-Key': WATERCRAWL_API_KEY as string },
-        keepalive: true,
+        timeoutMs: 45000,
       });
 
       if (resultsResponse.ok) {
@@ -158,9 +180,12 @@ async function getEquityPanditContent(stockCode: string): Promise<ScrapeResult> 
         const resultUrl = resultsData.results?.[0]?.result;
         if (resultUrl) {
           console.log('Fetching Watercrawl result content...');
-          const contentResponse = await fetch(resultUrl, { keepalive: true });
+          const contentResponse = await fetchWithTimeout(resultUrl, { timeoutMs: 45000 });
           if (contentResponse.ok) {
             const contentData = await contentResponse.json();
+            // The prompt asks the model to extract in markdown format.
+            // The result of openai_extract is a JSON object with the extracted data.
+            // We need to find the markdown within this object.
             const markdown = contentData.markdown as string | undefined;
             if (markdown) {
               console.log('Successfully retrieved markdown from Watercrawl.');
@@ -189,8 +214,6 @@ async function getEquityPanditContent(stockCode: string): Promise<ScrapeResult> 
 function extractLowHighBetweenMarkers(text: string): { low: string; high: string } | null {
   if (!text) return null;
 
-  // Normalize whitespace to ensure robust matching across newlines/extra spaces
-  console.log(text);
   const normalized = text.replace(/\r/g, '');
 
   const startMarker = /Today's Low\s*Today's High/i;
@@ -216,7 +239,6 @@ function extractLowHighBetweenMarkers(text: string): { low: string; high: string
   const numberTokens = slice.match(/[-+]?\d{1,3}(?:,\d{3})*(?:\.\d+)?|[-+]?\d+(?:\.\d+)?/g);
 
   if (!numberTokens || numberTokens.length < 2) {
-    // Sometimes there could be underscores or extra characters; we still only want numeric tokens
     console.error('Could not find two numeric values between markers.');
     return null;
   }
@@ -225,7 +247,6 @@ function extractLowHighBetweenMarkers(text: string): { low: string; high: string
   const lowStr = normalize(numberTokens[0]);
   const highStr = normalize(numberTokens[1]);
 
-  // Validate parsability
   const lowNum = parseFloat(lowStr);
   const highNum = parseFloat(highStr);
   if (Number.isNaN(lowNum) || Number.isNaN(highNum)) {
@@ -233,8 +254,10 @@ function extractLowHighBetweenMarkers(text: string): { low: string; high: string
     return null;
   }
 
-  // Return as strings formatted without commas (consistent display)
-  return { low: lowNum.toFixed(lowStr.includes('.') ? 2 : 2), high: highNum.toFixed(highStr.includes('.') ? 2 : 2) };
+  return {
+    low: lowNum.toFixed(2),
+    high: highNum.toFixed(2),
+  };
 }
 
 async function getTopGainersLosers(): Promise<{ topGainers: StockInfo[]; topLosers: StockInfo[] }> {
@@ -258,7 +281,7 @@ async function getTopGainersLosers(): Promise<{ topGainers: StockInfo[]; topLose
 
   // Only ask for gainers/losers now
   const prompt = `
-    Provide a stock market overview slices ONLY for today's ${currentDate} IST NSE lists:
+    Provide following information for today's ${currentDate} IST NSE stocks:
     1.  topGainers: Today's latest top 10 gainers on the NSE based on https://www.hdfcsec.com/market/equity/top-gainer-nse?indicesCode=76394. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
     2.  topLosers: Today's latest top 10 losers on the NSE based on https://www.hdfcsec.com/market/equity/top-loser-nse?indicesCode=76394. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
 
@@ -268,7 +291,7 @@ async function getTopGainersLosers(): Promise<{ topGainers: StockInfo[]; topLose
 
   const body = JSON.stringify({
     contents: [{ parts: [{ text: prompt }] }],
-    tools: [{ url_context: {} }], // Kept as-is; not passing scraped markup anymore
+    tools: [{ url_context: {}}], // not passing scraped markup anymore
   });
 
   try {
@@ -276,14 +299,15 @@ async function getTopGainersLosers(): Promise<{ topGainers: StockInfo[]; topLose
 
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
-        response = await fetch(url, {
+        response = await fetchWithTimeout(url, {
           method: 'POST',
           headers,
+          timeoutMs: 45000,
           body,
         });
 
         if (response.ok) {
-          break;
+          break; // success
         } else {
           const errorBody = await response.text();
           if (attempt === 3) {
@@ -295,8 +319,12 @@ async function getTopGainersLosers(): Promise<{ topGainers: StockInfo[]; topLose
           }
           if (attempt < 3) await sleep(5000);
         }
-      } catch (err) {
-        console.error(`Gemini API request error (attempt ${attempt}/3):`, err);
+      } catch (err: any) {
+        if (err?.name === 'AbortError') {
+          console.error(`Gemini API request timed out (attempt ${attempt}/3)`);
+        } else {
+          console.error(`Gemini API request error (attempt ${attempt}/3):`, err);
+        }
         if (attempt < 3) await sleep(5000);
       }
     }
@@ -309,6 +337,7 @@ async function getTopGainersLosers(): Promise<{ topGainers: StockInfo[]; topLose
 
     const content = data.candidates?.[0]?.content;
     let jsonText = '';
+
     if (content?.parts?.[0]?.text) {
       jsonText = content.parts[0].text;
     } else if (content?.text) {
@@ -344,7 +373,7 @@ const getStockData = unstable_cache(
     stockCode: string
   ): Promise<StockMarketOverview | null> => {
     try {
-      // Run scraping (watched) and Gemini (gainers/losers) in parallel
+      // Run scraping (watched) and Gemini (gainers/losers) in parallel and compose with allSettled
       const watchedPromise = (async () => {
         try {
           const scraped = await getEquityPanditContent(stockCode);
@@ -366,9 +395,18 @@ const getStockData = unstable_cache(
 
       const glPromise = getTopGainersLosers();
 
-      const [watchedStock, { topGainers, topLosers }] = await Promise.all([watchedPromise, glPromise]);
+      const [watchedRes, glRes] = await Promise.allSettled([watchedPromise, glPromise]);
 
-      // Validate minimal structure before returning
+      const watchedStock =
+        watchedRes.status === 'fulfilled'
+          ? watchedRes.value
+          : { name: stockCode, low: '-', high: '-' };
+
+      const { topGainers, topLosers } =
+        glRes.status === 'fulfilled'
+          ? glRes.value
+          : { topGainers: [], topLosers: [] };
+
       const overview: StockMarketOverview = {
         watchedStock,
         topGainers: Array.isArray(topGainers) ? topGainers : [],
@@ -386,9 +424,10 @@ const getStockData = unstable_cache(
       };
     }
   },
-  ['stock-overview'], // Cache key prefix (kept same to avoid changing existing caching mechanism)
+  ['stock-overview'], // Cache key prefix (kept same to avoid breaking existing caching setup)
   { revalidate: 3600 } // Revalidate every 1 hour
 );
+
 
 function StockCard({
   stock,
@@ -449,13 +488,13 @@ export default async function StocksPage({
     );
   }
 
-  const sortedGainers = overview.topGainers
+  const sortedGainers = Array.isArray(overview.topGainers)
     ? [...overview.topGainers].sort(
         (a, b) => parseFloat(b.change) - parseFloat(a.change)
       )
     : [];
 
-  const sortedLosers = overview.topLosers
+  const sortedLosers = Array.isArray(overview.topLosers)
     ? [...overview.topLosers]
         .filter(
           (stock) => stock.name.toLowerCase() !== 'hdfc bank ltd'
@@ -506,41 +545,39 @@ export default async function StocksPage({
           </Card>
         )}
 
-        {sortedLosers.length > 0 && (
-          <Card className="lg:col-span-1 card-hover border-border/50 bg-card/80 backdrop-blur-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-3 text-xl font-headline">
-                <div className="p-2 rounded-lg bg-red-100 dark:bg-red-950/30">
-                  <ArrowDown className="h-5 w-5 text-red-600" />
-                </div>
-                Today's Losers
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-3">
-              {sortedLosers.map((stock) => (
-                <StockCard key={stock.name} stock={stock} variant="loser" />
-              ))}
-            </CardContent>
-          </Card>
-        )}
+        {/* Always render Losers card, even if empty */}
+        <Card className="lg:col-span-1 card-hover border-border/50 bg-card/80 backdrop-blur-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-3 text-xl font-headline">
+              <div className="p-2 rounded-lg bg-red-100 dark:bg-red-950/30">
+                <ArrowDown className="h-5 w-5 text-red-600" />
+              </div>
+              Today's Losers
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 gap-3">
+            {sortedLosers.map((stock) => (
+              <StockCard key={stock.name} stock={stock} variant="loser" />
+            ))}
+          </CardContent>
+        </Card>
 
-        {sortedGainers.length > 0 && (
-          <Card className="lg:col-span-2 card-hover border-border/50 bg-card/80 backdrop-blur-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-3 text-xl font-headline">
-                <div className="p-2 rounded-lg bg-green-100 dark:bg-green-950/30">
-                  <ArrowUp className="h-5 w-5 text-green-600" />
-                </div>
-                Today's Gainers
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {sortedGainers.map((stock) => (
-                <StockCard key={stock.name} stock={stock} variant="gainer" />
-              ))}
-            </CardContent>
-          </Card>
-        )}
+        {/* Always render Gainers card, even if empty */}
+        <Card className="lg:col-span-2 card-hover border-border/50 bg-card/80 backdrop-blur-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-3 text-xl font-headline">
+              <div className="p-2 rounded-lg bg-green-100 dark:bg-green-950/30">
+                <ArrowUp className="h-5 w-5 text-green-600" />
+              </div>
+              Today's Gainers
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {sortedGainers.map((stock) => (
+              <StockCard key={stock.name} stock={stock} variant="gainer" />
+            ))}
+          </CardContent>
+        </Card>
       </div>
 
       <WatchlistManager stockCode={stockCode} />
