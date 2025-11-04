@@ -291,7 +291,11 @@ async function getTopGainersLosers(): Promise<{ topGainers: StockInfo[]; topLose
 
   const body = JSON.stringify({
     contents: [{ parts: [{ text: prompt }] }],
-    tools: [{ url_context: {}}], // not passing scraped markup anymore
+    tools: [{ url_context: {}}],
+            generationConfig: {
+                thinkingConfig: {
+                thinkingBudget: 0
+            } // not passing scraped markup anymore
   });
 
   try {
