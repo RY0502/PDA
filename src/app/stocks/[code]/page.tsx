@@ -290,13 +290,14 @@ async function getTopGainersLosers(): Promise<{ topGainers: StockInfo[]; topLose
   `;
 
   const body = JSON.stringify({
-    contents: [{ parts: [{ text: prompt }] }],
-    tools: [{ url_context: {}}],
-            generationConfig: {
-                thinkingConfig: {
-                thinkingBudget: 0
-            }, // not passing scraped markup anymore
-  });
+  contents: [{ parts: [{ text: prompt }] }],
+  tools: [{ url_context: {} }],
+  generationConfig: {
+    thinkingConfig: {
+      thinkingBudget: 0,
+    },
+  },
+});
 
   try {
     let response: Response | null = null;
