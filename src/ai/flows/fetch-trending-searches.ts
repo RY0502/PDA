@@ -48,10 +48,6 @@ export async function fetchTrendingSearches(): Promise<TrendingSearchesOutput> {
         google_search: {},
       },
     ],
-            generationConfig: {
-                thinkingConfig: {
-                thinkingBudget: 0
-            }
   });
 
   for (let attempt = 1; attempt <= 3; attempt++) {
