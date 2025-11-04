@@ -295,7 +295,7 @@ async function getTopGainersLosers(): Promise<{ topGainers: StockInfo[]; topLose
             generationConfig: {
                 thinkingConfig: {
                 thinkingBudget: 0
-            } // not passing scraped markup anymore
+            }, // not passing scraped markup anymore
   });
 
   try {
