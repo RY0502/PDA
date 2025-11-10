@@ -40,7 +40,7 @@ export async function fetchTrendingSearches(): Promise<TrendingSearchesOutput> {
   const body = JSON.stringify({
     contents: [
       {
-        parts: [{text: 'Trending today in india.It is important to generate a single line item for each trend. E.g.\nNarendra Modi visit to US is a trending topic.\nFlash floods in Uttrakhand is a topic of recent discussion.'}],
+        parts: [{text: 'Trending today in india.It is important to generate a single line item for each trend.Highlight the main part or noun in the trend.'}],
       },
     ],
     tools: [
