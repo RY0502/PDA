@@ -57,7 +57,9 @@ export async function getLatestFootballNews(): Promise<GetLatestFootballNewsOutp
     contents: [
       {
         //parts: [{text: 'Football transfer news and general football news today'}],
-        parts: [{text: 'Football news from top 5 football leagues today'}],
+        parts: [{text: 'Football news from top 5 football leagues today. It is important to generate a single line item for each news. E.g.
+          Man city defeat liverpool by 3-0.
+          Upcoming Man Utd vs Wolves match on Sunday 4pm CET.'}],
       },
     ],
     tools: [
