@@ -67,28 +67,48 @@ function TrendsSummary({ trendSections }: { trendSections: TrendSection[] }) {
 
 export default async function TrendsPage() {
   const { summary } = await fetchTrendingSearches();
-  const lines = summary.split('\n').filter((item) => item.trim().length > 0);
+  const lines = summary
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((item) => item.length > 0 && !item.startsWith('```') && !item.endsWith('```'));
 
   const trendSections: TrendSection[] = [];
   let currentSection: TrendSection | null = null;
 
-  lines.forEach((line) => {
-    const trimmedLine = line.trim();
-    if (trimmedLine.startsWith('**') && trimmedLine.endsWith('**')) {
-      if (currentSection) {
-        trendSections.push(currentSection);
+  const hasSectionHeaders = lines.some(
+    (line) => line.startsWith('**') && line.endsWith('**')
+  );
+
+  if (hasSectionHeaders) {
+    lines.forEach((line) => {
+      const trimmedLine = line;
+      if (trimmedLine.startsWith('**') && trimmedLine.endsWith('**')) {
+        if (currentSection) {
+          trendSections.push(currentSection);
+        }
+        currentSection = {
+          title: trimmedLine.slice(2, -2),
+          items: [],
+        };
+      } else if (currentSection) {
+        const text = trimmedLine.startsWith('*') || trimmedLine.startsWith('-')
+          ? trimmedLine.slice(1).trim()
+          : trimmedLine;
+        currentSection.items.push({ text });
       }
-      currentSection = {
-        title: trimmedLine.slice(2, -2),
-        items: [],
-      };
-    } else if (currentSection) {
-      const text = trimmedLine.startsWith('*') || trimmedLine.startsWith('-') 
-        ? trimmedLine.slice(1).trim() 
-        : trimmedLine;
-      currentSection.items.push({ text });
-    }
-  });
+    });
+  } else {
+    // Fallback: treat all lines as items under a default section
+    currentSection = {
+      title: "Today's Top Trends",
+      items: lines.map((line) => {
+        const text = line.startsWith('*') || line.startsWith('-')
+          ? line.slice(1).trim()
+          : line;
+        return { text };
+      }),
+    };
+  }
 
   if (currentSection) {
     trendSections.push(currentSection);

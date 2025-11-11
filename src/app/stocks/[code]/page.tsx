@@ -8,6 +8,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AreaChart, ArrowDown, ArrowUp, LineChart } from 'lucide-react';
 import { GEMINI_API_KEY, ANYCRAWL_API_KEY, WATERCRAWL_API_KEY } from '@/lib/constants';
 import { WatchlistManager } from './watchlist-manager';
+import { createClient } from '@/lib/supabase/client';
+import { Suspense } from 'react';
 
 export const revalidate = 3600; // Revalidate the page every 1 hour
 export const dynamic = 'force-static';
@@ -43,395 +45,6 @@ function safeJsonParse(jsonString: string): any | null {
 }
 
 // Simple sleep utility for retry backoff
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-// Fetch with timeout using AbortController (default 45s)
-async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit & { timeoutMs?: number } = {}) {
-  const { timeoutMs = 45000, ...rest } = init;
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(input, { ...rest, signal: controller.signal });
-  } catch (err: any) {
-    const urlStr = typeof input === 'string' ? input : (input as URL).toString();
-    if (err?.name === 'AbortError') {
-      console.error('Request timed out:', urlStr);
-    } else {
-      console.error('Request failed:', urlStr, err);
-    }
-    throw err;
-  } finally {
-    clearTimeout(id);
-  }
-}
-
-type ScrapeResult = {
-  source: 'anycrawl' | 'watercrawl';
-  text: string;
-} | null;
-
-// Function to fetch markdown/text from AnyCrawl/Watercrawl APIs with retries and fallbacks
-async function getEquityPanditContent(stockCode: string): Promise<ScrapeResult> {
-  let watercrawlRequestUuid: string | null = null;
-
-  if (WATERCRAWL_API_KEY) {
-    try {
-      console.log('Initiating Watercrawl request...');
-      const watercrawlPostResponse = await fetchWithTimeout("https://app.watercrawl.dev/api/v1/core/crawl-requests/", {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': WATERCRAWL_API_KEY,
-        },
-        next: { revalidate: 3600 },
-        timeoutMs: 45000,
-        body: JSON.stringify({
-          url: `https://www.equitypandit.com/share-price/${stockCode}`,
-          options: {
-            spider_options: {
-              max_depth: 1,
-              page_limit: 1,
-            },
-            page_options: {
-              wait_time: 1000,
-              only_main_content: true,
-              timeout: 15000,
-            },
-            plugin_options: {
-              openai_extract: {
-                is_active: true,
-                llm_model: "gpt-4o",
-                extractor_schema: {
-                  type: "object",
-                  properties: { title: { type: "string" } },
-                  required: ["title"],
-                },
-                prompt: "Extract the stock name, Today's High and Today's low value in markdown format",
-              },
-            },
-          },
-        })
-      });
-
-      if (watercrawlPostResponse.ok) {
-        const responseData = await watercrawlPostResponse.json();
-        watercrawlRequestUuid = responseData.uuid;
-        console.log(`Watercrawl request initiated with UUID: ${watercrawlRequestUuid}`);
-      } else {
-        console.error('Failed to initiate Watercrawl request:', watercrawlPostResponse.status, await watercrawlPostResponse.text());
-      }
-    } catch (error) {
-      console.error('Error initiating Watercrawl request:', error);
-    }
-  }
-
-  if (ANYCRAWL_API_KEY) {
-    const anycrawlUrl = "https://api.anycrawl.dev/v1/scrape";
-    const headers = {
-      'Authorization': `Bearer ${ANYCRAWL_API_KEY}`,
-      'Content-Type': 'application/json',
-    };
-    const urlToScrape = `https://www.equitypandit.com/share-price/${stockCode}`;
-    const engines = ['playwright', 'puppeteer'];
-
-    for (const engine of engines) {
-      try {
-        console.log(`Attempting to scrape with anycrawl engine: ${engine}...`);
-        const response = await fetchWithTimeout(anycrawlUrl, {
-          method: 'POST',
-          headers,
-          next: { revalidate: 3600 },
-          timeoutMs: 45000,
-          body: JSON.stringify({
-            url: urlToScrape,
-            engine: engine,
-          }),
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          if (result.data?.markdown) {
-            console.log(`AnyCrawl (${engine}) succeeded.`);
-            return { source: 'anycrawl', text: result.data.markdown as string };
-          }
-        }
-        console.error(`AnyCrawl request with ${engine} failed:`, response.status, await response.text());
-      } catch (error) {
-        console.error(`Error during AnyCrawl request with ${engine}:`, error);
-      }
-    }
-  }
-
-  console.error('All AnyCrawl attempts failed. Falling back to Watercrawl results.');
-  if (watercrawlRequestUuid) {
-    try {
-      console.log('Checking for Watercrawl results...');
-
-      const resultsUrl = `https://app.watercrawl.dev/api/v1/core/crawl-requests/${watercrawlRequestUuid}/results/`;
-      const resultsResponse = await fetchWithTimeout(resultsUrl, {
-        headers: { 'X-API-Key': WATERCRAWL_API_KEY as string },
-        timeoutMs: 45000,
-      });
-
-      if (resultsResponse.ok) {
-        const resultsData = await resultsResponse.json();
-        const resultUrl = resultsData.results?.[0]?.result;
-        if (resultUrl) {
-          console.log('Fetching Watercrawl result content...');
-          const contentResponse = await fetchWithTimeout(resultUrl, { timeoutMs: 45000 });
-          if (contentResponse.ok) {
-            const contentData = await contentResponse.json();
-            // The prompt asks the model to extract in markdown format.
-            // The result of openai_extract is a JSON object with the extracted data.
-            // We need to find the markdown within this object.
-            const markdown = contentData.markdown as string | undefined;
-            if (markdown) {
-              console.log('Successfully retrieved markdown from Watercrawl.');
-              return { source: 'watercrawl', text: markdown };
-            }
-            console.error('Markdown not found in Watercrawl result:', contentData);
-          } else {
-            console.error('Failed to fetch Watercrawl result content:', contentResponse.status, await contentResponse.text());
-          }
-        } else {
-          console.error('Watercrawl result URL not found in API response:', resultsData);
-        }
-      } else {
-        console.error('Failed to fetch Watercrawl results:', resultsResponse.status, await resultsResponse.text());
-      }
-    } catch (error) {
-      console.error('Error fetching Watercrawl results:', error);
-    }
-  }
-
-  console.error('All scraping attempts failed.');
-  return null;
-}
-
-// Extract the first two numbers between the two marker phrases
-function extractLowHighBetweenMarkers(text: string): { low: string; high: string } | null {
-  if (!text) return null;
-
-  const normalized = text.replace(/\r/g, '');
-
-  const startMarker = /Today's Low\s*Today's High/i;
-  const endMarker = /52W Low\s*52W High/i;
-
-  const startMatch = startMarker.exec(normalized);
-  const endMatch = endMarker.exec(normalized);
-
-  if (!startMatch || !endMatch) {
-    console.error('Markers not found while extracting low/high.');
-    return null;
-  }
-  const startIdx = startMatch.index + startMatch[0].length;
-  const endIdx = endMatch.index;
-  if (endIdx <= startIdx) {
-    console.error('Invalid marker range while extracting low/high.');
-    return null;
-  }
-
-  const slice = normalized.slice(startIdx, endIdx);
-
-  // Find numeric tokens like 1,091.30 or 1110.60, optional +/-, commas, decimals.
-  const numberTokens = slice.match(/[-+]?\d{1,3}(?:,\d{3})*(?:\.\d+)?|[-+]?\d+(?:\.\d+)?/g);
-
-  if (!numberTokens || numberTokens.length < 2) {
-    console.error('Could not find two numeric values between markers.');
-    return null;
-  }
-
-  const normalize = (s: string) => s.replace(/,/g, '').trim();
-  const lowStr = normalize(numberTokens[0]);
-  const highStr = normalize(numberTokens[1]);
-
-  const lowNum = parseFloat(lowStr);
-  const highNum = parseFloat(highStr);
-  if (Number.isNaN(lowNum) || Number.isNaN(highNum)) {
-    console.error('Parsed numbers are invalid:', { lowStr, highStr });
-    return null;
-  }
-
-  return {
-    low: lowNum.toFixed(2),
-    high: highNum.toFixed(2),
-  };
-}
-
-async function getTopGainersLosers(): Promise<{ topGainers: StockInfo[]; topLosers: StockInfo[] }> {
-  if (!GEMINI_API_KEY) {
-    console.error('GEMINI_API_KEY is not set.');
-    return { topGainers: [], topLosers: [] };
-  }
-
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
-  const headers = {
-    'x-goog-api-key': GEMINI_API_KEY,
-    'Content-Type': 'application/json',
-  };
-
-  const currentDate = new Date().toLocaleDateString('en-IN', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-
-  // Only ask for gainers/losers now
-  const prompt = `
-    Provide following information for today's ${currentDate} IST NSE stocks data:
-    1.  topGainers: Today's gainers from https://www.hdfcsec.com/market/equity/top-gainer-nse?indicesCode=76394.Extract only first 10. For each stock, provide 'name', 'price', 'change', and 'changePercent'.
-    2.  topLosers: Today's losers from https://www.hdfcsec.com/market/equity/top-loser-nse?indicesCode=76394.Extract only first 10 For each stock, provide 'name', 'price', 'change', and 'changePercent'.
-
-    IMPORTANT: Your entire response must be ONLY a single, valid, minified JSON object with two arrays: {"topGainers":[...],"topLosers":[...]}.
-    Do not include any text, explanations, or markdown formatting. The response must start with { and end with }.
-  `;
-
-  const body = JSON.stringify({
-  contents: [{ parts: [{ text: prompt }] }],
-  tools: [{ url_context: {} }],
-  generationConfig: {
-    thinkingConfig: {
-      thinkingBudget: 0,
-    },
-  },
-});
-
-  try {
-    let response: Response | null = null;
-
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        response = await fetchWithTimeout(url, {
-          method: 'POST',
-          headers,
-          timeoutMs: 45000,
-          body,
-        });
-
-        if (response.ok) {
-          break; // success
-        } else {
-          const errorBody = await response.text();
-          if (attempt === 3) {
-            console.error(
-              `Gemini API request failed (attempt ${attempt}/3):`,
-              response.status,
-              errorBody
-            );
-          }
-          if (attempt < 3) await sleep(5000);
-        }
-      } catch (err: any) {
-        if (err?.name === 'AbortError') {
-          console.error(`Gemini API request timed out (attempt ${attempt}/3)`);
-        } else {
-          console.error(`Gemini API request error (attempt ${attempt}/3):`, err);
-        }
-        if (attempt < 3) await sleep(5000);
-      }
-    }
-
-    if (!response || !response.ok) {
-      return { topGainers: [], topLosers: [] };
-    }
-
-    const data = await response.json();
-
-    const content = data.candidates?.[0]?.content;
-    let jsonText = '';
-
-    if (content?.parts?.[0]?.text) {
-      jsonText = content.parts[0].text;
-    } else if (content?.text) {
-      jsonText = content.text;
-    } else {
-      console.warn('No text found in expected format for Gemini response; attempting to stringify entire response');
-      jsonText = JSON.stringify(data);
-    }
-
-    if (!jsonText) {
-      console.error('No valid response content found in Gemini API response:', data);
-      return { topGainers: [], topLosers: [] };
-    }
-
-    const parsed = safeJsonParse(jsonText);
-    if (!parsed || typeof parsed !== 'object') {
-      console.error('Parsed JSON is not a valid object for gainers/losers:', parsed);
-      return { topGainers: [], topLosers: [] };
-    }
-
-    const topGainers: StockInfo[] = Array.isArray(parsed.topGainers) ? parsed.topGainers : [];
-    const topLosers: StockInfo[] = Array.isArray(parsed.topLosers) ? parsed.topLosers : [];
-
-    return { topGainers, topLosers };
-  } catch (error) {
-    console.error('Error fetching top gainers/losers from Gemini:', error);
-    return { topGainers: [], topLosers: [] };
-  }
-}
-
-const getStockData = unstable_cache(
-  async (
-    stockCode: string
-  ): Promise<StockMarketOverview | null> => {
-    try {
-      // Run scraping (watched) and Gemini (gainers/losers) in parallel and compose with allSettled
-      const watchedPromise = (async () => {
-        try {
-          const scraped = await getEquityPanditContent(stockCode);
-          if (!scraped || !scraped.text) {
-            console.error('Scrape content unavailable for watched stock.');
-            return { name: stockCode, low: '-', high: '-' };
-          }
-          const extracted = extractLowHighBetweenMarkers(scraped.text);
-          if (!extracted) {
-            console.error('Extraction failed for watched stock low/high.');
-            return { name: stockCode, low: '-', high: '-' };
-          }
-          return { name: stockCode, low: extracted.low, high: extracted.high };
-        } catch (e) {
-          console.error('Error while scraping/extracting watched stock:', e);
-          return { name: stockCode, low: '-', high: '-' };
-        }
-      })();
-
-      const glPromise = getTopGainersLosers();
-
-      const [watchedRes, glRes] = await Promise.allSettled([watchedPromise, glPromise]);
-
-      const watchedStock =
-        watchedRes.status === 'fulfilled'
-          ? watchedRes.value
-          : { name: stockCode, low: '-', high: '-' };
-
-      const { topGainers, topLosers } =
-        glRes.status === 'fulfilled'
-          ? glRes.value
-          : { topGainers: [], topLosers: [] };
-
-      const overview: StockMarketOverview = {
-        watchedStock,
-        topGainers: Array.isArray(topGainers) ? topGainers : [],
-        topLosers: Array.isArray(topLosers) ? topLosers : [],
-      };
-
-      return overview;
-    } catch (error) {
-      console.error('Error building stock market overview:', error);
-      // Return structure that lets the page render
-      return {
-        watchedStock: { name: stockCode, low: '-', high: '-' },
-        topGainers: [],
-        topLosers: [],
-      };
-    }
-  },
-  ['stock-overview'], // Cache key prefix (kept same to avoid breaking existing caching setup)
-  { revalidate: 3600 } // Revalidate every 1 hour
-);
 
 
 function StockCard({
@@ -467,14 +80,25 @@ function StockCard({
   );
 }
 
-export default async function StocksPage({
-  params,
-}: {
-  params: { code: string };
-}) {
-  const stockCode = params.code || 'PVRINOX';
-  const overview = await getStockData(stockCode);
+const getStockData = unstable_cache(
+  async (stockCode: string): Promise<StockMarketOverview | null> => {
+    const supabase = createClient();
+    const { data, error } = await supabase.functions.invoke('read-stock-data', {
+      body: { stockCode },
+    });
 
+    if (error) {
+      console.error('Error fetching stock data:', error);
+      return null;
+    }
+
+    return data;
+  },
+  ['stock-overview'],
+  { revalidate: 3600 }
+);
+
+function OverviewPageContent({ overview, stockCode }: { overview: StockMarketOverview | null, stockCode: string }) {
   if (!overview) {
     return (
       <div className="container py-12 md:py-16">
@@ -493,7 +117,7 @@ export default async function StocksPage({
     );
   }
 
-  const sortedGainers = Array.isArray(overview.topGainers)
+  const sortedGainers = overview.topGainers
     ? [...overview.topGainers].sort(
         (a, b) => parseFloat(b.change) - parseFloat(a.change)
       )
@@ -587,5 +211,246 @@ export default async function StocksPage({
 
       <WatchlistManager stockCode={stockCode} />
     </div>
+  );
+}
+
+function StocksPageSkeleton() {
+  return (
+    <div className="container py-12 md:py-16">
+      <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4 text-center mb-12">
+        <div className="relative">
+          <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-2xl"></div>
+          <div className="h-20 w-20 bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse"></div>
+        </div>
+        <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded-md w-3/4 animate-pulse"></div>
+        <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded-md w-1/2 animate-pulse mt-2"></div>
+      </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 max-w-7xl mx-auto">
+        <div className="lg:col-span-3 h-48 bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse"></div>
+        <div className="lg:col-span-1 h-96 bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse"></div>
+        <div className="lg:col-span-2 h-96 bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse"></div>
+      </div>
+    </div>
+  );
+}
+
+async function getWatchedStock(stockCode: string): Promise<StockInfo | null> {
+  const cached = unstable_cache(
+    async (): Promise<StockInfo | null> => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('watched_stocks')
+        .select('*')
+        .eq('code', stockCode)
+        .single();
+
+      if (error) {
+        console.error('Error fetching watched stock:', error);
+        return null;
+      }
+      return data as StockInfo;
+    },
+    ['watched-stock', stockCode],
+    { revalidate: 3600 }
+  );
+  return cached();
+}
+
+const getTopGainers = unstable_cache(
+  async (): Promise<StockInfo[] | null> => {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('top_gainers')
+      .select('*')
+      .order('updated_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching top gainers:', error);
+      return null;
+    }
+    const mapped = (data ?? []).map((row: any) => ({
+      name: row.name,
+      price: row.price,
+      change: row.change,
+      changePercent: row.change_percent,
+      updated_at: row.updated_at,
+    }));
+    return mapped as unknown as StockInfo[];
+  },
+  ['top-gainers'],
+  { revalidate: 3600 }
+);
+
+const getTopLosers = unstable_cache(
+  async (): Promise<StockInfo[] | null> => {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('top_losers')
+      .select('*')
+      .order('updated_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching top losers:', error);
+      return null;
+    }
+    const mapped = (data ?? []).map((row: any) => ({
+      name: row.name,
+      price: row.price,
+      change: row.change,
+      changePercent: row.change_percent,
+      updated_at: row.updated_at,
+    }));
+    return mapped as unknown as StockInfo[];
+  },
+  ['top-losers'],
+  { revalidate: 3600 }
+);
+
+function PageContent({
+  watchedStock,
+  topGainers,
+  topLosers,
+  stockCode,
+}: {
+  watchedStock: StockInfo | null;
+  topGainers: StockInfo[] | null;
+  topLosers: StockInfo[] | null;
+  stockCode: string;
+}) {
+  const uniqueByName = (list: StockInfo[] | null): StockInfo[] => {
+    if (!list) return [];
+    const map = new Map<string, StockInfo>();
+    for (const item of list) {
+      const key = item.name.toLowerCase();
+      const prev = map.get(key);
+      const prevTime = prev && (prev as any).updated_at ? new Date((prev as any).updated_at).getTime() : -Infinity;
+      const currTime = (item as any).updated_at ? new Date((item as any).updated_at).getTime() : -Infinity;
+      if (!prev || currTime > prevTime) {
+        map.set(key, item);
+      }
+    }
+    return Array.from(map.values());
+  };
+
+  const sortedGainers = uniqueByName(topGainers)
+    ? [...uniqueByName(topGainers)].sort(
+        (a, b) => parseFloat(b.change) - parseFloat(a.change)
+      )
+    : [];
+
+  const sortedLosers = uniqueByName(topLosers)
+    ? [...uniqueByName(topLosers)]
+        .filter(
+          (stock) => stock.name.toLowerCase() !== 'hdfc bank ltd'
+        )
+        .sort((a, b) => parseFloat(a.change) - parseFloat(b.change))
+    : [];
+
+  return (
+    <div className="container py-12 md:py-16">
+      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4 text-center mb-12">
+        <div className="relative">
+          <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-2xl"></div>
+          <AreaChart className="h-20 w-20 text-primary relative" />
+        </div>
+        <h1 className="font-headline gradient-text">
+          Stock Market Overview
+        </h1>
+        <p className="max-w-2xl text-xl text-muted-foreground leading-relaxed text-balance">
+          Today's highlights from the National Stock Exchange (NSE).
+        </p>
+      </section>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 max-w-7xl mx-auto">
+        {watchedStock && (
+          <Card className="lg:col-span-3 card-hover border-border/50 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl font-headline">
+                Watching:{' '}
+                <span className="gradient-text">
+                  {watchedStock.name}
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-around gap-6 text-center">
+              <div className="flex-1 p-6 rounded-xl bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 border border-green-200 dark:border-green-900/30">
+                <p className="text-sm font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Today's High</p>
+                <p className="text-3xl md:text-4xl font-bold text-green-600 font-headline">
+                  {watchedStock.high}
+                </p>
+              </div>
+              <div className="flex-1 p-6 rounded-xl bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-950/20 dark:to-red-900/10 border border-red-200 dark:border-red-900/30">
+                <p className="text-sm font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Today's Low</p>
+                <p className="text-3xl md:text-4xl font-bold text-red-600 font-headline">
+                  {watchedStock.low}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {sortedLosers.length > 0 && (
+          <Card className="lg:col-span-1 card-hover border-border/50 bg-card/80 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-3 text-xl font-headline">
+                <div className="p-2 rounded-lg bg-red-100 dark:bg-red-950/30">
+                  <ArrowDown className="h-5 w-5 text-red-600" />
+                </div>
+                Today's Losers
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 gap-3">
+              {sortedLosers.map((stock) => (
+                <StockCard key={`${stock.name}-${(stock as any).updated_at ?? ''}`} stock={stock} variant="loser" />
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {sortedGainers.length > 0 && (
+          <Card className="lg:col-span-2 card-hover border-border/50 bg-card/80 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-3 text-xl font-headline">
+                <div className="p-2 rounded-lg bg-green-100 dark:bg-green-950/30">
+                  <ArrowUp className="h-5 w-5 text-green-600" />
+                </div>
+                Today's Gainers
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {sortedGainers.map((stock) => (
+                <StockCard key={`${stock.name}-${(stock as any).updated_at ?? ''}`} stock={stock} variant="gainer" />
+              ))}
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      <WatchlistManager stockCode={stockCode} />
+    </div>
+  );
+}
+
+export default async function StocksPage({
+  params,
+}: {
+  params: { code: string };
+}) {
+  const stockCode = params.code || 'PVRINOX';
+  const [watchedStock, topGainers, topLosers] = await Promise.all([
+    getWatchedStock(stockCode),
+    getTopGainers(),
+    getTopLosers(),
+  ]);
+
+  return (
+    <Suspense fallback={<StocksPageSkeleton />}>
+      <PageContent
+        watchedStock={watchedStock}
+        topGainers={topGainers}
+        topLosers={topLosers}
+        stockCode={stockCode}
+      />
+    </Suspense>
   );
 }

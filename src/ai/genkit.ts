@@ -4,5 +4,5 @@ import { GEMINI_API_KEY } from '@/lib/constants';
 
 export const ai = genkit({
   plugins: [googleAI({ apiKey: GEMINI_API_KEY })],
-  model: 'googleai/gemini-2.0-flash',
+  model: 'googleai/gemini-2.5-flash',
 });

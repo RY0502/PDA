@@ -22,6 +22,9 @@ const conversionPrompt = ai.definePrompt({
   name: 'conversionPrompt',
   input: {schema: ConvertSummaryInputSchema},
   output: {schema: ConvertSummaryOutputSchema},
+  config: {
+      thinkingBudget: 0,
+    },
   prompt: `
     You are an AI assistant that enhances text by converting important news events and topics into Google search links.
     For the given HTML, identify key terms that represent significant news items and wrap them in anchor tags that link to a Google search for that term.
