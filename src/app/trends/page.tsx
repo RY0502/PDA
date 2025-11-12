@@ -2,6 +2,7 @@ import { fetchTrendingSearches } from '@/ai/flows/fetch-trending-searches';
 import { Card, CardContent } from '@/components/ui/card';
 import { SummaryDisplay } from '@/components/summary-display';
 import { TrendingUp } from 'lucide-react';
+import Link from 'next/link';
 
 // Revalidate the page every hour
 export const revalidate = 3600;
@@ -16,29 +17,39 @@ interface TrendSection {
 }
 
 // Component to render a single trend item with bullet point
+function slugify(text: string) {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .slice(0, 80);
+}
+
 function TrendListItem({ item }: { item: TrendItem }) {
   const parts = item.text.split(/(\*\*.*?\*\*)/g).filter((part) => part);
+  const href = `/trends/news/${slugify(item.text)}?title=${encodeURIComponent(item.text)}`;
   return (
     <li className="flex items-start gap-3 group">
       <div className="mt-[0.4rem] flex-shrink-0">
         <div className="h-2 w-2 rounded-full bg-primary group-hover:scale-125 transition-transform"></div>
       </div>
-      <span className="flex-1 text-base text-foreground/80 leading-relaxed">
+      <Link href={href} className="flex-1 text-base text-foreground/80 leading-relaxed cursor-pointer hover:underline">
         {parts.map((part, i) =>
           part.startsWith('**') && part.endsWith('**') ? (
             <strong key={i} className="font-bold text-primary">
               {part.slice(2, -2)}
             </strong>
           ) : (
-            part
+            <span key={i}>{part}</span>
           )
         )}
-      </span>
+      </Link>
     </li>
   );
 }
 
-function TrendsSummary({ trendSections }: { trendSections: TrendSection[] }) {
+function TrendsSummary({ trendSections, fallbackMessage }: { trendSections: TrendSection[], fallbackMessage?: string }) {
   return (
     <>
       {trendSections.length > 0 ? (
@@ -58,7 +69,7 @@ function TrendsSummary({ trendSections }: { trendSections: TrendSection[] }) {
         </div>
       ) : (
         <p className="text-muted-foreground">
-          No trends to display at the moment.
+          {fallbackMessage ?? 'No trends to display at the moment.'}
         </p>
       )}
     </>
@@ -66,7 +77,16 @@ function TrendsSummary({ trendSections }: { trendSections: TrendSection[] }) {
 }
 
 export default async function TrendsPage() {
-  const { summary } = await fetchTrendingSearches();
+  let summary = '';
+  let fallbackMessage: string | undefined;
+
+  try {
+    const res = await fetchTrendingSearches();
+    summary = res.summary;
+  } catch (_err) {
+    // When upstream Gemini is unavailable (e.g., 503), show a friendly message
+    fallbackMessage = 'Trends will be available shortly. Please check back later.';
+  }
   const lines = summary
     .split('\n')
     .map((l) => l.trim())
@@ -134,7 +154,8 @@ export default async function TrendsPage() {
           <CardContent className="p-0">
             <SummaryDisplay
               title="Today's Top Trends"
-              initialContent={<TrendsSummary trendSections={trendSections} />}
+              initialContent={<TrendsSummary trendSections={trendSections} fallbackMessage={fallbackMessage} />}
+              hideConvertButton
             />
           </CardContent>
         </Card>

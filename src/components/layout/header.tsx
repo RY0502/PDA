@@ -103,9 +103,10 @@ export function Header() {
                 onClick={(e) => handleNavClick(e, link.href)}
                 className={cn(
                   'px-3 py-2 sm:px-4 sm:py-2 rounded-lg transition-all duration-200',
-                  pathname.startsWith('/stocks') && link.label === 'Stocks'
-                    ? 'bg-primary text-primary-foreground font-semibold'
-                    : pathname === link.href
+                  (pathname.startsWith('/stocks') && link.label === 'Stocks') ||
+                  (pathname.startsWith('/football') && link.label === 'Football') ||
+                  (pathname.startsWith('/trends') && link.label === 'Trends') ||
+                  pathname === link.href
                     ? 'bg-primary text-primary-foreground font-semibold'
                     : 'text-foreground/70 hover:text-foreground hover:bg-secondary/50'
                 )}

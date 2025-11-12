@@ -11,11 +11,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 interface SummaryDisplayProps {
   initialContent: ReactNode;
   title: string;
+  hideConvertButton?: boolean;
 }
 
 export function SummaryDisplay({
   initialContent,
   title,
+  hideConvertButton = false,
 }: SummaryDisplayProps) {
   const [content, setContent] = useState<ReactNode>(initialContent);
   const [isConverted, setIsConverted] = useState(false);
@@ -86,7 +88,7 @@ export function SummaryDisplay({
         <h3 className="text-lg font-semibold tracking-tight text-foreground">
           {title}
         </h3>
-        {!isConverted && (
+        {!isConverted && !hideConvertButton && (
           <Button
             variant="ghost"
             size="sm"

@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Newspaper } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { DEFAULT_FOOTBALL_LOGO_URI } from '@/lib/constants';
 import { SummaryDisplay } from '@/components/summary-display';
 
@@ -25,24 +26,34 @@ interface ClubWithLogo {
 }
 
 // A component to render a single news item, handling team name highlighting
+function slugify(text: string) {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .slice(0, 80);
+}
+
 function NewsListItem({ item }: { item: NewsItem }) {
   const parts = item.text.split(/(\*\*.*?\*\*)/g).filter((part) => part);
+  const href = `/football/news/${slugify(item.text)}?title=${encodeURIComponent(item.text)}`;
   return (
     <li className="flex items-start gap-3 group">
       <div className="mt-[0.4rem] flex-shrink-0">
         <div className="h-2 w-2 rounded-full bg-primary group-hover:scale-125 transition-transform"></div>
       </div>
-      <span className="flex-1 text-base text-foreground/80 leading-relaxed">
+      <Link href={href} className="flex-1 text-base text-foreground/80 leading-relaxed cursor-pointer hover:underline">
         {parts.map((part, i) =>
           part.startsWith('**') && part.endsWith('**') ? (
             <strong key={i} className="font-bold text-primary">
               {part.slice(2, -2)}
             </strong>
           ) : (
-            part
+            <span key={i}>{part}</span>
           )
         )}
-      </span>
+      </Link>
     </li>
   );
 }
@@ -90,7 +101,7 @@ function ClubLogos({ clubs, totalClubs }: { clubs: ClubWithLogo[], totalClubs: n
   );
 }
 
-function NewsSummary({ newsSections }: { newsSections: NewsSection[] }) {
+function NewsSummary({ newsSections, fallbackMessage }: { newsSections: NewsSection[], fallbackMessage?: string }) {
   return (
     <>
       {newsSections.length > 0 ? (
@@ -110,7 +121,7 @@ function NewsSummary({ newsSections }: { newsSections: NewsSection[] }) {
         </div>
       ) : (
         <p className="text-muted-foreground">
-          No news to display at the moment.
+          {fallbackMessage ?? 'No news to display at the moment.'}
         </p>
       )}
     </>
@@ -118,7 +129,20 @@ function NewsSummary({ newsSections }: { newsSections: NewsSection[] }) {
 }
 
 export default async function FootballPage() {
-  const { summary, clubsWithLogos, totalClubs } = await getLatestFootballNews();
+  let summary = '';
+  let clubsWithLogos: ClubWithLogo[] = [];
+  let totalClubs = 0;
+  let fallbackMessage: string | undefined;
+
+  try {
+    const res = await getLatestFootballNews();
+    summary = res.summary;
+    clubsWithLogos = res.clubsWithLogos;
+    totalClubs = res.totalClubs;
+  } catch (_err) {
+    // When upstream Gemini is unavailable (e.g., 503), show a friendly message
+    fallbackMessage = 'News will be available shortly. Please check back later.';
+  }
   const lines = summary.split('\n').filter((item) => item.trim().length > 0);
 
   const newsSections: NewsSection[] = [];
@@ -169,7 +193,8 @@ export default async function FootballPage() {
           <CardContent className="p-0">
             <SummaryDisplay
               title="Today's Top Stories"
-              initialContent={<NewsSummary newsSections={newsSections} />}
+              initialContent={<NewsSummary newsSections={newsSections} fallbackMessage={fallbackMessage} />}
+              hideConvertButton
             />
           </CardContent>
         </Card>
