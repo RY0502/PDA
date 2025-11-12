@@ -30,11 +30,14 @@ function TrendListItem({ item }: { item: TrendItem }) {
   const parts = item.text.split(/(\*\*.*?\*\*)/g).filter((part) => part);
   const href = `/trends/news/${slugify(item.text)}?title=${encodeURIComponent(item.text)}`;
   return (
-    <li className="flex items-start gap-3 group">
-      <div className="mt-[0.4rem] flex-shrink-0">
-        <div className="h-2 w-2 rounded-full bg-primary group-hover:scale-125 transition-transform"></div>
+    <li className="flex items-center gap-3 group">
+      <div className="flex-shrink-0">
+        <div className="h-2 w-2 rounded-full bg-primary group-hover:scale-125 group-hover:shadow-lg group-hover:shadow-primary/50 transition-all duration-300"></div>
       </div>
-      <Link href={href} className="flex-1 text-base text-foreground/80 leading-relaxed cursor-pointer hover:underline">
+      <Link 
+        href={href} 
+        className="flex-1 text-base text-foreground/80 leading-relaxed cursor-pointer px-3 -mx-3 py-2 rounded-md transition-all duration-300 ease-out hover:text-foreground hover:bg-primary/5 hover:px-4"
+      >
         {parts.map((part, i) =>
           part.startsWith('**') && part.endsWith('**') ? (
             <strong key={i} className="font-bold text-primary">
