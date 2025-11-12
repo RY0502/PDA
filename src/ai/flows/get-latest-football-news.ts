@@ -65,6 +65,11 @@ export async function getLatestFootballNews(): Promise<GetLatestFootballNewsOutp
         google_search: {},
       },
     ],
+     generationConfig: {
+    thinkingConfig: {
+      thinkingBudget: 0,
+    },
+  },
   });
 
   for (let attempt = 1; attempt <= 3; attempt++) {

@@ -262,7 +262,8 @@ const getTopGainers = unstable_cache(
     const { data, error } = await supabase
       .from('top_gainers')
       .select('*')
-      .order('updated_at', { ascending: false });
+      .order('updated_at', { ascending: false })
+      .limit(10);
 
     if (error) {
       console.error('Error fetching top gainers:', error);
@@ -287,7 +288,8 @@ const getTopLosers = unstable_cache(
     const { data, error } = await supabase
       .from('top_losers')
       .select('*')
-      .order('updated_at', { ascending: false });
+      .order('updated_at', { ascending: false })
+      .limit(10);
 
     if (error) {
       console.error('Error fetching top losers:', error);

@@ -24,7 +24,6 @@ function extractLowHighBetweenMarkers(text) {
     return null;
   }
   const slice = normalized.slice(startIdx, endIdx);
-  // Find numeric tokens like 1,091.30 or 1110.60, optional +/-, commas, decimals.
   const numberTokens = slice.match(/[-+]?\d{1,3}(?:,\d{3})*(?:\.\d+)?|[-+]?\d+(?:\.\d+)?/g);
   if (!numberTokens || numberTokens.length < 2) {
     console.error('Could not find two numeric values between markers.');
@@ -121,13 +120,13 @@ async function getEquityPanditMarkdown(stockCode) {
           headers,
           body: JSON.stringify({
             url: urlToScrape,
-            engine: engine
+            engine
           })
         });
         if (response.ok) {
           const result = await response.json();
           if (result.data?.markdown) {
-            console.log(`Anyncrawl (${engine}) succeeded.`);
+            console.log(`AnyCrawl (${engine}) succeeded.`);
             return result.data.markdown;
           }
         }
@@ -178,8 +177,35 @@ async function getEquityPanditMarkdown(stockCode) {
   return null;
 }
 serve(async (req)=>{
-  const { stockCode } = await req.json();
   try {
+    // Fetch latest stock code from supabase 'stock_code' table by updated_at desc
+    const { data: latestStockRow, error: fetchError } = await supabase.from('stock_code').select('code').order('updatedAt', {
+      ascending: false
+    }).limit(1).maybeSingle();
+    if (fetchError) {
+      console.error('Error fetching latest stock_code:', fetchError);
+      return new Response(JSON.stringify({
+        error: 'Database error fetching latest stock code'
+      }), {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    }
+    if (!latestStockRow || !latestStockRow.code) {
+      console.error('No stock code found in stock_code table.');
+      return new Response(JSON.stringify({
+        error: 'No stock code available'
+      }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    }
+    const stockCode = latestStockRow.code;
+    console.log('Using stockCode from DB:', stockCode);
     const markdown = await getEquityPanditMarkdown(stockCode);
     if (!markdown) {
       throw new Error('Failed to get markdown');
@@ -195,8 +221,7 @@ serve(async (req)=>{
     if (phraseMatch && phraseMatch[1]) {
       nameMatch = phraseMatch[1].trim();
     }
-    if (nameMatch == '') {
-      // Fallback: capture from H1 line like "# Stock Name"
+    if (nameMatch === '') {
       const h1Match = markdown.match(/^#\s*(.+)$/m);
       if (h1Match && h1Match[1]) {
         nameMatch = h1Match[1].trim();
@@ -216,15 +241,6 @@ serve(async (req)=>{
       console.error('Error upserting watched stock:', error);
       throw error;
     }
-    // Delete old records
-    //const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    //const { error: deleteError } = await supabase
-    //    .from('watched_stocks')
-    //    .delete()
-    //    .lt('updated_at', oneWeekAgo);
-    // if (deleteError) {
-    //    console.error('Error deleting old watched stocks:', deleteError);
-    // }
     return new Response(JSON.stringify({
       success: true
     }), {
@@ -233,7 +249,7 @@ serve(async (req)=>{
       }
     });
   } catch (error) {
-    console.error(`Error in fetch-stock-price function for ${stockCode}:`, error);
+    console.error('Error in fetch-stock-price function:', error);
     return new Response(JSON.stringify({
       error: error.message
     }), {
