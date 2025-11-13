@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, TrendingUp, Sparkles } from 'lucide-react';
+import { ArrowLeft, TrendingUp } from 'lucide-react';
 import { DetailsStream } from '@/components/details-stream';
 
 export default function TrendsNewsDetail({ searchParams }: { searchParams: { title?: string } }) {
@@ -72,7 +72,7 @@ export default function TrendsNewsDetail({ searchParams }: { searchParams: { tit
                   {/* Decorative divider */}
                   <div className="flex items-center gap-3 pt-2">
                     <div className="h-1 w-12 bg-gradient-to-r from-primary to-accent rounded-full"></div>
-                    <Sparkles className="h-3.5 w-3.5 text-primary/60" />
+                    <div className="h-1.5 w-1.5 rounded-full bg-accent/25 ring-1 ring-accent/25 opacity-80"></div>
                   </div>
                 </div>
               </div>
