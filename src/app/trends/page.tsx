@@ -64,12 +64,9 @@ function TrendsSummary({ trendSections, fallbackMessage }: { trendSections: Tren
         <div className="space-y-6">
           {trendSections.map((section, index) => (
             <div key={index} className="pb-6 last:pb-0">
-              <h3 className="text-xl font-bold tracking-tight text-foreground mb-4 font-headline">
-                {section.title}
-              </h3>
               <ul className="space-y-3">
                 {section.items.map((item, itemIndex) => (
-                  <TrendListItem key={itemIndex} item={item} />
+                  itemIndex === 0 ? null : <TrendListItem key={itemIndex} item={item} />
                 ))}
               </ul>
             </div>
