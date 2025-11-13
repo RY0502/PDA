@@ -1,7 +1,7 @@
 import { fetchTrendingSearches } from '@/ai/flows/fetch-trending-searches';
 import { Card, CardContent } from '@/components/ui/card';
 import { SummaryDisplay } from '@/components/summary-display';
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
 // Revalidate the page every hour
@@ -30,23 +30,28 @@ function TrendListItem({ item }: { item: TrendItem }) {
   const parts = item.text.split(/(\*\*.*?\*\*)/g).filter((part) => part);
   const href = `/trends/news/${slugify(item.text)}?title=${encodeURIComponent(item.text)}`;
   return (
-    <li className="flex items-center gap-3 group">
-      <div className="flex-shrink-0">
-        <div className="h-2 w-2 rounded-full bg-primary group-hover:scale-125 group-hover:shadow-lg group-hover:shadow-primary/50 transition-all duration-300"></div>
-      </div>
-      <Link 
-        href={href} 
-        className="flex-1 text-base text-foreground/80 leading-relaxed cursor-pointer px-3 -mx-3 py-2 rounded-md transition-all duration-300 ease-out hover:text-foreground hover:bg-primary/5 hover:px-4"
+    <li>
+      <Link
+        href={href}
+        className="group block rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm p-4 transition-all duration-300 hover:bg-card/80 hover:border-primary/40 hover:shadow-md"
       >
-        {parts.map((part, i) =>
-          part.startsWith('**') && part.endsWith('**') ? (
-            <strong key={i} className="font-bold text-primary">
-              {part.slice(2, -2)}
-            </strong>
-          ) : (
-            <span key={i}>{part}</span>
-          )
-        )}
+        <div className="flex items-start gap-4">
+          <div className="p-2 rounded-lg bg-primary/10 text-primary">
+            <TrendingUp className="h-5 w-5" />
+          </div>
+          <div className="flex-1 text-base leading-relaxed text-foreground/80 group-hover:text-foreground">
+            {parts.map((part, i) =>
+              part.startsWith('**') && part.endsWith('**') ? (
+                <strong key={i} className="font-bold text-primary">
+                  {part.slice(2, -2)}
+                </strong>
+              ) : (
+                <span key={i}>{part}</span>
+              )
+            )}
+          </div>
+          <ChevronRight className="h-5 w-5 text-muted-foreground transition-all duration-300 group-hover:text-primary group-hover:translate-x-0.5" />
+        </div>
       </Link>
     </li>
   );
