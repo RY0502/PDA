@@ -132,7 +132,7 @@ export default async function TrendsPage() {
 
   return (
     <div className="container py-12 md:py-16">
-      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4 text-center mb-8">
+      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4 text-center mb-7">
         <div className="relative">
           <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-2xl"></div>
           <TrendingUp className="h-20 w-20 text-primary relative" />
