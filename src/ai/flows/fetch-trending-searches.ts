@@ -75,7 +75,7 @@ export async function fetchTrendingSearches(): Promise<TrendingSearchesOutput> {
             summary: `**API Error**\n* Could not fetch trends. Status: ${response.status}`,
           };
         }
-        await sleep(2000); // Wait for 2 seconds before retrying
+        await sleep(5000); // Wait for 5 seconds before retrying
         continue;
       }
 

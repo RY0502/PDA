@@ -109,7 +109,7 @@ function ClubLogos({ clubs, totalClubs }: { clubs: ClubWithLogo[], totalClubs: n
   );
 }
 
-function NewsSummary({ newsSections, fallbackMessage }: { newsSections: NewsSection[], fallbackMessage?: string }) {
+function NewsSummary({ newsSections }: { newsSections: NewsSection[] }) {
   return (
     <>
       {newsSections.length > 0 ? (
@@ -128,9 +128,7 @@ function NewsSummary({ newsSections, fallbackMessage }: { newsSections: NewsSect
           ))}
         </div>
       ) : (
-        <p className="text-muted-foreground">
-          {fallbackMessage ?? 'No news to display at the moment.'}
-        </p>
+        <p className="text-muted-foreground">No news to display at the moment.</p>
       )}
     </>
   );
@@ -140,40 +138,50 @@ export default async function FootballPage() {
   let summary = '';
   let clubsWithLogos: ClubWithLogo[] = [];
   let totalClubs = 0;
-  let fallbackMessage: string | undefined;
-
-  try {
-    const res = await getLatestFootballNews();
-    summary = res.summary;
-    clubsWithLogos = res.clubsWithLogos;
-    totalClubs = res.totalClubs;
-  } catch (_err) {
-    // When upstream Gemini is unavailable (e.g., 503), show a friendly message
-    fallbackMessage = 'News will be available shortly. Please check back later.';
-  }
+  const res = await getLatestFootballNews();
+  summary = res.summary;
+  clubsWithLogos = res.clubsWithLogos;
+  totalClubs = res.totalClubs;
   const lines = summary.split('\n').filter((item) => item.trim().length > 0);
 
   const newsSections: NewsSection[] = [];
   let currentSection: NewsSection | null = null;
 
-  lines.forEach((line) => {
-    const trimmedLine = line.trim();
-    if (trimmedLine.startsWith('**') && trimmedLine.endsWith('**')) {
-      if (currentSection) {
-        newsSections.push(currentSection);
+  const hasSectionHeaders = lines.some(
+    (line) => line.startsWith('**') && line.endsWith('**')
+  );
+
+  if (hasSectionHeaders) {
+    lines.forEach((line) => {
+      const trimmedLine = line.trim();
+      if (trimmedLine.startsWith('**') && trimmedLine.endsWith('**')) {
+        if (currentSection) {
+          newsSections.push(currentSection);
+        }
+        currentSection = {
+          title: trimmedLine.slice(2, -2),
+          items: [],
+        };
+      } else if (currentSection) {
+        const text = trimmedLine.startsWith('*') || trimmedLine.startsWith('-')
+          ? trimmedLine.slice(1).trim()
+          : trimmedLine;
+        currentSection.items.push({ text });
       }
-      currentSection = {
-        title: trimmedLine.slice(2, -2),
-        items: [],
-      };
-    } else if (currentSection) {
-      // Treat any line that is not a title as a news item.
-      const text = trimmedLine.startsWith('*') || trimmedLine.startsWith('-') 
-        ? trimmedLine.slice(1).trim() 
-        : trimmedLine;
-      currentSection.items.push({ text });
-    }
-  });
+    });
+  } else {
+    // Fallback: treat all lines as items under a default section
+    currentSection = {
+      title: "Today's Top Stories",
+      items: lines.map((line) => {
+        const trimmedLine = line.trim();
+        const text = trimmedLine.startsWith('*') || trimmedLine.startsWith('-')
+          ? trimmedLine.slice(1).trim()
+          : trimmedLine;
+        return { text };
+      }),
+    };
+  }
 
   if (currentSection) {
     newsSections.push(currentSection);
@@ -181,7 +189,7 @@ export default async function FootballPage() {
 
   return (
     <div className="container py-12 md:py-16">
-      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4 text-center mb-12">
+      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4 text-center mb-8">
         <div className="relative">
           <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-2xl"></div>
           <Newspaper className="h-20 w-20 text-primary relative" />
@@ -201,7 +209,7 @@ export default async function FootballPage() {
           <CardContent className="p-0">
             <SummaryDisplay
               title="Today's Top Stories"
-              initialContent={<NewsSummary newsSections={newsSections} fallbackMessage={fallbackMessage} />}
+              initialContent={<NewsSummary newsSections={newsSections} />}
               hideConvertButton
             />
           </CardContent>

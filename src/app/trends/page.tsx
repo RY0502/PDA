@@ -57,7 +57,7 @@ function TrendListItem({ item }: { item: TrendItem }) {
   );
 }
 
-function TrendsSummary({ trendSections, fallbackMessage }: { trendSections: TrendSection[], fallbackMessage?: string }) {
+function TrendsSummary({ trendSections }: { trendSections: TrendSection[] }) {
   return (
     <>
       {trendSections.length > 0 ? (
@@ -73,9 +73,7 @@ function TrendsSummary({ trendSections, fallbackMessage }: { trendSections: Tren
           ))}
         </div>
       ) : (
-        <p className="text-muted-foreground">
-          {fallbackMessage ?? 'No trends to display at the moment.'}
-        </p>
+        <p className="text-muted-foreground">No trends to display at the moment.</p>
       )}
     </>
   );
@@ -83,15 +81,8 @@ function TrendsSummary({ trendSections, fallbackMessage }: { trendSections: Tren
 
 export default async function TrendsPage() {
   let summary = '';
-  let fallbackMessage: string | undefined;
-
-  try {
-    const res = await fetchTrendingSearches();
-    summary = res.summary;
-  } catch (_err) {
-    // When upstream Gemini is unavailable (e.g., 503), show a friendly message
-    fallbackMessage = 'Trends will be available shortly. Please check back later.';
-  }
+  const res = await fetchTrendingSearches();
+  summary = res.summary;
   const lines = summary
     .split('\n')
     .map((l) => l.trim())
@@ -141,7 +132,7 @@ export default async function TrendsPage() {
 
   return (
     <div className="container py-12 md:py-16">
-      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4 text-center mb-12">
+      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4 text-center mb-8">
         <div className="relative">
           <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-2xl"></div>
           <TrendingUp className="h-20 w-20 text-primary relative" />
@@ -159,7 +150,7 @@ export default async function TrendsPage() {
           <CardContent className="p-0">
             <SummaryDisplay
               title="Today's Top Trends"
-              initialContent={<TrendsSummary trendSections={trendSections} fallbackMessage={fallbackMessage} />}
+              initialContent={<TrendsSummary trendSections={trendSections} />}
               hideConvertButton
             />
           </CardContent>

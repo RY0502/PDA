@@ -90,7 +90,7 @@ export async function getLatestFootballNews(): Promise<GetLatestFootballNewsOutp
                 totalClubs: 0,
             };
         }
-        await sleep(2000); // Wait for 2 seconds before retrying
+        await sleep(5000); // Wait for 5 seconds before retrying
         continue;
       }
 
