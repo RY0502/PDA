@@ -88,7 +88,7 @@ export default async function Home() {
   const isMock = response?.isMock;
 
   return (
-    <div className="container py-12 md:py-16">
+    <div className="container py-12 md:py-12">
       <header className="mb-12 text-center max-w-3xl mx-auto">
         <h1 className="font-headline gradient-text mb-4">
           Your Daily Brief
