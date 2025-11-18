@@ -57,7 +57,7 @@ export async function getLatestFootballNews(): Promise<GetLatestFootballNewsOutp
     contents: [
       {
         //parts: [{text: 'Football transfer news and general football news today'}],
-        parts: [{text: 'Football news from top 5 football leagues today. It is important to generate each news as it\'s own line item.Highlight the main part or noun in the news.Do not include any commentary, explanations.'}],
+        parts: [{text: 'Trending football news from top 5 football leagues-English Premier League, Spanish La Liga, German Bundesliga, Italian Serie A and French Ligue 1 right now. It is important to generate each news as it\'s own line item.Highlight the main part or noun in the news.Do not include any commentary, explanations.'}],
       },
     ],
     tools: [
