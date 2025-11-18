@@ -80,10 +80,10 @@ function ClubLogos({ clubs, totalClubs }: { clubs: ClubWithLogo[], totalClubs: n
         {clubs.map((club) => (
           <Tooltip key={club.name}>
             <TooltipTrigger asChild>
-              <Avatar className="h-12 w-12 sm:h-14 sm:w-14 bg-gradient-to-br from-muted to-muted/50 border-2 border-border/50 hover:border-primary/50 transition-all hover:scale-110 cursor-pointer shadow-sm flex-shrink-0">
+              <Avatar className="h-[52px] w-[52px] sm:h-14 sm:w-14 bg-gradient-to-br from-muted to-muted/50 border-2 border-border/50 hover:border-primary/50 transition-all hover:scale-110 cursor-pointer shadow-sm flex-shrink-0">
                 <AvatarImage src={club.logoUrl || DEFAULT_FOOTBALL_LOGO_URI} alt={`${club.name} logo`} />
                 <AvatarFallback>
-                  <Image src={DEFAULT_FOOTBALL_LOGO_URI} alt="Football logo" width={48} height={48} />
+                  <Image src={DEFAULT_FOOTBALL_LOGO_URI} alt="Football logo" width={52} height={52} />
                 </AvatarFallback>
               </Avatar>
             </TooltipTrigger>
@@ -95,7 +95,7 @@ function ClubLogos({ clubs, totalClubs }: { clubs: ClubWithLogo[], totalClubs: n
         {remainingClubs > 0 && (
            <Tooltip>
             <TooltipTrigger asChild>
-              <Avatar className="h-12 w-12 sm:h-14 sm:w-14 bg-gradient-to-br from-primary/10 to-accent/10 border-2 border-dashed border-primary/30 hover:border-primary/60 transition-all hover:scale-110 cursor-pointer flex-shrink-0">
+              <Avatar className="h-[52px] w-[52px] sm:h-14 sm:w-14 bg-gradient-to-br from-primary/10 to-accent/10 border-2 border-dashed border-primary/30 hover:border-primary/60 transition-all hover:scale-110 cursor-pointer flex-shrink-0">
                 <AvatarFallback className="text-primary font-bold text-sm">+{remainingClubs}</AvatarFallback>
               </Avatar>
             </TooltipTrigger>
