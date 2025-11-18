@@ -40,7 +40,7 @@ export async function fetchTrendingSearches(): Promise<TrendingSearchesOutput> {
   const body = JSON.stringify({
     contents: [
       {
-        parts: [{text: 'Trending news in india right now.It is important to generate each news as it\'s own line item.Aim for atleast 10-15 trending news.Highlight the main part or noun in the news.Do not include any commentary, explanations.'}],
+        parts: [{text: 'Search for currently trending news in India.It is important to generate each news as it\'s own line item.Aim for atleast 10-15 trending news.Highlight the main part or noun in the news.Do not include any commentary, explanations.'}],
       },
     ],
     tools: [
@@ -48,11 +48,6 @@ export async function fetchTrendingSearches(): Promise<TrendingSearchesOutput> {
         google_search: {},
       },
     ],
-     generationConfig: {
-    thinkingConfig: {
-      thinkingBudget: 0,
-    },
-  },
   });
 
   for (let attempt = 1; attempt <= 3; attempt++) {
