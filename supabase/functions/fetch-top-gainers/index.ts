@@ -42,7 +42,7 @@ serve(async ()=>{
       'Content-Type': 'application/json'
     };
     const prompt = `
-      Get Today's ${currentDate} IST latest list of the top 10 gainers on the NSE based on https://www.hdfcsec.com/market/equity/top-gainer-nse?indicesCode=76394.
+      Using ONLY real-time web version of the web page get Today's ${currentDate} IST latest list of the top 10 gainers from the past 24 hours on the NSE based on https://www.hdfcsec.com/market/equity/top-gainer-nse?indicesCode=76394.
       For each stock, provide 'name', 'price', 'change', and 'changePercent'.
       Return ONLY a single, valid, minified JSON object with a 'topGainers' key. Do not include any text, explanations, or markdown formatting.
     `;

@@ -7,8 +7,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { DEFAULT_FOOTBALL_LOGO_URI } from '@/lib/constants';
 import { SummaryDisplay } from '@/components/summary-display';
+import { unstable_cache } from 'next/cache';
 
-export const revalidate = 5400; // Revalidate the page every 1.5 hours
+export const revalidate = 3600; // Revalidate the page every 1 hours
+export const dynamic = 'force-static';
+const getCachedLatestFootballNews = unstable_cache(async () => await getLatestFootballNews(), ['football-news'], { revalidate: 3600 });
 
 // Define the types for our structured data
 interface NewsItem {
@@ -138,7 +141,7 @@ export default async function FootballPage() {
   let summary = '';
   let clubsWithLogos: ClubWithLogo[] = [];
   let totalClubs = 0;
-  const res = await getLatestFootballNews();
+  const res = await getCachedLatestFootballNews();
   summary = res.summary;
   clubsWithLogos = res.clubsWithLogos;
   totalClubs = res.totalClubs;

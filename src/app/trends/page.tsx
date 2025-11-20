@@ -3,9 +3,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { SummaryDisplay } from '@/components/summary-display';
 import { TrendingUp, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import { unstable_cache } from 'next/cache';
 
 // Revalidate the page every hour
 export const revalidate = 3600;
+export const dynamic = 'force-static';
+const getCachedTrendingSearches = unstable_cache(async () => await fetchTrendingSearches(), ['trends'], { revalidate: 3600 });
 
 interface TrendItem {
   text: string;
@@ -81,7 +84,7 @@ function TrendsSummary({ trendSections }: { trendSections: TrendSection[] }) {
 
 export default async function TrendsPage() {
   let summary = '';
-  const res = await fetchTrendingSearches();
+  const res = await getCachedTrendingSearches();
   summary = res.summary;
   const lines = summary
     .split('\n')

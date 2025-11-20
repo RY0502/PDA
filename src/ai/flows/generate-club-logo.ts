@@ -31,7 +31,7 @@ export async function generateClubLogo(
 ): Promise<GenerateClubLogoOutput> {
   // Some inputs might be like "Club A, Country". Use only the first segment for generation.
   const sanitizedClubName = input.clubName.split(',')[0].trim();
-  const prompt = `Generate a logo for the football club/person: "${sanitizedClubName}". The design should be a modern, photorealistic,circular shaped that is as close as possible to the actual official club logo/person. The logo must be on a white background with the logo covering majority of the background. Sometimes there could be additional text as well with the football club name/person. You will have to extract the football club name or the noun  before generating the logo. If there is any error during football club logo generation or you are unable to generate the logo for the football club, generate a logo of an actual football image instead in the same format.`;
+  const prompt = `Generate a logo for the football club/person: "${sanitizedClubName}". The design should be a modern, photorealistic,circular shaped that is as close as possible to the actual official club logo/person. The logo must be on a white background with the logo covering 90% of the image background area. Sometimes there could be additional text as well with the football club name/person. You will have to extract the football club name or the noun  before generating the logo. If there is any error during football club logo generation or you are unable to generate the logo for the football club, generate a logo of an actual football image instead in the same format.`;
 
   try {
     const encodedPrompt = encodeURIComponent(prompt);
