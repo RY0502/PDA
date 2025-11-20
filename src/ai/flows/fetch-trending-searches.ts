@@ -40,7 +40,7 @@ export async function fetchTrendingSearches(): Promise<TrendingSearchesOutput> {
   const body = JSON.stringify({
     contents: [
       {
-        parts: [{text: 'Find currently trending news in India.It is important to generate each news as it\'s own line item.Aim for atleast 10-15 trending news.Highlight the main part or noun in the news.Do not include any commentary, explanations.'}],
+        parts: [{text: 'Using ONLY real-time web results get me trending stories in India from the past 24 hours.It is important to generate each news as it\'s own line item.Aim for atleast 10-15 trending news.Highlight the main part or noun in the news.Do not include any commentary, explanations.'}],
       },
     ],
     tools: [
