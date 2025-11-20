@@ -35,7 +35,7 @@ export async function generateClubLogo(
 
   try {
     const encodedPrompt = encodeURIComponent(prompt);
-    const url = `https://enter.pollinations.ai/api/generate/image/${encodedPrompt}?model=flux&width=200&height=200`;
+    const url = `https://enter.pollinations.ai/api/generate/image/${encodedPrompt}?model=flux&width=400&height=400`;
     const headers: Record<string, string> = {};
     if (POLLINATIONS_API_KEY) {
       headers['Authorization'] = `Bearer ${POLLINATIONS_API_KEY}`;
