@@ -206,7 +206,7 @@ export default async function FootballPage() {
         </p>
       </section>
 
-      <div className="py-6">
+      <div className="py-5">
         <ClubLogos clubs={clubsWithLogos} totalClubs={totalClubs} />
         <Card className="mx-auto max-w-4xl card-hover border-border/50 bg-card/80 backdrop-blur-sm">
           <CardContent className="p-0">
