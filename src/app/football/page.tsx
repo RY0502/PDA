@@ -191,7 +191,7 @@ export default async function FootballPage() {
   }
 
   return (
-    <div className="container py-12 md:py-16">
+    <div className="container py-7 md:py-16">
       <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4 text-center mb-7">
         <div className="relative">
           <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-2xl"></div>
@@ -206,7 +206,7 @@ export default async function FootballPage() {
         </p>
       </section>
 
-      <div className="py-8">
+      <div className="py-6">
         <ClubLogos clubs={clubsWithLogos} totalClubs={totalClubs} />
         <Card className="mx-auto max-w-4xl card-hover border-border/50 bg-card/80 backdrop-blur-sm">
           <CardContent className="p-0">
