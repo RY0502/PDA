@@ -74,7 +74,7 @@ function ClubLogos({ clubs, totalClubs }: { clubs: ClubWithLogo[], totalClubs: n
   if (!clubs || clubs.length === 0) {
     return null;
   }
-  
+
   const remainingClubs = totalClubs - clubs.length;
 
   return (
@@ -96,7 +96,7 @@ function ClubLogos({ clubs, totalClubs }: { clubs: ClubWithLogo[], totalClubs: n
           </Tooltip>
         ))}
         {remainingClubs > 0 && (
-           <Tooltip>
+          <Tooltip>
             <TooltipTrigger asChild>
               <Avatar className="h-[52px] w-[52px] sm:h-14 sm:w-14 bg-gradient-to-br from-primary/10 to-accent/10 border-2 border-dashed border-primary/30 hover:border-primary/60 transition-all hover:scale-110 cursor-pointer flex-shrink-0">
                 <AvatarFallback className="text-primary font-bold text-sm">+{remainingClubs}</AvatarFallback>
@@ -124,7 +124,7 @@ function NewsSummary({ newsSections }: { newsSections: NewsSection[] }) {
               </h3>
               <ul className="space-y-3">
                 {section.items.map((item, itemIndex) => (
-                  <NewsListItem key={itemIndex} item={item} />
+                  item.text.toLowerCase().includes("today's top stories") ? null : <NewsListItem key={itemIndex} item={item} />
                 ))}
               </ul>
             </div>

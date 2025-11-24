@@ -8,8 +8,8 @@
  * - GenerateClubLogoOutput - The return type for the function.
  */
 
-import {z} from 'genkit';
-import {POLLINATIONS_API_KEY} from '@/lib/constants';
+import { z } from 'genkit';
+import { POLLINATIONS_API_KEY } from '@/lib/constants';
 
 const GenerateClubLogoInputSchema = z.object({
   clubName: z.string().describe('The name of the football club.'),
@@ -26,6 +26,47 @@ export type GenerateClubLogoOutput = z.infer<
   typeof GenerateClubLogoOutputSchema
 >;
 
+/**
+ * Helper function to fetch logo with retry mechanism
+ * @param url - The URL to fetch from
+ * @param headers - Request headers
+ * @param maxRetries - Maximum number of retries (default: 1)
+ * @returns Response object
+ */
+async function fetchLogoWithRetry(
+  url: string,
+  headers: Record<string, string>,
+  maxRetries: number = 1
+): Promise<Response> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, { method: 'GET', headers });
+
+      if (response.ok) {
+        return response;
+      }
+
+      // If response is not ok, treat it as an error for retry purposes
+      lastError = new Error(`HTTP ${response.status}: ${response.statusText}`);
+
+      if (attempt < maxRetries) {
+        console.warn(`Attempt ${attempt + 1} failed, retrying...`, lastError.message);
+      }
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+
+      if (attempt < maxRetries) {
+        console.warn(`Attempt ${attempt + 1} failed, retrying...`, lastError.message);
+      }
+    }
+  }
+
+  // If all retries failed, throw the last error
+  throw lastError || new Error('Failed to fetch logo after retries');
+}
+
 export async function generateClubLogo(
   input: GenerateClubLogoInput
 ): Promise<GenerateClubLogoOutput> {
@@ -40,12 +81,9 @@ export async function generateClubLogo(
     if (POLLINATIONS_API_KEY) {
       headers['Authorization'] = `Bearer ${POLLINATIONS_API_KEY}`;
     }
-    const response = await fetch(url, { method: 'GET', headers });
 
-    if (!response.ok) {
-      console.error(`Pollinations API error for ${sanitizedClubName}:`, response.statusText);
-      return { logoUrl: undefined };
-    }
+    // Use the retry mechanism
+    const response = await fetchLogoWithRetry(url, headers, 1);
 
     const contentType = response.headers.get('content-type') || 'image/jpeg';
     const arrayBuffer = await response.arrayBuffer();
@@ -54,12 +92,12 @@ export async function generateClubLogo(
 
     if (!logoUrl) {
       console.error(`Failed to generate logo for ${sanitizedClubName}`);
-      return {logoUrl: undefined};
+      return { logoUrl: undefined };
     }
 
-    return {logoUrl};
+    return { logoUrl };
   } catch (error) {
     console.error(`Error generating logo for ${sanitizedClubName}:`, error);
-    return {logoUrl: undefined};
+    return { logoUrl: undefined };
   }
 }
