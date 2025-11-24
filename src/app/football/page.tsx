@@ -40,9 +40,10 @@ function slugify(text: string) {
 
 function NewsListItem({ item }: { item: NewsItem }) {
   const parts = item.text.split(/(\*\*.*?\*\*)/g).filter((part) => part);
-  const href = `/football/news/${slugify(item.text)}?title=${encodeURIComponent(item.text)}`;
+  const slug = slugify(item.text);
+  const href = `/football/news/${slug}?title=${encodeURIComponent(item.text)}`;
   return (
-    <li>
+    <li id={`item-${slug}`} className="scroll-mt-16">
       <Link
         href={href}
         className="group block rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm p-4 transition-all duration-300 hover:bg-card/80 hover:border-primary/40 hover:shadow-md"

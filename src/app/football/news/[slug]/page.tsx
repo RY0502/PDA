@@ -5,6 +5,13 @@ import { DetailsStream } from '@/components/details-stream';
 
 export default function FootballNewsDetail({ searchParams }: { searchParams: { title?: string } }) {
   const titleParam = searchParams?.title || '';
+  const slugify = (text: string) =>
+    text
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .slice(0, 80);
 
   // Parse title for bold formatting
   const formatTitle = (title: string) => {
@@ -38,7 +45,7 @@ export default function FootballNewsDetail({ searchParams }: { searchParams: { t
             variant="ghost" 
             className="mb-8 group hover:bg-primary/10 transition-all duration-300 hover:scale-105"
           >
-            <Link href="/football">
+            <Link href={`/football#item-${slugify(titleParam)}`}>
               <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
               <span className="font-medium">Back to News</span>
             </Link>
@@ -90,7 +97,7 @@ export default function FootballNewsDetail({ searchParams }: { searchParams: { t
               className="shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
               aria-label="Back to list"
             >
-              <Link href="/football">
+              <Link href={`/football#item-${slugify(titleParam)}`}>
                 <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
                 Back to All News
               </Link>
