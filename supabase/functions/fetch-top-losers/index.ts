@@ -59,6 +59,9 @@ serve(async ()=>{
       tools: [
         {
           url_context: {}
+        },
+        {
+          google_search: {}
         }
       ],
       generationConfig: {
