@@ -14,9 +14,30 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  async function fetchSlugApiKey(): Promise<string | null> {
+    const base = process.env.SLUG_KEY_URL || '';
+    try {
+      const u = new URL(base);
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const r = await fetch(u.toString(), { method: 'GET' });
+          if (r.ok) {
+            const data = await r.json();
+            const key = data?.keys?.[0]?.vault_keys?.decrypted_value;
+            if (typeof key === 'string' && key.length > 0) return key;
+          }
+        } catch (_e) {}
+        await new Promise((res) => setTimeout(res, 1000));
+      }
+      return null;
+    } catch (_e) {
+      return null;
+    }
+  }
+
+  const apiKey = await fetchSlugApiKey();
   if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'Server is not configured (missing GEMINI_API_KEY).' }), {
+    return new Response(JSON.stringify({ error: 'Server is not configured (missing SLUG_KEY_URL and GEMINI_API_KEY).' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });

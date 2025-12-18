@@ -8,7 +8,7 @@
  */
 
 import {z} from 'genkit';
-import {GEMINI_API_KEY} from '@/lib/constants';
+import {TRENDS_KEY_URL} from '@/lib/constants';
 
 const TrendingSearchesOutputSchema = z.object({
   summary: z.string().describe('A summary of the latest trending searches.'),
@@ -23,18 +23,41 @@ function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+async function getTrendsApiKey(): Promise<string | null> {
+  const base = TRENDS_KEY_URL || '';
+  try {
+    const u = new URL(base);
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const r = await fetch(u.toString(), { method: 'GET' });
+        if (r.ok) {
+          const data = await r.json();
+          const key = data?.keys?.[0]?.vault_keys?.decrypted_value;
+          if (typeof key === 'string' && key.length > 0) return key;
+        }
+      } catch (_e) {}
+      await sleep(1000);
+    }
+    return null;
+  } catch (_e) {
+    return null;
+  }
+}
+
 export async function fetchTrendingSearches(): Promise<TrendingSearchesOutput> {
-  if (!GEMINI_API_KEY) {
-    console.error('GEMINI_API_KEY is not set.');
+  const pageKey = await getTrendsApiKey();
+  const apiKey = pageKey;
+  if (!apiKey) {
+    console.error('Trends API key could not be resolved.');
     return {
       summary:
-        '**Configuration Error**\n* The Gemini API key is not configured. Please set it in your environment variables.',
+        '**Configuration Error**\n* The API key for trends could not be resolved from TRENDS_KEY_URL.',
     };
   }
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
   const headers = {
-    'x-goog-api-key': GEMINI_API_KEY,
+    'x-goog-api-key': apiKey,
     'Content-Type': 'application/json',
   };
   const body = JSON.stringify({

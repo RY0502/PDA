@@ -1,8 +1,10 @@
 export const GMAIL_CLIENT_ID = process.env.GMAIL_CLIENT_ID;
 export const GMAIL_CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET;
 export const GMAIL_REFRESH_TOKEN = process.env.GMAIL_REFRESH_TOKEN;
-export const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 export const POLLINATIONS_API_KEY = process.env.POLLINATIONS_API_KEY;
+export const FOOTBALL_KEY_URL = process.env.FOOTBALL_KEY_URL;
+export const TRENDS_KEY_URL = process.env.TRENDS_KEY_URL;
+export const SLUG_KEY_URL = process.env.SLUG_KEY_URL;
 export const ANYCRAWL_API_KEY = process.env.ANYCRAWL_API_KEY;
 export const WATERCRAWL_API_KEY = process.env.WATERCRAWL_API_KEY;
 
