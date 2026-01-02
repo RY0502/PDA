@@ -79,7 +79,7 @@ export async function getLatestFootballNews(): Promise<GetLatestFootballNewsOutp
   const body = JSON.stringify({
     contents: [
       {
-        parts: [{text: 'Football transfer news and general football news from the past 24 hours'}]
+        parts: [{text: 'Football transfer news and general football news from the past 24 hours.Do not include any commentary or extra text other than the news.'}]
         //parts: [{text: 'Using ONLY real-time web results get me trending football stories from the past 24 hours from top 5 football leagues-English Premier League, Spanish La Liga, German Bundesliga, Italian Serie A and French Ligue 1. It is important to generate each news as it\'s own line item.Highlight the main part or noun in the news.Do not include any commentary, explanations.'}],
       },
     ],
