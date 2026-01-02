@@ -35,7 +35,18 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const apiKey = await fetchSlugApiKey();
+  const globalKeySymbol = '__PDA_SLUG_API_KEY__';
+  const g = globalThis as any;
+  if (typeof g[globalKeySymbol] !== 'string') {
+    g[globalKeySymbol] = '';
+  }
+  let apiKey: string | null = g[globalKeySymbol] || null;
+  if (!apiKey) {
+    apiKey = await fetchSlugApiKey();
+    if (apiKey) {
+      g[globalKeySymbol] = apiKey;
+    }
+  }
   if (!apiKey) {
     return new Response(JSON.stringify({ error: 'Server is not configured (missing SLUG_KEY_URL and GEMINI_API_KEY).' }), {
       status: 500,
