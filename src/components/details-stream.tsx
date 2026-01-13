@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Sparkles, AlertCircle } from 'lucide-react';
 
-export function DetailsStream({ tab, title }: { tab: 'football' | 'trends'; title: string }) {
+export function DetailsStream({ tab, title }: { tab: 'football' | 'trends' | 'medium'; title: string }) {
   const [content, setContent] = useState<string>('');
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);

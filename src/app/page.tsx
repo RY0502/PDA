@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Terminal, Image as ImageIcon } from 'lucide-react';
+import { Terminal, Image as ImageIcon, FileText } from 'lucide-react';
 import type { MediumArticle } from '@/services/email-service';
 import { UrlOpener } from '@/components/url-opener';
 import Link from 'next/link';
@@ -18,14 +18,24 @@ import Image from 'next/image';
 // Revalidate the page every 6 hours
 export const revalidate = 21600;
 
+function slugify(text: string) {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .slice(0, 80);
+}
+
 function ArticleCard({ article }: { article: MediumArticle }) {
   const truncatedAuthor =
     article.author && article.author.length > 25
       ? `${article.author.substring(0, 25)}...`
       : article.author;
+  const anchorSlug = slugify(article.url || article.title || article.id);
 
   return (
-    <Card className="overflow-hidden card-hover border-border/50 bg-card/80 backdrop-blur-sm">
+    <Card id={`item-${anchorSlug}`} className="overflow-hidden card-hover border-border/50 bg-card/80 backdrop-blur-sm scroll-mt-16">
       <CardContent className="p-4">
         <div className="flex gap-4">
           <div className="relative h-28 w-28 flex-shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-muted to-muted/50">
@@ -62,17 +72,29 @@ function ArticleCard({ article }: { article: MediumArticle }) {
                   </div>
                 )}
               </div>
-              <Link
-                href={`https://freedium.cfd/${article.url}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={cn(
-                  buttonVariants({ size: 'sm' }), 
-                  'flex-shrink-0 shadow-sm hover:shadow-md transition-all'
-                )}
-              >
-                Read More
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/medium/news/${anchorSlug}?url=${encodeURIComponent(article.url)}`}
+                  className={cn(
+                    buttonVariants({ variant: 'ghost', size: 'sm' }),
+                    'flex-shrink-0 hover:bg-primary/10 text-primary'
+                  )}
+                  aria-label="Summary"
+                >
+                  <FileText className="h-4 w-4" />
+                </Link>
+                <Link
+                  href={`https://freedium.cfd/${article.url}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    buttonVariants({ size: 'sm' }), 
+                    'flex-shrink-0 shadow-sm hover:shadow-md transition-all'
+                  )}
+                >
+                  Read More
+                </Link>
+              </div>
             </div>
           </div>
         </div>

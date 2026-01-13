@@ -54,7 +54,10 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  const prompt = `Generate a short text summary of the given news regarding ${tab}. Provide the latest available contents through search quickly for this: ${title}`;
+  const prompt =
+    tab === 'medium'
+      ? `Give me detailed contents of the following page: ${title}`
+      : `Generate a short text summary of the given news regarding ${tab}. Provide the latest available contents through search quickly for this: ${title}`;
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?key=${apiKey}&alt=sse`;
 
