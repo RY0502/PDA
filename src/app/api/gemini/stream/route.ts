@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
 
   const prompt =
     tab === 'medium'
-      ? `Give me detailed contents of the following page: ${title}. When the content contains several concepts, topics, frameworks, tools, technologies etc, make sure each one is separated line item in generated text.`
+      ? `Give me detailed contents of the following page: ${title}. When the content contains several concepts, topics, frameworks, tools, technologies etc, make sure there is line break between them in generated text to show separation.`
       : `Generate a short text summary of the given news regarding ${tab}. Provide the latest available contents through search quickly for this: ${title}`;
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?key=${apiKey}&alt=sse`;
