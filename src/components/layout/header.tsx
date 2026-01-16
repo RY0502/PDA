@@ -88,7 +88,7 @@ export function Header() {
         <div className="flex items-center w-full gap-2">
           <Link href="/" className="mr-4 sm:mr-10 md:mr-12 flex items-center space-x-3 group flex-shrink-0">
             <div className="relative">
-              <div className="absolute inset-0 bg-primary/20 rounded-lg blur-md group-hover:blur-lg transition-all"></div>
+              <div className="absolute inset-0 bg-primary/25 rounded-xl blur-md group-hover:blur-lg transition-all"></div>
               <Bot className="h-8 w-8 text-primary relative" />
             </div>
             <span className="hidden font-bold text-lg sm:inline-block font-headline">

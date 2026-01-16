@@ -58,6 +58,14 @@ export function DetailsStream({ tab, title }: { tab: 'football' | 'trends' | 'me
   // Format content with better typography
   const formatContent = (text: string) => {
     const sections = text.split('\n\n').filter(Boolean);
+    const renderWithBold = (t: string) => {
+      const parts = t.split(/(\*\*.*?\*\*)/g).filter(Boolean);
+      return parts.map((part, i) =>
+        part.startsWith('**') && part.endsWith('**')
+          ? <strong key={i} className="font-bold text-primary">{part.slice(2, -2)}</strong>
+          : <span key={i}>{part}</span>
+      );
+    };
     
     return sections.map((section, idx) => {
       // Check if it's a heading (starts with # or is all caps short text)
@@ -83,7 +91,7 @@ export function DetailsStream({ tab, title }: { tab: 'football' | 'trends' | 'me
             {items.map((item, i) => (
               <li key={i} className="flex items-start gap-3 text-foreground/80 leading-relaxed">
                 <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-primary mt-2.5"></span>
-                <span className="flex-1">{item.replace(/^[-*•]\s/, '')}</span>
+                <span className="flex-1">{renderWithBold(item.replace(/^[-*•]\s/, ''))}</span>
               </li>
             ))}
           </ul>
@@ -93,7 +101,7 @@ export function DetailsStream({ tab, title }: { tab: 'football' | 'trends' | 'me
       // Regular paragraph
       return (
         <p key={idx} className="text-base md:text-lg leading-relaxed text-foreground/80 mb-6">
-          {section}
+          {renderWithBold(section)}
         </p>
       );
     });
