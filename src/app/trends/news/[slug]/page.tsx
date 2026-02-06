@@ -31,7 +31,7 @@ export default function TrendsNewsDetail({ searchParams }: { searchParams: { tit
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-accent/5 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="container py-8 md:py-12 relative">
+      <div className="container py-6 md:py-12 relative">
         <div className="mx-auto max-w-4xl">
           {/* Back button with modern styling */}
           <Button 
