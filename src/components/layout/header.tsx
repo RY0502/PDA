@@ -86,7 +86,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 glass-effect">
       <div className="container flex h-16 items-center px-4">
         <div className="flex items-center w-full gap-2">
-          <Link href="/" className="mr-6 sm:mr-10 md:mr-12 flex items-center space-x-3 group flex-shrink-0">
+          <Link href="/" className="mr-4 sm:mr-10 md:mr-12 flex items-center space-x-3 group flex-shrink-0">
             <div className="relative">
               <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-lg group-hover:blur-xl transition-all"></div>
               <div className="relative bg-gradient-to-br from-primary to-accent p-2 rounded-xl shadow-md group-hover:shadow-lg transition-all">
@@ -102,7 +102,7 @@ export function Header() {
               </span>
             </div>
           </Link>
-          <nav className="flex items-center space-x-1 text-sm font-medium flex-1">
+          <nav className="flex items-center space-x-1 sm:space-x-2 text-sm font-medium flex-1">
             {navLinks.map((link) => (
               <Link
                 key={link.label}
@@ -122,7 +122,7 @@ export function Header() {
               </Link>
             ))}
           </nav>
-          <div className="ml-auto flex items-center flex-shrink-0">
+          <div className="ml-auto flex items-center flex-shrink-0 pr-1">
             {userName || userEmail ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

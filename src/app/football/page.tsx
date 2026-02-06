@@ -142,9 +142,9 @@ export default async function FootballPage() {
   const newsSections: NewsSection[] = parseSectionsFromSummary(summary, "Today's Top Stories");
 
   return (
-    <div className="container py-10 md:py-16">
-      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5 text-center mb-10">
-        <div className="relative">
+    <div className="container py-8 sm:py-10 md:py-16">
+      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5 text-center mb-6 sm:mb-8 md:mb-10">
+        <div className="relative mt-4">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl blur-2xl"></div>
           <div className="relative bg-gradient-to-br from-primary/10 to-accent/10 p-5 rounded-2xl shadow-lg ring-1 ring-primary/20">
             <Newspaper className="h-16 w-16 text-primary" />

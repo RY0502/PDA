@@ -99,7 +99,7 @@ const getStockData = unstable_cache(
 function OverviewPageContent({ overview, stockCode }: { overview: StockMarketOverview | null, stockCode: string }) {
   if (!overview) {
     return (
-      <div className="container py-12 md:py-16">
+      <div className="container py-8 sm:py-12 md:py-16">
         <Alert variant="destructive" className="mx-auto max-w-2xl shadow-xl rounded-2xl border-2">
           <LineChart className="h-6 w-6" />
           <AlertTitle className="text-base font-semibold">Error Fetching Data</AlertTitle>
@@ -130,9 +130,9 @@ function OverviewPageContent({ overview, stockCode }: { overview: StockMarketOve
     : [];
 
   return (
-    <div className="container py-12 md:py-16">
-      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5 text-center mb-12">
-        <div className="relative">
+    <div className="container py-8 sm:py-12 md:py-16">
+      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5 text-center mb-6 sm:mb-10 md:mb-12">
+        <div className="relative mt-4">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl blur-2xl"></div>
           <div className="relative bg-gradient-to-br from-primary/10 to-accent/10 p-5 rounded-2xl shadow-lg ring-1 ring-primary/20">
             <AreaChart className="h-16 w-16 text-primary" />
@@ -349,9 +349,9 @@ function PageContent({
     : [];
 
   return (
-    <div className="container py-12 md:py-16">
-      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5 text-center mb-12">
-        <div className="relative">
+    <div className="container py-8 sm:py-12 md:py-16">
+      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5 text-center mb-6 sm:mb-10 md:mb-12">
+        <div className="relative mt-4">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl blur-2xl"></div>
           <div className="relative bg-gradient-to-br from-primary/10 to-accent/10 p-5 rounded-2xl shadow-lg ring-1 ring-primary/20">
             <AreaChart className="h-16 w-16 text-primary" />

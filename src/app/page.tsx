@@ -27,16 +27,16 @@ function ArticleCard({ article }: { article: MediumArticle }) {
 
   return (
     <Card id={`item-${anchorSlug}`} className="overflow-hidden card-hover border-border/50 bg-card/90 backdrop-blur-sm scroll-mt-16 shadow-lg hover:shadow-xl">
-      <CardContent className="p-3 sm:p-5">
-        <div className="flex gap-3 sm:gap-5">
-          <div className="relative h-20 w-20 sm:h-32 sm:w-32 flex-shrink-0 overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-br from-muted to-muted/50 shadow-md ring-1 ring-border/50">
+      <CardContent className="p-4 sm:p-5">
+        <div className="flex gap-4 sm:gap-5">
+          <div className="relative h-24 w-24 sm:h-32 sm:w-32 flex-shrink-0 overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-br from-muted to-muted/50 shadow-md ring-1 ring-border/50">
             {article.imageUrl ? (
               <Image
                 src={article.imageUrl}
                 alt={article.title}
                 fill
                 className="object-cover transition-transform duration-300 hover:scale-110"
-                sizes="(max-width: 640px) 80px, 128px"
+                sizes="(max-width: 640px) 96px, 128px"
                 data-ai-hint="article cover"
               />
             ) : (
@@ -55,7 +55,7 @@ function ArticleCard({ article }: { article: MediumArticle }) {
                 {article.description}
               </CardDescription>
             </div>
-            <div className="mt-2 sm:mt-4 flex items-center justify-between gap-2 sm:gap-3">
+            <div className="mt-3 sm:mt-4 flex items-center justify-between gap-2 sm:gap-3">
               <div className="flex-1 min-w-0">
                 {article.author && (
                   <div className="text-xs text-muted-foreground flex items-center gap-1.5">
@@ -102,9 +102,9 @@ export default async function Home() {
   const isMock = response?.isMock;
 
   return (
-    <div className="container py-12 md:py-16">
-      <header className="mb-14 text-center max-w-3xl mx-auto">
-        <div className="relative inline-block mb-6">
+    <div className="container py-8 sm:py-12 md:py-16">
+      <header className="mb-8 sm:mb-12 md:mb-14 text-center max-w-3xl mx-auto">
+        <div className="relative inline-block mb-6 mt-4">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl blur-2xl"></div>
           <Newspaper className="h-16 w-16 text-primary relative" />
         </div>
@@ -127,7 +127,7 @@ export default async function Home() {
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 gap-4 sm:gap-7 md:grid-cols-2 lg:gap-8 max-w-6xl mx-auto">
+      <div className="grid grid-cols-1 gap-5 sm:gap-7 md:grid-cols-2 lg:gap-8 max-w-6xl mx-auto">
         {articles?.map((article) => (
           <ArticleCard key={article.id} article={article} />
         ))}
