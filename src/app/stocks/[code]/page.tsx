@@ -157,16 +157,16 @@ function OverviewPageContent({ overview, stockCode }: { overview: StockMarketOve
                 </span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col sm:flex-row justify-around gap-6 text-center">
-              <div className="flex-1 p-7 rounded-2xl bg-gradient-to-br from-green-50 to-green-100/60 dark:from-green-950/30 dark:to-green-900/20 border-2 border-green-200 dark:border-green-900/40 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5">
-                <p className="text-xs font-bold text-muted-foreground mb-3 uppercase tracking-wider">Today's High</p>
-                <p className="text-4xl md:text-5xl font-bold text-green-600 font-headline">
+            <CardContent className="flex flex-row justify-around gap-3 sm:gap-6 text-center">
+              <div className="flex-1 p-4 sm:p-7 rounded-xl sm:rounded-2xl bg-gradient-to-br from-green-50 to-green-100/60 dark:from-green-950/30 dark:to-green-900/20 border-2 border-green-200 dark:border-green-900/40 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5">
+                <p className="text-[10px] sm:text-xs font-bold text-muted-foreground mb-2 sm:mb-3 uppercase tracking-wider">Today's High</p>
+                <p className="text-2xl sm:text-4xl md:text-5xl font-bold text-green-600 font-headline">
                   {overview.watchedStock.high}
                 </p>
               </div>
-              <div className="flex-1 p-7 rounded-2xl bg-gradient-to-br from-red-50 to-red-100/60 dark:from-red-950/30 dark:to-red-900/20 border-2 border-red-200 dark:border-red-900/40 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5">
-                <p className="text-xs font-bold text-muted-foreground mb-3 uppercase tracking-wider">Today's Low</p>
-                <p className="text-4xl md:text-5xl font-bold text-red-600 font-headline">
+              <div className="flex-1 p-4 sm:p-7 rounded-xl sm:rounded-2xl bg-gradient-to-br from-red-50 to-red-100/60 dark:from-red-950/30 dark:to-red-900/20 border-2 border-red-200 dark:border-red-900/40 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5">
+                <p className="text-[10px] sm:text-xs font-bold text-muted-foreground mb-2 sm:mb-3 uppercase tracking-wider">Today's Low</p>
+                <p className="text-2xl sm:text-4xl md:text-5xl font-bold text-red-600 font-headline">
                   {overview.watchedStock.low}
                 </p>
               </div>
@@ -376,16 +376,16 @@ function PageContent({
                 </span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col sm:flex-row justify-around gap-6 text-center">
-              <div className="flex-1 p-7 rounded-2xl bg-gradient-to-br from-green-50 to-green-100/60 dark:from-green-950/30 dark:to-green-900/20 border-2 border-green-200 dark:border-green-900/40 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5">
-                <p className="text-xs font-bold text-muted-foreground mb-3 uppercase tracking-wider">Today's High</p>
-                <p className="text-4xl md:text-5xl font-bold text-green-600 font-headline">
+            <CardContent className="flex flex-row justify-around gap-3 sm:gap-6 text-center">
+              <div className="flex-1 p-4 sm:p-7 rounded-xl sm:rounded-2xl bg-gradient-to-br from-green-50 to-green-100/60 dark:from-green-950/30 dark:to-green-900/20 border-2 border-green-200 dark:border-green-900/40 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5">
+                <p className="text-[10px] sm:text-xs font-bold text-muted-foreground mb-2 sm:mb-3 uppercase tracking-wider">Today's High</p>
+                <p className="text-2xl sm:text-4xl md:text-5xl font-bold text-green-600 font-headline">
                   {watchedStock.high}
                 </p>
               </div>
-              <div className="flex-1 p-7 rounded-2xl bg-gradient-to-br from-red-50 to-red-100/60 dark:from-red-950/30 dark:to-red-900/20 border-2 border-red-200 dark:border-red-900/40 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5">
-                <p className="text-xs font-bold text-muted-foreground mb-3 uppercase tracking-wider">Today's Low</p>
-                <p className="text-4xl md:text-5xl font-bold text-red-600 font-headline">
+              <div className="flex-1 p-4 sm:p-7 rounded-xl sm:rounded-2xl bg-gradient-to-br from-red-50 to-red-100/60 dark:from-red-950/30 dark:to-red-900/20 border-2 border-red-200 dark:border-red-900/40 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5">
+                <p className="text-[10px] sm:text-xs font-bold text-muted-foreground mb-2 sm:mb-3 uppercase tracking-wider">Today's Low</p>
+                <p className="text-2xl sm:text-4xl md:text-5xl font-bold text-red-600 font-headline">
                   {watchedStock.low}
                 </p>
               </div>

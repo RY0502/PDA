@@ -27,35 +27,35 @@ function ArticleCard({ article }: { article: MediumArticle }) {
 
   return (
     <Card id={`item-${anchorSlug}`} className="overflow-hidden card-hover border-border/50 bg-card/90 backdrop-blur-sm scroll-mt-16 shadow-lg hover:shadow-xl">
-      <CardContent className="p-5">
-        <div className="flex gap-5">
-          <div className="relative h-32 w-32 flex-shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-muted to-muted/50 shadow-md ring-1 ring-border/50">
+      <CardContent className="p-3 sm:p-5">
+        <div className="flex gap-3 sm:gap-5">
+          <div className="relative h-20 w-20 sm:h-32 sm:w-32 flex-shrink-0 overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-br from-muted to-muted/50 shadow-md ring-1 ring-border/50">
             {article.imageUrl ? (
               <Image
                 src={article.imageUrl}
                 alt={article.title}
                 fill
                 className="object-cover transition-transform duration-300 hover:scale-110"
-                sizes="128px"
+                sizes="(max-width: 640px) 80px, 128px"
                 data-ai-hint="article cover"
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5">
-                <ImageIcon className="h-12 w-12 text-muted-foreground/40" />
+                <ImageIcon className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground/40" />
               </div>
             )}
           </div>
 
           <div className="flex flex-grow flex-col">
             <div className="flex-grow">
-              <CardTitle className="mb-2.5 line-clamp-3 text-lg leading-snug font-headline text-foreground hover:text-primary transition-colors">
+              <CardTitle className="mb-1.5 sm:mb-2.5 line-clamp-3 text-base sm:text-lg leading-snug font-headline text-foreground hover:text-primary transition-colors">
                 {article.title}
               </CardTitle>
-              <CardDescription className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+              <CardDescription className="line-clamp-2 text-xs sm:text-sm leading-relaxed text-muted-foreground">
                 {article.description}
               </CardDescription>
             </div>
-            <div className="mt-4 flex items-center justify-between gap-3">
+            <div className="mt-2 sm:mt-4 flex items-center justify-between gap-2 sm:gap-3">
               <div className="flex-1 min-w-0">
                 {article.author && (
                   <div className="text-xs text-muted-foreground flex items-center gap-1.5">
@@ -127,7 +127,7 @@ export default async function Home() {
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:gap-8 max-w-6xl mx-auto">
+      <div className="grid grid-cols-1 gap-4 sm:gap-7 md:grid-cols-2 lg:gap-8 max-w-6xl mx-auto">
         {articles?.map((article) => (
           <ArticleCard key={article.id} article={article} />
         ))}

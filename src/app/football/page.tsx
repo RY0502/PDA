@@ -72,15 +72,15 @@ function ClubLogos({ clubs, totalClubs }: { clubs: ClubWithLogo[], totalClubs: n
   const remainingClubs = totalClubs - clubs.length;
 
   return (
-    <div className="mx-auto mb-12 flex max-w-4xl flex-wrap items-center justify-center gap-4 sm:gap-5">
+    <div className="mx-auto mb-12 flex max-w-4xl flex-wrap items-center justify-center gap-2 sm:gap-4 md:gap-5">
       <TooltipProvider>
         {clubs.map((club) => (
           <Tooltip key={club.name}>
             <TooltipTrigger asChild>
-              <Avatar className="h-14 w-14 sm:h-16 sm:w-16 bg-gradient-to-br from-muted to-muted/50 border-2 border-border/50 hover:border-primary/50 transition-all hover:scale-110 cursor-pointer shadow-md hover:shadow-lg flex-shrink-0 ring-2 ring-primary/10">
+              <Avatar className="h-11 w-11 sm:h-14 sm:w-14 md:h-16 md:w-16 bg-gradient-to-br from-muted to-muted/50 border-2 border-border/50 hover:border-primary/50 transition-all hover:scale-110 cursor-pointer shadow-md hover:shadow-lg flex-shrink-0 ring-2 ring-primary/10">
                 <AvatarImage src={club.logoUrl || DEFAULT_FOOTBALL_LOGO_URI} alt={`${club.name} logo`} />
                 <AvatarFallback>
-                  <Image src={DEFAULT_FOOTBALL_LOGO_URI} alt="Football logo" width={64} height={64} />
+                  <Image src={DEFAULT_FOOTBALL_LOGO_URI} alt="Football logo" width={64} height={64} className="object-contain" />
                 </AvatarFallback>
               </Avatar>
             </TooltipTrigger>
@@ -92,8 +92,8 @@ function ClubLogos({ clubs, totalClubs }: { clubs: ClubWithLogo[], totalClubs: n
         {remainingClubs > 0 && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <Avatar className="h-14 w-14 sm:h-16 sm:w-16 bg-gradient-to-br from-primary/10 to-accent/10 border-2 border-dashed border-primary/40 hover:border-primary/70 transition-all hover:scale-110 cursor-pointer flex-shrink-0 shadow-md">
-                <AvatarFallback className="text-primary font-bold text-base">+{remainingClubs}</AvatarFallback>
+              <Avatar className="h-11 w-11 sm:h-14 sm:w-14 md:h-16 md:w-16 bg-gradient-to-br from-primary/10 to-accent/10 border-2 border-dashed border-primary/40 hover:border-primary/70 transition-all hover:scale-110 cursor-pointer flex-shrink-0 shadow-md">
+                <AvatarFallback className="text-primary font-bold text-sm sm:text-base">+{remainingClubs}</AvatarFallback>
               </Avatar>
             </TooltipTrigger>
             <TooltipContent className="rounded-xl shadow-lg border-border/50">
