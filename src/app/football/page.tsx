@@ -164,7 +164,6 @@ export default async function FootballPage() {
             <SummaryDisplay
               title="Today's Top Stories"
               initialContent={<NewsSummary newsSections={newsSections} />}
-              hideConvertButton
             />
           </CardContent>
         </Card>

@@ -1,4 +1,6 @@
 import { NextRequest } from 'next/server';
+import { fetchGeminiApiKey } from '@/ai/gemini';
+import { GEMINI_BASE_MODEL_URL } from '@/lib/constants';
 
 export const runtime = 'edge';
 
@@ -16,23 +18,7 @@ export async function GET(req: NextRequest) {
 
   async function fetchSlugApiKey(): Promise<string | null> {
     const base = process.env.SLUG_KEY_URL || '';
-    try {
-      const u = new URL(base);
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        try {
-          const r = await fetch(u.toString(), { method: 'GET' });
-          if (r.ok) {
-            const data = await r.json();
-            const key = data?.keys?.[0]?.vault_keys?.decrypted_value;
-            if (typeof key === 'string' && key.length > 0) return key;
-          }
-        } catch (_e) {}
-        await new Promise((res) => setTimeout(res, 1000));
-      }
-      return null;
-    } catch (_e) {
-      return null;
-    }
+    return fetchGeminiApiKey(base, 3, 1000);
   }
 
   const globalKeySymbol = '__PDA_SLUG_API_KEY__';
@@ -59,7 +45,7 @@ export async function GET(req: NextRequest) {
       ? `Give me detailed contents of the following page: ${title}. When the content contains several concepts, topics, frameworks, tools, technologies etc, make sure there is line break between them in generated text to show separation.`
       : `Generate a short text summary of the given news regarding ${tab}. Provide the latest available contents through search quickly for this: ${title}`;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?key=${apiKey}&alt=sse`;
+  const url = `${GEMINI_BASE_MODEL_URL}:streamGenerateContent?key=${apiKey}&alt=sse`;
 
   try {
     const upstream = await fetch(url, {

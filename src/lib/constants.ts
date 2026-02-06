@@ -7,6 +7,7 @@ export const TRENDS_KEY_URL = process.env.TRENDS_KEY_URL;
 export const SLUG_KEY_URL = process.env.SLUG_KEY_URL;
 export const ANYCRAWL_API_KEY = process.env.ANYCRAWL_API_KEY;
 export const WATERCRAWL_API_KEY = process.env.WATERCRAWL_API_KEY;
+export const GEMINI_BASE_MODEL_URL = process.env.GEMINI_BASE_MODEL_URL;
 
 // A static, Base64-encoded PNG of a classic football to be used as a fallback logo.
 export const DEFAULT_FOOTBALL_LOGO_URI =

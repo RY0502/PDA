@@ -103,7 +103,6 @@ export default async function TrendsPage() {
             <SummaryDisplay
               title="Today's Top Trends"
               initialContent={<TrendsSummary trendSections={trendSections} />}
-              hideConvertButton
             />
           </CardContent>
         </Card>
