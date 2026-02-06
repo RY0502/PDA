@@ -18,10 +18,23 @@ export function parseSectionsFromSummary(
   summary: string,
   defaultTitle: string
 ): { title: string; items: { text: string }[] }[] {
+  const normalize = (s: string) => {
+    let t = s.trim();
+    if (t.startsWith('**') && t.endsWith('**')) t = t.slice(2, -2);
+    if (t.startsWith('*') || t.startsWith('-')) t = t.slice(1).trim();
+    t = t.replace(/:+$/, '').replace(/[`"]/g, '').trim().toLowerCase();
+    return t;
+  };
+  const defaultNorm = normalize(defaultTitle);
   const lines = summary
     .split("\n")
     .map((l) => l.trim())
-    .filter((l) => l.length > 0 && !l.startsWith("```") && !l.endsWith("```"))
+    .filter((l) => {
+      const keep = l.length > 0 && !l.startsWith("```") && !l.endsWith("```");
+      if (!keep) return false;
+      const n = normalize(l);
+      return n !== defaultNorm;
+    })
 
   const sections: { title: string; items: { text: string }[] }[] = []
   let current: { title: string; items: { text: string }[] } | null = null
@@ -35,7 +48,7 @@ export function parseSectionsFromSummary(
         if (current) {
           sections.push(current)
         }
-        current = { title: t.slice(2, -2), items: [] }
+        current = { title: t.slice(2, -2).replace(/:+$/, ''), items: [] }
       } else if (current) {
         const text = t.startsWith("*") || t.startsWith("-") ? t.slice(1).trim() : t
         current.items.push({ text })

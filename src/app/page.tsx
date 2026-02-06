@@ -58,8 +58,8 @@ function ArticleCard({ article }: { article: MediumArticle }) {
             <div className="mt-3 sm:mt-4 flex items-center justify-between gap-2 sm:gap-3">
               <div className="flex-1 min-w-0">
                 {article.author && (
-                  <div className="text-xs text-muted-foreground flex items-center gap-2">
-                    <div className="h-1.5 w-2 rounded-full bg-primary/60"></div>
+                  <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary/60"></div>
                     <span className="font-semibold text-foreground/80">{truncatedAuthor}</span>
                   </div>
                 )}
