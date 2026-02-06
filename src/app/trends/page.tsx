@@ -30,13 +30,13 @@ function TrendListItem({ item }: { item: TrendItem }) {
     <li id={`item-${slug}`} className="scroll-mt-16">
       <Link
         href={href}
-        className="group block rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm p-4 transition-all duration-300 hover:bg-card/80 hover:border-primary/40 hover:shadow-md"
+        className="group block rounded-2xl border border-border/50 bg-card/70 backdrop-blur-sm p-5 transition-all duration-300 hover:bg-card/90 hover:border-primary/50 hover:shadow-lg hover:-translate-y-0.5"
       >
         <div className="flex items-start gap-4">
-          <div className="p-2 rounded-lg bg-primary/10 text-primary">
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 text-primary ring-1 ring-primary/20">
             <TrendingUp className="h-5 w-5" />
           </div>
-          <div className="flex-1 text-base leading-relaxed text-foreground/80 group-hover:text-foreground">
+          <div className="flex-1 text-base leading-relaxed text-foreground/80 group-hover:text-foreground transition-colors">
             {parts.map((part, i) =>
               part.startsWith('**') && part.endsWith('**') ? (
                 <strong key={i} className="font-bold text-primary">
@@ -47,7 +47,7 @@ function TrendListItem({ item }: { item: TrendItem }) {
               )
             )}
           </div>
-          <ChevronRight className="h-5 w-5 text-muted-foreground transition-all duration-300 group-hover:text-primary group-hover:translate-x-0.5" />
+          <ChevronRight className="h-5 w-5 text-muted-foreground transition-all duration-300 group-hover:text-primary group-hover:translate-x-1" />
         </div>
       </Link>
     </li>
@@ -58,10 +58,10 @@ function TrendsSummary({ trendSections }: { trendSections: TrendSection[] }) {
   return (
     <>
       {trendSections.length > 0 ? (
-        <div className="space-y-6">
+        <div className="space-y-7">
           {trendSections.map((section, index) => (
-            <div key={index} className="pb-6 last:pb-0">
-              <ul className="space-y-3">
+            <div key={index} className="pb-7 last:pb-0 border-b border-border/30 last:border-0">
+              <ul className="space-y-3.5">
                 {section.items.map((item, itemIndex) => (
                   itemIndex === 0 ? null : <TrendListItem key={itemIndex} item={item} />
                 ))}
@@ -70,7 +70,7 @@ function TrendsSummary({ trendSections }: { trendSections: TrendSection[] }) {
           ))}
         </div>
       ) : (
-        <p className="text-muted-foreground">No trends to display at the moment.</p>
+        <p className="text-muted-foreground text-center py-8">No trends to display at the moment.</p>
       )}
     </>
   );
@@ -83,13 +83,15 @@ export default async function TrendsPage() {
   const trendSections: TrendSection[] = parseSectionsFromSummary(summary, "Today's Top Trends");
 
   return (
-    <div className="container py-8 md:py-16">
-      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4 text-center mb-5">
+    <div className="container py-10 md:py-16">
+      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5 text-center mb-10">
         <div className="relative">
-          <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-2xl"></div>
-          <TrendingUp className="h-20 w-20 text-primary relative" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl blur-2xl"></div>
+          <div className="relative bg-gradient-to-br from-primary/10 to-accent/10 p-5 rounded-2xl shadow-lg ring-1 ring-primary/20">
+            <TrendingUp className="h-16 w-16 text-primary" />
+          </div>
         </div>
-        <h1 className="font-headline gradient-text">
+        <h1 className="font-headline gradient-text text-5xl md:text-6xl font-bold">
           Daily Trends
         </h1>
         <p className="max-w-2xl text-xl text-muted-foreground leading-relaxed text-balance">
@@ -97,8 +99,8 @@ export default async function TrendsPage() {
         </p>
       </section>
 
-      <div className="py-8">
-        <Card className="mx-auto max-w-4xl card-hover border-border/50 bg-card/80 backdrop-blur-sm">
+      <div className="py-6">
+        <Card className="mx-auto max-w-4xl card-hover border-border/50 bg-card/90 backdrop-blur-sm shadow-xl">
           <CardContent className="p-0">
             <SummaryDisplay
               title="Today's Top Trends"

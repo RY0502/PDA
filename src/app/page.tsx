@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Terminal, Image as ImageIcon, FileText } from 'lucide-react';
+import { Terminal, Image as ImageIcon, FileText, Newspaper } from 'lucide-react';
 import type { MediumArticle } from '@/services/email-service';
 import { UrlOpener } from '@/components/url-opener';
 import Link from 'next/link';
@@ -26,39 +26,40 @@ function ArticleCard({ article }: { article: MediumArticle }) {
   const anchorSlug = slugify(article.url || article.title || article.id);
 
   return (
-    <Card id={`item-${anchorSlug}`} className="overflow-hidden card-hover border-border/50 bg-card/80 backdrop-blur-sm scroll-mt-16">
-      <CardContent className="p-4">
-        <div className="flex gap-4">
-          <div className="relative h-28 w-28 flex-shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-muted to-muted/50">
+    <Card id={`item-${anchorSlug}`} className="overflow-hidden card-hover border-border/50 bg-card/90 backdrop-blur-sm scroll-mt-16 shadow-lg hover:shadow-xl">
+      <CardContent className="p-5">
+        <div className="flex gap-5">
+          <div className="relative h-32 w-32 flex-shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-muted to-muted/50 shadow-md ring-1 ring-border/50">
             {article.imageUrl ? (
               <Image
                 src={article.imageUrl}
                 alt={article.title}
                 fill
-                className="object-cover"
-                sizes="96px"
+                className="object-cover transition-transform duration-300 hover:scale-110"
+                sizes="128px"
                 data-ai-hint="article cover"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center">
-                <ImageIcon className="h-10 w-10 text-muted-foreground" />
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5">
+                <ImageIcon className="h-12 w-12 text-muted-foreground/40" />
               </div>
             )}
           </div>
 
           <div className="flex flex-grow flex-col">
             <div className="flex-grow">
-              <CardTitle className="mb-2 line-clamp-3 text-lg leading-tight font-headline">
+              <CardTitle className="mb-2.5 line-clamp-3 text-lg leading-snug font-headline text-foreground hover:text-primary transition-colors">
                 {article.title}
               </CardTitle>
-              <CardDescription className="line-clamp-2 text-sm leading-relaxed">
+              <CardDescription className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
                 {article.description}
               </CardDescription>
             </div>
-            <div className="mt-3 flex items-center justify-between gap-2">
+            <div className="mt-4 flex items-center justify-between gap-3">
               <div className="flex-1 min-w-0">
                 {article.author && (
-                  <div className="text-xs text-muted-foreground flex items-center gap-1">
+                  <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary/60"></div>
                     <span className="font-semibold text-foreground/80">{truncatedAuthor}</span>
                   </div>
                 )}
@@ -68,7 +69,7 @@ function ArticleCard({ article }: { article: MediumArticle }) {
                   href={`/medium/news/${anchorSlug}?url=${encodeURIComponent(article.url)}`}
                   className={cn(
                     buttonVariants({ variant: 'ghost', size: 'sm' }),
-                    'flex-shrink-0 hover:bg-primary/10 text-primary'
+                    'flex-shrink-0 hover:bg-primary/10 text-primary rounded-xl'
                   )}
                   aria-label="Summary"
                 >
@@ -80,7 +81,7 @@ function ArticleCard({ article }: { article: MediumArticle }) {
                   rel="noopener noreferrer"
                   className={cn(
                     buttonVariants({ size: 'sm' }), 
-                    'flex-shrink-0 shadow-sm hover:shadow-md transition-all'
+                    'flex-shrink-0 shadow-md hover:shadow-lg transition-all rounded-xl'
                   )}
                 >
                   Read More
@@ -101,36 +102,43 @@ export default async function Home() {
   const isMock = response?.isMock;
 
   return (
-    <div className="container py-12 md:py-12">
-      <header className="mb-12 text-center max-w-3xl mx-auto">
-        <h1 className="font-headline gradient-text mb-4">
+    <div className="container py-12 md:py-16">
+      <header className="mb-14 text-center max-w-3xl mx-auto">
+        <div className="relative inline-block mb-6">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl blur-2xl"></div>
+          <Newspaper className="h-16 w-16 text-primary relative" />
+        </div>
+        <h1 className="font-headline gradient-text mb-5 text-5xl md:text-6xl font-bold">
           Your Daily Brief
         </h1>
-        <p className="text-xl text-muted-foreground leading-relaxed text-balance">
-          Discover the latest articles from Medium, curated and powered by AI.
+        <p className="text-xl text-muted-foreground leading-relaxed text-balance max-w-2xl mx-auto">
+          Discover the latest articles from Medium, curated and powered by AI technology.
         </p>
       </header>
 
       {isMock && (
-        <Alert className="mb-10 max-w-3xl mx-auto border-primary/20 bg-primary/5">
+        <Alert className="mb-12 max-w-3xl mx-auto border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5 shadow-lg rounded-2xl">
           <Terminal className="h-5 w-5 text-primary" />
           <AlertTitle className="text-base font-semibold">Displaying Mock Data</AlertTitle>
-          <AlertDescription className="text-sm">
+          <AlertDescription className="text-sm leading-relaxed">
             The Gmail API is not configured. To see your latest Medium
             articles, please follow the setup instructions.
           </AlertDescription>
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8 max-w-6xl mx-auto">
+      <div className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:gap-8 max-w-6xl mx-auto">
         {articles?.map((article) => (
           <ArticleCard key={article.id} article={article} />
         ))}
       </div>
 
       {response && articles?.length === 0 && (
-        <div className="py-16 text-center">
-          <p className="text-lg text-muted-foreground">
+        <div className="py-20 text-center">
+          <div className="inline-block p-6 rounded-2xl bg-muted/50 mb-4">
+            <Newspaper className="h-12 w-12 text-muted-foreground/50 mx-auto" />
+          </div>
+          <p className="text-lg text-muted-foreground font-medium">
             No articles found in your latest Medium email.
           </p>
         </div>

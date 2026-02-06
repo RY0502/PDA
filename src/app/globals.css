@@ -34,13 +34,20 @@
     --input: 220 13% 91%;
     --ring: 239 84% 67%;
     
-    --radius: 0.75rem;
+    --radius: 0.875rem;
     
     --chart-1: 239 84% 67%;
     --chart-2: 262 83% 58%;
     --chart-3: 291 64% 42%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 82% 52%;
+    
+    /* Enhanced shadow tokens */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   }
 }
 
@@ -100,39 +107,66 @@
 }
 
 @layer components {
-  /* Gradient background effect */
+  /* Enhanced gradient background with subtle pattern */
   .gradient-bg {
-    background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(220 20% 95%) 100%);
+    background: 
+      radial-gradient(circle at 20% 20%, hsl(239 84% 67% / 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, hsl(262 83% 58% / 0.03) 0%, transparent 50%),
+      linear-gradient(135deg, hsl(var(--background)) 0%, hsl(220 20% 95%) 100%);
   }
   
-  /* Glass effect */
+  /* Glass effect with refined blur */
   .glass-effect {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
   }
   
-  /* Animated gradient text */
+  /* Animated gradient text with vibrant colors */
   .gradient-text {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(262 83% 58%) 100%);
+    background: linear-gradient(135deg, hsl(239 84% 67%) 0%, hsl(262 83% 58%) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
   
-  /* Modern card hover effect */
+  /* Modern card hover effect with refined shadow */
   .card-hover {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .card-hover:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    transform: translateY(-2px);
+    box-shadow: 
+      0 20px 25px -5px rgba(124, 120, 255, 0.1), 
+      0 10px 10px -5px rgba(124, 120, 255, 0.04),
+      0 0 0 1px rgba(124, 120, 255, 0.05);
   }
   
   /* Smooth transitions */
   .transition-smooth {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Subtle glow effect for interactive elements */
+  .glow-primary {
+    box-shadow: 0 0 20px -5px hsl(239 84% 67% / 0.3);
+  }
+  
+  /* Refined border with subtle gradient */
+  .border-gradient {
+    border: 1px solid transparent;
+    background-image: 
+      linear-gradient(white, white), 
+      linear-gradient(135deg, hsl(239 84% 67% / 0.2) 0%, hsl(262 83% 58% / 0.2) 100%);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+  }
+  
+  /* Enhanced focus states */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2;
   }
 }
 

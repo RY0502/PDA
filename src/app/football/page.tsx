@@ -39,13 +39,13 @@ function NewsListItem({ item }: { item: NewsItem }) {
     <li id={`item-${slug}`} className="scroll-mt-16">
       <Link
         href={href}
-        className="group block rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm p-4 transition-all duration-300 hover:bg-card/80 hover:border-primary/40 hover:shadow-md"
+        className="group block rounded-2xl border border-border/50 bg-card/70 backdrop-blur-sm p-5 transition-all duration-300 hover:bg-card/90 hover:border-primary/50 hover:shadow-lg hover:-translate-y-0.5"
       >
         <div className="flex items-start gap-4">
-          <div className="p-2 rounded-lg bg-primary/10 text-primary">
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 text-primary ring-1 ring-primary/20">
             <Newspaper className="h-5 w-5" />
           </div>
-          <div className="flex-1 text-base leading-relaxed text-foreground/80 group-hover:text-foreground">
+          <div className="flex-1 text-base leading-relaxed text-foreground/80 group-hover:text-foreground transition-colors">
             {parts.map((part, i) =>
               part.startsWith('**') && part.endsWith('**') ? (
                 <strong key={i} className="font-bold text-primary">
@@ -56,7 +56,7 @@ function NewsListItem({ item }: { item: NewsItem }) {
               )
             )}
           </div>
-          <ChevronRight className="h-5 w-5 text-muted-foreground transition-all duration-300 group-hover:text-primary group-hover:translate-x-0.5" />
+          <ChevronRight className="h-5 w-5 text-muted-foreground transition-all duration-300 group-hover:text-primary group-hover:translate-x-1" />
         </div>
       </Link>
     </li>
@@ -72,32 +72,32 @@ function ClubLogos({ clubs, totalClubs }: { clubs: ClubWithLogo[], totalClubs: n
   const remainingClubs = totalClubs - clubs.length;
 
   return (
-    <div className="mx-auto mb-10 flex max-w-4xl flex-wrap items-center justify-center gap-3 sm:gap-4">
+    <div className="mx-auto mb-12 flex max-w-4xl flex-wrap items-center justify-center gap-4 sm:gap-5">
       <TooltipProvider>
         {clubs.map((club) => (
           <Tooltip key={club.name}>
             <TooltipTrigger asChild>
-              <Avatar className="h-[52px] w-[52px] sm:h-14 sm:w-14 bg-gradient-to-br from-muted to-muted/50 border-2 border-border/50 hover:border-primary/50 transition-all hover:scale-110 cursor-pointer shadow-sm flex-shrink-0">
+              <Avatar className="h-14 w-14 sm:h-16 sm:w-16 bg-gradient-to-br from-muted to-muted/50 border-2 border-border/50 hover:border-primary/50 transition-all hover:scale-110 cursor-pointer shadow-md hover:shadow-lg flex-shrink-0 ring-2 ring-primary/10">
                 <AvatarImage src={club.logoUrl || DEFAULT_FOOTBALL_LOGO_URI} alt={`${club.name} logo`} />
                 <AvatarFallback>
-                  <Image src={DEFAULT_FOOTBALL_LOGO_URI} alt="Football logo" width={52} height={52} />
+                  <Image src={DEFAULT_FOOTBALL_LOGO_URI} alt="Football logo" width={64} height={64} />
                 </AvatarFallback>
               </Avatar>
             </TooltipTrigger>
-            <TooltipContent>
-              <p>{club.name}</p>
+            <TooltipContent className="rounded-xl shadow-lg border-border/50">
+              <p className="font-semibold">{club.name}</p>
             </TooltipContent>
           </Tooltip>
         ))}
         {remainingClubs > 0 && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <Avatar className="h-[52px] w-[52px] sm:h-14 sm:w-14 bg-gradient-to-br from-primary/10 to-accent/10 border-2 border-dashed border-primary/30 hover:border-primary/60 transition-all hover:scale-110 cursor-pointer flex-shrink-0">
-                <AvatarFallback className="text-primary font-bold text-sm">+{remainingClubs}</AvatarFallback>
+              <Avatar className="h-14 w-14 sm:h-16 sm:w-16 bg-gradient-to-br from-primary/10 to-accent/10 border-2 border-dashed border-primary/40 hover:border-primary/70 transition-all hover:scale-110 cursor-pointer flex-shrink-0 shadow-md">
+                <AvatarFallback className="text-primary font-bold text-base">+{remainingClubs}</AvatarFallback>
               </Avatar>
             </TooltipTrigger>
-            <TooltipContent>
-              <p>{remainingClubs} more clubs mentioned</p>
+            <TooltipContent className="rounded-xl shadow-lg border-border/50">
+              <p className="font-semibold">{remainingClubs} more clubs mentioned</p>
             </TooltipContent>
           </Tooltip>
         )}
@@ -110,13 +110,13 @@ function NewsSummary({ newsSections }: { newsSections: NewsSection[] }) {
   return (
     <>
       {newsSections.length > 0 ? (
-        <div className="space-y-6">
+        <div className="space-y-7">
           {newsSections.map((section, index) => (
-            <div key={index} className="pb-6 last:pb-0">
-              <h3 className="text-xl font-bold tracking-tight text-foreground mb-4 font-headline">
+            <div key={index} className="pb-7 last:pb-0 border-b border-border/30 last:border-0">
+              <h3 className="text-xl font-bold tracking-tight text-foreground mb-5 font-headline">
                 {section.title}
               </h3>
-              <ul className="space-y-3">
+              <ul className="space-y-3.5">
                 {section.items.map((item, itemIndex) => (
                   item.text.toLowerCase().includes("today's top stories") ? null : <NewsListItem key={itemIndex} item={item} />
                 ))}
@@ -125,7 +125,7 @@ function NewsSummary({ newsSections }: { newsSections: NewsSection[] }) {
           ))}
         </div>
       ) : (
-        <p className="text-muted-foreground">No news to display at the moment.</p>
+        <p className="text-muted-foreground text-center py-8">No news to display at the moment.</p>
       )}
     </>
   );
@@ -142,13 +142,15 @@ export default async function FootballPage() {
   const newsSections: NewsSection[] = parseSectionsFromSummary(summary, "Today's Top Stories");
 
   return (
-    <div className="container py-7 md:py-16">
-      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4 text-center mb-7">
+    <div className="container py-10 md:py-16">
+      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5 text-center mb-10">
         <div className="relative">
-          <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-2xl"></div>
-          <Newspaper className="h-20 w-20 text-primary relative" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl blur-2xl"></div>
+          <div className="relative bg-gradient-to-br from-primary/10 to-accent/10 p-5 rounded-2xl shadow-lg ring-1 ring-primary/20">
+            <Newspaper className="h-16 w-16 text-primary" />
+          </div>
         </div>
-        <h1 className="font-headline gradient-text">
+        <h1 className="font-headline gradient-text text-5xl md:text-6xl font-bold">
           Football News
         </h1>
         <p className="max-w-2xl text-xl text-muted-foreground leading-relaxed text-balance">
@@ -157,9 +159,9 @@ export default async function FootballPage() {
         </p>
       </section>
 
-      <div className="py-5">
+      <div className="py-6">
         <ClubLogos clubs={clubsWithLogos} totalClubs={totalClubs} />
-        <Card className="mx-auto max-w-4xl card-hover border-border/50 bg-card/80 backdrop-blur-sm">
+        <Card className="mx-auto max-w-4xl card-hover border-border/50 bg-card/90 backdrop-blur-sm shadow-xl">
           <CardContent className="p-0">
             <SummaryDisplay
               title="Today's Top Stories"

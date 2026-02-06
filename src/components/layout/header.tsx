@@ -86,29 +86,36 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 glass-effect">
       <div className="container flex h-16 items-center px-4">
         <div className="flex items-center w-full gap-2">
-          <Link href="/" className="mr-4 sm:mr-10 md:mr-12 flex items-center space-x-3 group flex-shrink-0">
+          <Link href="/" className="mr-6 sm:mr-10 md:mr-12 flex items-center space-x-3 group flex-shrink-0">
             <div className="relative">
-              <div className="absolute inset-0 bg-primary/25 rounded-xl blur-md group-hover:blur-lg transition-all"></div>
-              <Bot className="h-8 w-8 text-primary relative" />
+              <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-lg group-hover:blur-xl transition-all"></div>
+              <div className="relative bg-gradient-to-br from-primary to-accent p-2 rounded-xl shadow-md group-hover:shadow-lg transition-all">
+                <Bot className="h-6 w-6 text-white" />
+              </div>
             </div>
-            <span className="hidden font-bold text-lg sm:inline-block font-headline">
-              PDA
-            </span>
+            <div className="hidden sm:flex flex-col">
+              <span className="font-bold text-lg font-headline leading-none bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                PDA
+              </span>
+              <span className="text-[10px] text-muted-foreground font-medium tracking-wide uppercase">
+                AI Assistant
+              </span>
+            </div>
           </Link>
-          <nav className="flex items-center space-x-1 sm:space-x-2 text-sm font-medium flex-1">
+          <nav className="flex items-center space-x-1 text-sm font-medium flex-1">
             {navLinks.map((link) => (
               <Link
                 key={link.label}
                 href={link.href}
                 onClick={(e) => handleNavClick(e, link.href)}
                 className={cn(
-                  'px-3 py-2 sm:px-4 sm:py-2 rounded-lg transition-all duration-200',
+                  'px-3 py-2 sm:px-4 sm:py-2 rounded-xl transition-all duration-200',
                   (pathname.startsWith('/stocks') && link.label === 'Stocks') ||
                   (pathname.startsWith('/football') && link.label === 'Football') ||
                   (pathname.startsWith('/trends') && link.label === 'Trends') ||
                   pathname === link.href
-                    ? 'bg-primary text-primary-foreground font-semibold'
-                    : 'text-foreground/70 hover:text-foreground hover:bg-secondary/50'
+                    ? 'bg-gradient-to-br from-primary to-primary/90 text-primary-foreground font-semibold shadow-md'
+                    : 'text-foreground/70 hover:text-foreground hover:bg-primary/5'
                 )}
               >
                 {link.label}
@@ -121,9 +128,9 @@ export function Header() {
                 <DropdownMenuTrigger asChild>
                   <button
                     aria-label="User menu"
-                    className="inline-flex items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground h-9 w-9 sm:h-10 sm:w-10 md:h-11 md:w-11 select-none shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+                    className="inline-flex items-center justify-center rounded-full bg-gradient-to-br from-primary via-primary to-accent text-primary-foreground h-10 w-10 sm:h-11 sm:w-11 select-none shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 ring-2 ring-primary/20"
                   >
-                    <span className="text-sm sm:text-base font-semibold">
+                    <span className="text-sm sm:text-base font-bold">
                       {(userName ?? userEmail ?? 'U')
                         .split(' ')
                         .slice(0, 2)
@@ -132,14 +139,15 @@ export function Header() {
                     </span>
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40">
-                  <div className="px-2 py-1.5 text-xs text-muted-foreground truncate">
+                <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-lg border-border/50">
+                  <div className="px-3 py-2 text-xs text-muted-foreground truncate border-b border-border/50 mb-1">
                     {userName ?? userEmail}
                   </div>
                   <DropdownMenuItem
                     onClick={async () => {
                       await supabase.auth.signOut();
                     }}
+                    className="rounded-lg text-destructive focus:text-destructive focus:bg-destructive/10"
                   >
                     Logout
                   </DropdownMenuItem>

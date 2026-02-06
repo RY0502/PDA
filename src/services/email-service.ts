@@ -14,7 +14,6 @@ import {
   GMAIL_CLIENT_SECRET,
   GMAIL_REFRESH_TOKEN,
 } from '@/lib/constants';
-import type { RegExpExecArray } from 'node-html-parser';
 
 export type MediumArticle = {
   id: string;

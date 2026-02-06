@@ -2,6 +2,7 @@ import { unstable_cache } from 'next/cache';
 import {
   type StockMarketOverview,
   type StockInfo,
+  type WatchedStock,
 } from '@/ai/flows/get-stock-market-overview';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -43,9 +44,6 @@ function safeJsonParse(jsonString: string): any | null {
   }
 }
 
-// Simple sleep utility for retry backoff
-
-
 function StockCard({
   stock,
   variant,
@@ -57,23 +55,24 @@ function StockCard({
   const colorClass = isGainer ? 'text-green-600' : 'text-red-600';
   const bgClass = isGainer ? 'bg-green-50 dark:bg-green-950/20' : 'bg-red-50 dark:bg-red-950/20';
   const borderClass = isGainer ? 'border-green-200 dark:border-green-900/30' : 'border-red-200 dark:border-red-900/30';
+  const glowClass = isGainer ? 'hover:shadow-green-200/50 dark:hover:shadow-green-900/20' : 'hover:shadow-red-200/50 dark:hover:shadow-red-900/20';
 
   return (
-    <div className={`flex items-center justify-between rounded-xl border ${borderClass} ${bgClass} p-4 transition-all hover:shadow-md group`}>
+    <div className={`flex items-center justify-between rounded-2xl border-2 ${borderClass} ${bgClass} p-4 transition-all hover:shadow-lg ${glowClass} hover:-translate-y-0.5 group`}>
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-foreground text-sm mb-1 truncate group-hover:text-primary transition-colors">{stock.name}</p>
-        <p className="text-lg font-bold text-foreground">{stock.price}</p>
+        <p className="font-semibold text-foreground text-sm mb-1.5 truncate group-hover:text-primary transition-colors">{stock.name}</p>
+        <p className="text-xl font-bold text-foreground font-headline">{stock.price}</p>
       </div>
-      <div className={`text-right font-semibold ${colorClass} flex flex-col items-end gap-1`}>
-        <div className="flex items-center gap-1">
+      <div className={`text-right font-semibold ${colorClass} flex flex-col items-end gap-1.5`}>
+        <div className="flex items-center gap-1.5">
           {isGainer ? (
-            <ArrowUp className="h-4 w-4" />
+            <ArrowUp className="h-5 w-5" />
           ) : (
-            <ArrowDown className="h-4 w-4" />
+            <ArrowDown className="h-5 w-5" />
           )}
-          <span className="text-base">{stock.change}</span>
+          <span className="text-base font-bold">{stock.change}</span>
         </div>
-        <span className="text-sm font-bold">{stock.changePercent}%</span>
+        <span className="text-sm font-bold bg-white dark:bg-gray-900 px-2 py-0.5 rounded-lg">{stock.changePercent}%</span>
       </div>
     </div>
   );
@@ -101,10 +100,10 @@ function OverviewPageContent({ overview, stockCode }: { overview: StockMarketOve
   if (!overview) {
     return (
       <div className="container py-12 md:py-16">
-        <Alert variant="destructive" className="mx-auto max-w-2xl shadow-lg">
-          <LineChart className="h-5 w-5" />
+        <Alert variant="destructive" className="mx-auto max-w-2xl shadow-xl rounded-2xl border-2">
+          <LineChart className="h-6 w-6" />
           <AlertTitle className="text-base font-semibold">Error Fetching Data</AlertTitle>
-          <AlertDescription className="text-sm">
+          <AlertDescription className="text-sm leading-relaxed">
             Could not fetch stock market data. The service may be temporarily
             unavailable. Please try again later.
           </AlertDescription>
@@ -132,12 +131,14 @@ function OverviewPageContent({ overview, stockCode }: { overview: StockMarketOve
 
   return (
     <div className="container py-12 md:py-16">
-      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4 text-center mb-12">
+      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5 text-center mb-12">
         <div className="relative">
-          <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-2xl"></div>
-          <AreaChart className="h-20 w-20 text-primary relative" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl blur-2xl"></div>
+          <div className="relative bg-gradient-to-br from-primary/10 to-accent/10 p-5 rounded-2xl shadow-lg ring-1 ring-primary/20">
+            <AreaChart className="h-16 w-16 text-primary" />
+          </div>
         </div>
-        <h1 className="font-headline gradient-text">
+        <h1 className="font-headline gradient-text text-5xl md:text-6xl font-bold">
           Stock Market Overview
         </h1>
         <p className="max-w-2xl text-xl text-muted-foreground leading-relaxed text-balance">
@@ -145,27 +146,27 @@ function OverviewPageContent({ overview, stockCode }: { overview: StockMarketOve
         </p>
       </section>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 gap-7 lg:grid-cols-3 max-w-7xl mx-auto">
         {overview.watchedStock && (
-          <Card className="lg:col-span-3 card-hover border-border/50 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-headline">
-                Watching:{' '}
+          <Card className="lg:col-span-3 card-hover border-border/50 bg-gradient-to-br from-card to-card/80 backdrop-blur-sm shadow-xl">
+            <CardHeader className="pb-5">
+              <CardTitle className="text-2xl font-headline flex items-center gap-2">
+                <span className="text-muted-foreground font-semibold">Watching:</span>
                 <span className="gradient-text">
                   {overview.watchedStock.name}
                 </span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex justify-around gap-6 text-center">
-              <div className="flex-1 p-6 rounded-xl bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 border border-green-200 dark:border-green-900/30">
-                <p className="text-sm font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Today's High</p>
-                <p className="text-3xl md:text-4xl font-bold text-green-600 font-headline">
+            <CardContent className="flex flex-col sm:flex-row justify-around gap-6 text-center">
+              <div className="flex-1 p-7 rounded-2xl bg-gradient-to-br from-green-50 to-green-100/60 dark:from-green-950/30 dark:to-green-900/20 border-2 border-green-200 dark:border-green-900/40 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5">
+                <p className="text-xs font-bold text-muted-foreground mb-3 uppercase tracking-wider">Today's High</p>
+                <p className="text-4xl md:text-5xl font-bold text-green-600 font-headline">
                   {overview.watchedStock.high}
                 </p>
               </div>
-              <div className="flex-1 p-6 rounded-xl bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-950/20 dark:to-red-900/10 border border-red-200 dark:border-red-900/30">
-                <p className="text-sm font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Today's Low</p>
-                <p className="text-3xl md:text-4xl font-bold text-red-600 font-headline">
+              <div className="flex-1 p-7 rounded-2xl bg-gradient-to-br from-red-50 to-red-100/60 dark:from-red-950/30 dark:to-red-900/20 border-2 border-red-200 dark:border-red-900/40 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5">
+                <p className="text-xs font-bold text-muted-foreground mb-3 uppercase tracking-wider">Today's Low</p>
+                <p className="text-4xl md:text-5xl font-bold text-red-600 font-headline">
                   {overview.watchedStock.low}
                 </p>
               </div>
@@ -174,16 +175,16 @@ function OverviewPageContent({ overview, stockCode }: { overview: StockMarketOve
         )}
 
         {/* Always render Losers card, even if empty */}
-        <Card className="lg:col-span-1 card-hover border-border/50 bg-card/80 backdrop-blur-sm">
-          <CardHeader className="pb-4">
+        <Card className="lg:col-span-1 card-hover border-border/50 bg-card/90 backdrop-blur-sm shadow-xl">
+          <CardHeader className="pb-5">
             <CardTitle className="flex items-center gap-3 text-xl font-headline">
-              <div className="p-2 rounded-lg bg-red-100 dark:bg-red-950/30">
-                <ArrowDown className="h-5 w-5 text-red-600" />
+              <div className="p-2.5 rounded-xl bg-red-100 dark:bg-red-950/40 shadow-md">
+                <ArrowDown className="h-6 w-6 text-red-600" />
               </div>
               Today's Losers
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-3">
+          <CardContent className="grid grid-cols-1 gap-4">
             {sortedLosers.map((stock) => (
               <StockCard key={stock.name} stock={stock} variant="loser" />
             ))}
@@ -191,16 +192,16 @@ function OverviewPageContent({ overview, stockCode }: { overview: StockMarketOve
         </Card>
 
         {/* Always render Gainers card, even if empty */}
-        <Card className="lg:col-span-2 card-hover border-border/50 bg-card/80 backdrop-blur-sm">
-          <CardHeader className="pb-4">
+        <Card className="lg:col-span-2 card-hover border-border/50 bg-card/90 backdrop-blur-sm shadow-xl">
+          <CardHeader className="pb-5">
             <CardTitle className="flex items-center gap-3 text-xl font-headline">
-              <div className="p-2 rounded-lg bg-green-100 dark:bg-green-950/30">
-                <ArrowUp className="h-5 w-5 text-green-600" />
+              <div className="p-2.5 rounded-xl bg-green-100 dark:bg-green-950/40 shadow-md">
+                <ArrowUp className="h-6 w-6 text-green-600" />
               </div>
               Today's Gainers
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {sortedGainers.map((stock) => (
               <StockCard key={stock.name} stock={stock} variant="gainer" />
             ))}
@@ -216,26 +217,26 @@ function OverviewPageContent({ overview, stockCode }: { overview: StockMarketOve
 function StocksPageSkeleton() {
   return (
     <div className="container py-12 md:py-16">
-      <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4 text-center mb-12">
+      <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5 text-center mb-12">
         <div className="relative">
-          <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-2xl"></div>
-          <div className="h-20 w-20 bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse"></div>
+          <div className="absolute inset-0 bg-primary/20 rounded-3xl blur-2xl"></div>
+          <div className="h-24 w-24 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse"></div>
         </div>
-        <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded-md w-3/4 animate-pulse"></div>
-        <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded-md w-1/2 animate-pulse mt-2"></div>
+        <div className="h-12 bg-gray-200 dark:bg-gray-800 rounded-2xl w-3/4 animate-pulse"></div>
+        <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded-xl w-1/2 animate-pulse mt-2"></div>
       </div>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 max-w-7xl mx-auto">
-        <div className="lg:col-span-3 h-48 bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse"></div>
-        <div className="lg:col-span-1 h-96 bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse"></div>
-        <div className="lg:col-span-2 h-96 bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse"></div>
+      <div className="grid grid-cols-1 gap-7 lg:grid-cols-3 max-w-7xl mx-auto">
+        <div className="lg:col-span-3 h-52 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse shadow-lg"></div>
+        <div className="lg:col-span-1 h-96 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse shadow-lg"></div>
+        <div className="lg:col-span-2 h-96 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse shadow-lg"></div>
       </div>
     </div>
   );
 }
 
-async function getWatchedStock(stockCode: string): Promise<StockInfo | null> {
+async function getWatchedStock(stockCode: string): Promise<WatchedStock | null> {
   const cached = unstable_cache(
-    async (): Promise<StockInfo | null> => {
+    async (): Promise<WatchedStock | null> => {
       const supabase = createClient();
       const { data, error } = await supabase
         .from('watched_stocks')
@@ -247,7 +248,7 @@ async function getWatchedStock(stockCode: string): Promise<StockInfo | null> {
         console.error('Error fetching watched stock:', error);
         return null;
       }
-      return data as StockInfo;
+      return data as WatchedStock;
     },
     ['watched-stock', stockCode],
     { revalidate: 3600 }
@@ -313,7 +314,7 @@ function PageContent({
   topLosers,
   stockCode,
 }: {
-  watchedStock: StockInfo | null;
+  watchedStock: WatchedStock | null;
   topGainers: StockInfo[] | null;
   topLosers: StockInfo[] | null;
   stockCode: string;
@@ -349,12 +350,14 @@ function PageContent({
 
   return (
     <div className="container py-12 md:py-16">
-      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4 text-center mb-12">
+      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5 text-center mb-12">
         <div className="relative">
-          <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-2xl"></div>
-          <AreaChart className="h-20 w-20 text-primary relative" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl blur-2xl"></div>
+          <div className="relative bg-gradient-to-br from-primary/10 to-accent/10 p-5 rounded-2xl shadow-lg ring-1 ring-primary/20">
+            <AreaChart className="h-16 w-16 text-primary" />
+          </div>
         </div>
-        <h1 className="font-headline gradient-text">
+        <h1 className="font-headline gradient-text text-5xl md:text-6xl font-bold">
           Stock Market Overview
         </h1>
         <p className="max-w-2xl text-xl text-muted-foreground leading-relaxed text-balance">
@@ -362,27 +365,27 @@ function PageContent({
         </p>
       </section>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 gap-7 lg:grid-cols-3 max-w-7xl mx-auto">
         {watchedStock && (
-          <Card className="lg:col-span-3 card-hover border-border/50 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-headline">
-                Watching:{' '}
+          <Card className="lg:col-span-3 card-hover border-border/50 bg-gradient-to-br from-card to-card/80 backdrop-blur-sm shadow-xl">
+            <CardHeader className="pb-5">
+              <CardTitle className="text-2xl font-headline flex items-center gap-2">
+                <span className="text-muted-foreground font-semibold">Watching:</span>
                 <span className="gradient-text">
                   {watchedStock.name}
                 </span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex justify-around gap-6 text-center">
-              <div className="flex-1 p-6 rounded-xl bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 border border-green-200 dark:border-green-900/30">
-                <p className="text-sm font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Today's High</p>
-                <p className="text-3xl md:text-4xl font-bold text-green-600 font-headline">
+            <CardContent className="flex flex-col sm:flex-row justify-around gap-6 text-center">
+              <div className="flex-1 p-7 rounded-2xl bg-gradient-to-br from-green-50 to-green-100/60 dark:from-green-950/30 dark:to-green-900/20 border-2 border-green-200 dark:border-green-900/40 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5">
+                <p className="text-xs font-bold text-muted-foreground mb-3 uppercase tracking-wider">Today's High</p>
+                <p className="text-4xl md:text-5xl font-bold text-green-600 font-headline">
                   {watchedStock.high}
                 </p>
               </div>
-              <div className="flex-1 p-6 rounded-xl bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-950/20 dark:to-red-900/10 border border-red-200 dark:border-red-900/30">
-                <p className="text-sm font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Today's Low</p>
-                <p className="text-3xl md:text-4xl font-bold text-red-600 font-headline">
+              <div className="flex-1 p-7 rounded-2xl bg-gradient-to-br from-red-50 to-red-100/60 dark:from-red-950/30 dark:to-red-900/20 border-2 border-red-200 dark:border-red-900/40 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5">
+                <p className="text-xs font-bold text-muted-foreground mb-3 uppercase tracking-wider">Today's Low</p>
+                <p className="text-4xl md:text-5xl font-bold text-red-600 font-headline">
                   {watchedStock.low}
                 </p>
               </div>
@@ -391,16 +394,16 @@ function PageContent({
         )}
 
         {sortedLosers.length > 0 && (
-          <Card className="lg:col-span-1 card-hover border-border/50 bg-card/80 backdrop-blur-sm">
-            <CardHeader className="pb-4">
+          <Card className="lg:col-span-1 card-hover border-border/50 bg-card/90 backdrop-blur-sm shadow-xl">
+            <CardHeader className="pb-5">
               <CardTitle className="flex items-center gap-3 text-xl font-headline">
-                <div className="p-2 rounded-lg bg-red-100 dark:bg-red-950/30">
-                  <ArrowDown className="h-5 w-5 text-red-600" />
+                <div className="p-2.5 rounded-xl bg-red-100 dark:bg-red-950/40 shadow-md">
+                  <ArrowDown className="h-6 w-6 text-red-600" />
                 </div>
                 Today's Losers
               </CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-3">
+            <CardContent className="grid grid-cols-1 gap-4">
               {sortedLosers.map((stock) => (
                 <StockCard key={`${stock.name}-${(stock as any).updated_at ?? ''}`} stock={stock} variant="loser" />
               ))}
@@ -409,16 +412,16 @@ function PageContent({
         )}
 
         {sortedGainers.length > 0 && (
-          <Card className="lg:col-span-2 card-hover border-border/50 bg-card/80 backdrop-blur-sm">
-            <CardHeader className="pb-4">
+          <Card className="lg:col-span-2 card-hover border-border/50 bg-card/90 backdrop-blur-sm shadow-xl">
+            <CardHeader className="pb-5">
               <CardTitle className="flex items-center gap-3 text-xl font-headline">
-                <div className="p-2 rounded-lg bg-green-100 dark:bg-green-950/30">
-                  <ArrowUp className="h-5 w-5 text-green-600" />
+                <div className="p-2.5 rounded-xl bg-green-100 dark:bg-green-950/40 shadow-md">
+                  <ArrowUp className="h-6 w-6 text-green-600" />
                 </div>
                 Today's Gainers
               </CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {sortedGainers.map((stock) => (
                 <StockCard key={`${stock.name}-${(stock as any).updated_at ?? ''}`} stock={stock} variant="gainer" />
               ))}
