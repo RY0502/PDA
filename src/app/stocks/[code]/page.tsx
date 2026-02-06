@@ -1,11 +1,9 @@
 import { unstable_cache } from 'next/cache';
 import {
-  type StockMarketOverview,
   type StockInfo,
   type WatchedStock,
 } from '@/ai/flows/get-stock-market-overview';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AreaChart, ArrowDown, ArrowUp, LineChart } from 'lucide-react';
 import { WatchlistManager } from './watchlist-manager';
 import { createClient } from '@/lib/supabase/client';
@@ -13,36 +11,6 @@ import { Suspense } from 'react';
 
 export const revalidate = 3600; // Revalidate the page every 1 hour
 export const dynamic = 'force-static';
-
-function safeJsonParse(jsonString: string): any | null {
-  if (!jsonString) return null;
-  try {
-    // First, try to find a JSON block wrapped in markdown
-    const markdownMatch = jsonString.match(/```json\n([\s\S]*?)\n```/);
-    if (markdownMatch && markdownMatch[1]) {
-      return JSON.parse(markdownMatch[1]);
-    }
-
-    // If no markdown block, find the first '{' and last '}'
-    const startIndex = jsonString.indexOf('{');
-    const endIndex = jsonString.lastIndexOf('}');
-    if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
-      const potentialJson = jsonString.substring(startIndex, endIndex + 1);
-      return JSON.parse(potentialJson);
-    }
-
-    // Fallback for when the string is just the JSON object itself.
-    return JSON.parse(jsonString);
-  } catch (error) {
-    console.error(
-      'Failed to parse JSON string:',
-      error,
-      'Original string:',
-      jsonString
-    );
-    return null;
-  }
-}
 
 function StockCard({
   stock,
@@ -78,141 +46,6 @@ function StockCard({
   );
 }
 
-const getStockData = unstable_cache(
-  async (stockCode: string): Promise<StockMarketOverview | null> => {
-    const supabase = createClient();
-    const { data, error } = await supabase.functions.invoke('read-stock-data', {
-      body: { stockCode },
-    });
-
-    if (error) {
-      console.error('Error fetching stock data:', error);
-      return null;
-    }
-
-    return data;
-  },
-  ['stock-overview'],
-  { revalidate: 3600 }
-);
-
-function OverviewPageContent({ overview, stockCode }: { overview: StockMarketOverview | null, stockCode: string }) {
-  if (!overview) {
-    return (
-      <div className="container py-8 sm:py-12 md:py-16">
-        <Alert variant="destructive" className="mx-auto max-w-2xl shadow-xl rounded-2xl border-2">
-          <LineChart className="h-6 w-6" />
-          <AlertTitle className="text-base font-semibold">Error Fetching Data</AlertTitle>
-          <AlertDescription className="text-sm leading-relaxed">
-            Could not fetch stock market data. The service may be temporarily
-            unavailable. Please try again later.
-          </AlertDescription>
-        </Alert>
-        <div className="mt-8">
-          <WatchlistManager stockCode={stockCode} />
-        </div>
-      </div>
-    );
-  }
-
-  const sortedGainers = overview.topGainers
-    ? [...overview.topGainers].sort(
-        (a, b) => parseFloat(b.change) - parseFloat(a.change)
-      )
-    : [];
-
-  const sortedLosers = Array.isArray(overview.topLosers)
-    ? [...overview.topLosers]
-        .filter(
-          (stock) => stock.name.toLowerCase() !== 'hdfc bank ltd'
-        )
-        .sort((a, b) => parseFloat(a.change) - parseFloat(b.change))
-    : [];
-
-  return (
-    <div className="container py-8 sm:py-12 md:py-16">
-      <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5 text-center mb-6 sm:mb-10 md:mb-12">
-        <div className="relative mt-1">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl blur-2xl"></div>
-          <div className="relative bg-gradient-to-br from-primary/10 to-accent/10 p-5 rounded-2xl shadow-lg ring-1 ring-primary/20">
-            <AreaChart className="h-16 w-16 text-primary" />
-          </div>
-        </div>
-        <h1 className="font-headline gradient-text text-5xl md:text-6xl font-bold">
-          Stock Market Overview
-        </h1>
-        <p className="max-w-2xl text-xl text-muted-foreground leading-relaxed text-balance">
-          Today's highlights from the National Stock Exchange (NSE).
-        </p>
-      </section>
-
-      <div className="grid grid-cols-1 gap-7 lg:grid-cols-3 max-w-7xl mx-auto">
-        {overview.watchedStock && (
-          <Card className="lg:col-span-3 card-hover border-border/50 bg-gradient-to-br from-card to-card/80 backdrop-blur-sm shadow-xl">
-            <CardHeader className="pb-5">
-              <CardTitle className="text-2xl font-headline flex items-center gap-2">
-                <span className="text-muted-foreground font-semibold">Watching:</span>
-                <span className="gradient-text">
-                  {overview.watchedStock.name}
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-row justify-around gap-3 sm:gap-6 text-center">
-              <div className="flex-1 p-4 sm:p-7 rounded-xl sm:rounded-2xl bg-gradient-to-br from-green-50 to-green-100/60 dark:from-green-950/30 dark:to-green-900/20 border-2 border-green-200 dark:border-green-900/40 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5">
-                <p className="text-[10px] sm:text-xs font-bold text-muted-foreground mb-2 sm:mb-3 uppercase tracking-wider">Today's High</p>
-                <p className="text-2xl sm:text-4xl md:text-5xl font-bold text-green-600 font-headline">
-                  {overview.watchedStock.high}
-                </p>
-              </div>
-              <div className="flex-1 p-4 sm:p-7 rounded-xl sm:rounded-2xl bg-gradient-to-br from-red-50 to-red-100/60 dark:from-red-950/30 dark:to-red-900/20 border-2 border-red-200 dark:border-red-900/40 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5">
-                <p className="text-[10px] sm:text-xs font-bold text-muted-foreground mb-2 sm:mb-3 uppercase tracking-wider">Today's Low</p>
-                <p className="text-2xl sm:text-4xl md:text-5xl font-bold text-red-600 font-headline">
-                  {overview.watchedStock.low}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Always render Losers card, even if empty */}
-        <Card className="lg:col-span-1 card-hover border-border/50 bg-card/90 backdrop-blur-sm shadow-xl">
-          <CardHeader className="pb-5">
-            <CardTitle className="flex items-center gap-3 text-xl font-headline">
-              <div className="p-2.5 rounded-xl bg-red-100 dark:bg-red-950/40 shadow-md">
-                <ArrowDown className="h-6 w-6 text-red-600" />
-              </div>
-              Today's Losers
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-4">
-            {sortedLosers.map((stock) => (
-              <StockCard key={stock.name} stock={stock} variant="loser" />
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Always render Gainers card, even if empty */}
-        <Card className="lg:col-span-2 card-hover border-border/50 bg-card/90 backdrop-blur-sm shadow-xl">
-          <CardHeader className="pb-5">
-            <CardTitle className="flex items-center gap-3 text-xl font-headline">
-              <div className="p-2.5 rounded-xl bg-green-100 dark:bg-green-950/40 shadow-md">
-                <ArrowUp className="h-6 w-6 text-green-600" />
-              </div>
-              Today's Gainers
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {sortedGainers.map((stock) => (
-              <StockCard key={stock.name} stock={stock} variant="gainer" />
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      <WatchlistManager stockCode={stockCode} />
-    </div>
-  );
-}
 
 function StocksPageSkeleton() {
   return (

@@ -1,5 +1,5 @@
 import { getMediumArticles } from '@/services/email-service';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import {
   Card,
   CardContent,

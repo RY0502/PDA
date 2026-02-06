@@ -1,5 +1,5 @@
 import { getLatestFootballNews } from '@/ai/flows/get-latest-football-news';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent} from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Newspaper, ChevronRight } from 'lucide-react';

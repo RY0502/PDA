@@ -1,17 +1,20 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { slugify } from '@/lib/utils';
 
 export function UrlOpener() {
   const [url, setUrl] = useState('');
+  const router = useRouter();
 
   const handleGoClick = () => {
     if (url.trim()) {
-      const fullUrl = `https://freedium.cfd/${url.trim()}`;
-      window.open(fullUrl, '_blank', 'noopener,noreferrer');
+      const anchorSlug = slugify(url.trim() || 'medium');
+      router.push(`/medium/news/${anchorSlug}?url=${encodeURIComponent(url.trim())}`);
     }
   };
 
