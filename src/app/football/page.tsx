@@ -72,7 +72,7 @@ function ClubLogos({ clubs, totalClubs }: { clubs: ClubWithLogo[], totalClubs: n
   const remainingClubs = totalClubs - clubs.length;
 
   return (
-    <div className="mx-auto mb-12 flex max-w-4xl flex-wrap items-center justify-center gap-2 sm:gap-4 md:gap-5">
+    <div className="mx-auto mb-12 flex max-w-4xl flex-wrap items-center justify-center gap-3 sm:gap-5 md:gap-6">
       <TooltipProvider>
         {clubs.map((club) => (
           <Tooltip key={club.name}>
@@ -144,7 +144,7 @@ export default async function FootballPage() {
   return (
     <div className="container py-8 sm:py-10 md:py-16">
       <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5 text-center mb-6 sm:mb-8 md:mb-10">
-        <div className="relative mt-3">
+        <div className="relative mt-2">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl blur-2xl"></div>
           <div className="relative bg-gradient-to-br from-primary/10 to-accent/10 p-5 rounded-2xl shadow-lg ring-1 ring-primary/20">
             <Newspaper className="h-16 w-16 text-primary" />
@@ -153,13 +153,13 @@ export default async function FootballPage() {
         <h1 className="font-headline gradient-text text-5xl md:text-6xl font-bold">
           Football News
         </h1>
-        <p className="max-w-2xl text-xl text-muted-foreground leading-relaxed text-balance mb-4">
+        <p className="max-w-2xl text-xl text-muted-foreground leading-relaxed text-balance">
           The latest headlines and transfer talk from the world of football,
           powered by AI.
         </p>
       </section>
 
-      <div className="py-4">
+      <div className="pt-2 pb-6">
         <ClubLogos clubs={clubsWithLogos} totalClubs={totalClubs} />
         <Card className="mx-auto max-w-4xl card-hover border-border/50 bg-card/90 backdrop-blur-sm shadow-xl">
           <CardContent className="p-0">
