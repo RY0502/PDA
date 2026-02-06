@@ -2,16 +2,10 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, TrendingUp } from 'lucide-react';
 import { DetailsStream } from '@/components/details-stream';
+import { slugify } from '@/lib/utils';
 
 export default function TrendsNewsDetail({ searchParams }: { searchParams: { title?: string } }) {
   const titleParam = searchParams?.title || '';
-  const slugify = (text: string) =>
-    text
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .trim()
-      .replace(/\s+/g, '-')
-      .slice(0, 80);
 
   // Parse title for bold formatting
   const formatTitle = (title: string) => {

@@ -4,6 +4,7 @@ import { SummaryDisplay } from '@/components/summary-display';
 import { TrendingUp, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { unstable_cache } from 'next/cache';
+import { slugify, parseSectionsFromSummary } from '@/lib/utils';
 
 // Revalidate the page every hour
 export const revalidate = 3600;
@@ -20,14 +21,6 @@ interface TrendSection {
 }
 
 // Component to render a single trend item with bullet point
-function slugify(text: string) {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .slice(0, 80);
-}
 
 function TrendListItem({ item }: { item: TrendItem }) {
   const parts = item.text.split(/(\*\*.*?\*\*)/g).filter((part) => part);
@@ -87,52 +80,7 @@ export default async function TrendsPage() {
   let summary = '';
   const res = await getCachedTrendingSearches();
   summary = res.summary;
-  const lines = summary
-    .split('\n')
-    .map((l) => l.trim())
-    .filter((item) => item.length > 0 && !item.startsWith('```') && !item.endsWith('```'));
-
-  const trendSections: TrendSection[] = [];
-  let currentSection: TrendSection | null = null;
-
-  const hasSectionHeaders = lines.some(
-    (line) => line.startsWith('**') && line.endsWith('**')
-  );
-
-  if (hasSectionHeaders) {
-    lines.forEach((line) => {
-      const trimmedLine = line;
-      if (trimmedLine.startsWith('**') && trimmedLine.endsWith('**')) {
-        if (currentSection) {
-          trendSections.push(currentSection);
-        }
-        currentSection = {
-          title: trimmedLine.slice(2, -2),
-          items: [],
-        };
-      } else if (currentSection) {
-        const text = trimmedLine.startsWith('*') || trimmedLine.startsWith('-')
-          ? trimmedLine.slice(1).trim()
-          : trimmedLine;
-        currentSection.items.push({ text });
-      }
-    });
-  } else {
-    // Fallback: treat all lines as items under a default section
-    currentSection = {
-      title: "Today's Top Trends",
-      items: lines.map((line) => {
-        const text = line.startsWith('*') || line.startsWith('-')
-          ? line.slice(1).trim()
-          : line;
-        return { text };
-      }),
-    };
-  }
-
-  if (currentSection) {
-    trendSections.push(currentSection);
-  }
+  const trendSections: TrendSection[] = parseSectionsFromSummary(summary, "Today's Top Trends");
 
   return (
     <div className="container py-8 md:py-16">

@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { DEFAULT_FOOTBALL_LOGO_URI } from '@/lib/constants';
 import { SummaryDisplay } from '@/components/summary-display';
 import { unstable_cache } from 'next/cache';
+import { slugify, parseSectionsFromSummary } from '@/lib/utils';
 
 export const revalidate = 3600; // Revalidate the page every 1 hours
 export const dynamic = 'force-static';
@@ -29,14 +30,6 @@ interface ClubWithLogo {
 }
 
 // A component to render a single news item, handling team name highlighting
-function slugify(text: string) {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .slice(0, 80);
-}
 
 function NewsListItem({ item }: { item: NewsItem }) {
   const parts = item.text.split(/(\*\*.*?\*\*)/g).filter((part) => part);
@@ -146,50 +139,7 @@ export default async function FootballPage() {
   summary = res.summary;
   clubsWithLogos = res.clubsWithLogos;
   totalClubs = res.totalClubs;
-  const lines = summary.split('\n').filter((item) => item.trim().length > 0);
-
-  const newsSections: NewsSection[] = [];
-  let currentSection: NewsSection | null = null;
-
-  const hasSectionHeaders = lines.some(
-    (line) => line.startsWith('**') && line.endsWith('**')
-  );
-
-  if (hasSectionHeaders) {
-    lines.forEach((line) => {
-      const trimmedLine = line.trim();
-      if (trimmedLine.startsWith('**') && trimmedLine.endsWith('**')) {
-        if (currentSection) {
-          newsSections.push(currentSection);
-        }
-        currentSection = {
-          title: trimmedLine.slice(2, -2),
-          items: [],
-        };
-      } else if (currentSection) {
-        const text = trimmedLine.startsWith('*') || trimmedLine.startsWith('-')
-          ? trimmedLine.slice(1).trim()
-          : trimmedLine;
-        currentSection.items.push({ text });
-      }
-    });
-  } else {
-    // Fallback: treat all lines as items under a default section
-    currentSection = {
-      title: "Today's Top Stories",
-      items: lines.map((line) => {
-        const trimmedLine = line.trim();
-        const text = trimmedLine.startsWith('*') || trimmedLine.startsWith('-')
-          ? trimmedLine.slice(1).trim()
-          : trimmedLine;
-        return { text };
-      }),
-    };
-  }
-
-  if (currentSection) {
-    newsSections.push(currentSection);
-  }
+  const newsSections: NewsSection[] = parseSectionsFromSummary(summary, "Today's Top Stories");
 
   return (
     <div className="container py-7 md:py-16">

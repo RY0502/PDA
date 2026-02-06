@@ -12,20 +12,11 @@ import { Terminal, Image as ImageIcon, FileText } from 'lucide-react';
 import type { MediumArticle } from '@/services/email-service';
 import { UrlOpener } from '@/components/url-opener';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
+import { cn, slugify } from '@/lib/utils';
 import Image from 'next/image';
 
 // Revalidate the page every 6 hours
 export const revalidate = 21600;
-
-function slugify(text: string) {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .slice(0, 80);
-}
 
 function ArticleCard({ article }: { article: MediumArticle }) {
   const truncatedAuthor =
