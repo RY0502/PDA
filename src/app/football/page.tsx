@@ -77,7 +77,7 @@ function ClubLogos({ clubs, totalClubs }: { clubs: ClubWithLogo[], totalClubs: n
         {clubs.map((club) => (
           <Tooltip key={club.name}>
             <TooltipTrigger asChild>
-              <Avatar className="h-11 w-11 sm:h-14 sm:w-14 md:h-16 md:w-16 bg-gradient-to-br from-muted to-muted/50 border-2 border-border/50 hover:border-primary/50 transition-all hover:scale-110 cursor-pointer shadow-md hover:shadow-lg flex-shrink-0 ring-2 ring-primary/10">
+              <Avatar className="h-12 w-12 sm:h-16 sm:w-16 md:h-18 md:w-18 bg-gradient-to-br from-muted to-muted/50 border-2 border-border/50 hover:border-primary/50 transition-all hover:scale-110 cursor-pointer shadow-md hover:shadow-lg flex-shrink-0 ring-2 ring-primary/10">
                 <AvatarImage src={club.logoUrl || DEFAULT_FOOTBALL_LOGO_URI} alt={`${club.name} logo`} />
                 <AvatarFallback>
                   <Image src={DEFAULT_FOOTBALL_LOGO_URI} alt="Football logo" width={64} height={64} className="object-contain" />
@@ -92,7 +92,7 @@ function ClubLogos({ clubs, totalClubs }: { clubs: ClubWithLogo[], totalClubs: n
         {remainingClubs > 0 && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <Avatar className="h-11 w-11 sm:h-14 sm:w-14 md:h-16 md:w-16 bg-gradient-to-br from-primary/10 to-accent/10 border-2 border-dashed border-primary/40 hover:border-primary/70 transition-all hover:scale-110 cursor-pointer flex-shrink-0 shadow-md">
+              <Avatar className="h-12 w-12 sm:h-16 sm:w-16 md:h-18 md:w-18 bg-gradient-to-br from-primary/10 to-accent/10 border-2 border-dashed border-primary/40 hover:border-primary/70 transition-all hover:scale-110 cursor-pointer flex-shrink-0 shadow-md">
                 <AvatarFallback className="text-primary font-bold text-sm sm:text-base">+{remainingClubs}</AvatarFallback>
               </Avatar>
             </TooltipTrigger>
@@ -144,7 +144,7 @@ export default async function FootballPage() {
   return (
     <div className="container py-8 sm:py-10 md:py-16">
       <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5 text-center mb-6 sm:mb-8 md:mb-10">
-        <div className="relative mt-4">
+        <div className="relative mt-3">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl blur-2xl"></div>
           <div className="relative bg-gradient-to-br from-primary/10 to-accent/10 p-5 rounded-2xl shadow-lg ring-1 ring-primary/20">
             <Newspaper className="h-16 w-16 text-primary" />
@@ -153,13 +153,13 @@ export default async function FootballPage() {
         <h1 className="font-headline gradient-text text-5xl md:text-6xl font-bold">
           Football News
         </h1>
-        <p className="max-w-2xl text-xl text-muted-foreground leading-relaxed text-balance">
+        <p className="max-w-2xl text-xl text-muted-foreground leading-relaxed text-balance mb-4">
           The latest headlines and transfer talk from the world of football,
           powered by AI.
         </p>
       </section>
 
-      <div className="py-6">
+      <div className="py-4">
         <ClubLogos clubs={clubsWithLogos} totalClubs={totalClubs} />
         <Card className="mx-auto max-w-4xl card-hover border-border/50 bg-card/90 backdrop-blur-sm shadow-xl">
           <CardContent className="p-0">

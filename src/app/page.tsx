@@ -104,9 +104,10 @@ export default async function Home() {
   return (
     <div className="container py-8 sm:py-12 md:py-16">
       <header className="mb-8 sm:mb-12 md:mb-14 text-center max-w-3xl mx-auto">
-        <div className="relative inline-block mb-6 mt-4">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl blur-2xl"></div>
-          <Newspaper className="h-16 w-16 text-primary relative" />
+        <div className="relative mt-3 mb-6 inline-block">
+          <div className="bg-gradient-to-br from-primary/10 to-accent/10 p-5 rounded-2xl shadow-lg ring-1 ring-primary/20">
+            <Newspaper className="h-16 w-16 text-primary" />
+          </div>
         </div>
         <h1 className="font-headline gradient-text mb-5 text-5xl md:text-6xl font-bold">
           Your Daily Brief
