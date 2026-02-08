@@ -1,6 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { getWebsiteData } from './getdata.ts';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -35,10 +34,26 @@ serve(async (req)=>{
     const stockCode = latestStockRow.code;
     console.log('Using stockCode from DB:', stockCode);
     const targetUrl = `https://www.equitypandit.com/share-price/${stockCode}`;
-    const scrape = await getWebsiteData({
-      url: targetUrl,
-      prompt: "Extract the stock's name, today's High, and today's Low. Return ONLY a minified JSON object with keys: name (string), high (string or number), low (string or number). No extra text."
+    const functionsUrl = `${SUPABASE_URL}/functions/v1/shared`;
+    console.log(`[fetch-stock-price] Hitting website-data for ${targetUrl}`);
+    const scrapeResp = await fetch(functionsUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+      },
+      body: JSON.stringify({
+        url: targetUrl,
+        prompt: "Extract the stock's name, today's High, and today's Low. Return ONLY a minified JSON object with keys: name (string), high (string or number), low (string or number). No extra text.",
+        useWatercrawl: true
+      })
     });
+    if (!scrapeResp.ok) {
+      console.error(`[fetch-stock-price] website-data responded non-OK: ${scrapeResp.status}`);
+      throw new Error(`Shared function error: ${scrapeResp.status}`);
+    }
+    const scrape = await scrapeResp.json();
+    console.log(`[fetch-stock-price] website-data returned source=${scrape.source} hasJson=${!!scrape.json} hasMarkdown=${!!scrape.markdown}`);
     if (!scrape.json || typeof scrape.json !== 'object') {
       throw new Error('No JSON data returned from scraper');
     }

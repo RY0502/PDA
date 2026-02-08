@@ -1,3 +1,4 @@
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 const ANYCRAWL_API_KEY = Deno.env.get('ANYCRAWL_API_KEY');
 const WATERCRAWL_API_KEY = Deno.env.get('WATERCRAWL_API_KEY');
 export type WebsiteDataResult = {
@@ -10,11 +11,51 @@ export type WebsiteDataResult = {
     resultUrl: string;
   };
 };
-export async function getWebsiteData(input: { url: string; prompt: string; useWatercrawl?: boolean }): Promise<WebsiteDataResult> {
+
+serve(async (req) => {
+  try {
+    if (req.method !== 'POST') {
+      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+        status: 405,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    let body: any = null;
+    try {
+      body = await req.json();
+    } catch (_e) {
+      return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    const url = String(body?.url || '');
+    const prompt = String(body?.prompt || '');
+    const useWatercrawl = body?.useWatercrawl !== false;
+    if (!url || !prompt) {
+      return new Response(JSON.stringify({ error: 'Missing url or prompt' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    const result = await getWebsiteData({ url, prompt, useWatercrawl });
+    return new Response(JSON.stringify(result), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+});
+
+ async function getWebsiteData(input: { url: string; prompt: string; useWatercrawl?: boolean }): Promise<WebsiteDataResult> {
   const { url, prompt, useWatercrawl = true } = input;
   let watercrawlRequestUuid: string | null = null;
   if (useWatercrawl && WATERCRAWL_API_KEY) {
     try {
+      console.log(`[shared] Hitting Watercrawl for ${url}`);
       const watercrawlPostResponse = await fetch("https://app.watercrawl.dev/api/v1/core/crawl-requests/", {
         method: 'POST',
         headers: {
@@ -55,6 +96,7 @@ export async function getWebsiteData(input: { url: string; prompt: string; useWa
       if (watercrawlPostResponse.ok) {
         const responseData = await watercrawlPostResponse.json();
         watercrawlRequestUuid = responseData.uuid;
+        console.log(`[shared] Watercrawl request initiated: ${watercrawlRequestUuid}`);
       }
     } catch (_error) {}
   }
@@ -67,6 +109,7 @@ export async function getWebsiteData(input: { url: string; prompt: string; useWa
     const engines = ['playwright', 'puppeteer', 'cheerio'];
     for (const engine of engines) {
       try {
+        console.log(`[shared] Hitting AnyCrawl (${engine}) for ${url}`);
         const response = await fetch(anycrawlUrl, {
           method: 'POST',
           headers,
@@ -85,6 +128,7 @@ export async function getWebsiteData(input: { url: string; prompt: string; useWa
           const payloadJson = result?.data?.json ?? result?.data?.output ?? null;
           const payloadMarkdown = result?.data?.markdown ?? null;
           if (payloadJson || payloadMarkdown) {
+            console.log(`[shared] AnyCrawl (${engine}) returned data; returning`);
             return {
               url,
               source: 'anycrawl',
@@ -98,6 +142,7 @@ export async function getWebsiteData(input: { url: string; prompt: string; useWa
   }
   if (useWatercrawl && watercrawlRequestUuid && WATERCRAWL_API_KEY) {
     try {
+      console.log(`[shared] Checking Watercrawl results for uuid ${watercrawlRequestUuid}`);
       const resultsUrl = `https://app.watercrawl.dev/api/v1/core/crawl-requests/${watercrawlRequestUuid}/results/`;
       const resultsResponse = await fetch(resultsUrl, {
         headers: {
@@ -108,11 +153,13 @@ export async function getWebsiteData(input: { url: string; prompt: string; useWa
         const resultsData = await resultsResponse.json();
         const resultUrl: string | undefined = resultsData.results?.[0]?.result;
         if (resultUrl) {
+          console.log(`[shared] Fetching Watercrawl result content from ${resultUrl}`);
           const contentResponse = await fetch(resultUrl);
           if (contentResponse.ok) {
             const contentData = await contentResponse.json();
             const extractedJson: unknown = contentData?.json ?? contentData?.extraction ?? contentData?.output ?? null;
             if (extractedJson) {
+              console.log(`[shared] Watercrawl returned JSON; returning`);
               return {
                 url,
                 source: 'watercrawl',
@@ -129,6 +176,7 @@ export async function getWebsiteData(input: { url: string; prompt: string; useWa
       }
     } catch (_error) {}
   }
+  console.log(`[shared] All crawlers failed for ${url}`);
   return {
     url,
     source: null,

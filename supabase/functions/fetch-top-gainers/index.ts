@@ -3,148 +3,44 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
-const TOP_GAINERS_KEY_URL = Deno.env.get('TOP_GAINERS_KEY_URL'); // new env var
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-function cleanJsonResponse(text: string) {
-  // Remove markdown code block wrappers if present
-  return text.replace(/^```json\s*/, '').replace(/\s*```$/, '').trim();
-}
-
-function extractGeminiJsonText(geminiData: any) {
-  const parts = geminiData?.candidates?.[0]?.content?.parts ?? [];
-  for (const part of parts) {
-    if (typeof part?.text === 'string' && part.text.trim()) {
-      return part.text.trim();
-    }
-    const inline = part?.inlineData?.data;
-    if (inline && typeof inline === 'string') {
-      try {
-        const decoded = atob(inline);
-        if (decoded && decoded.trim()) {
-          return decoded.trim();
-        }
-      } catch (_e) {
-        // ignore base64 decode errors
-      }
-    }
-  }
-  return null;
-}
-
-async function fetchApiKeyWithRetries(url: string | null, attempts = 3, delayMs = 500): Promise<string | null> {
-  if (!url) {
-    console.error('TOP_GAINERS_KEY_URL is not set');
-    return null;
-  }
-
-  for (let attempt = 1; attempt <= attempts; attempt++) {
-    try {
-      console.log(`Fetching API key (attempt ${attempt}) from ${url}...`);
-      const resp = await fetch(url, { method: 'GET' });
-      if (!resp.ok) {
-        const text = await resp.text().catch(() => '');
-        console.error(`Key fetch failed (status ${resp.status}):`, text);
-        throw new Error(`Key fetch failed with status ${resp.status}`);
-      }
-      const json = await resp.json();
-      const decrypted = json?.keys?.[0]?.vault_keys?.decrypted_value;
-      if (decrypted && typeof decrypted === 'string') {
-        console.log('Successfully retrieved decrypted API key.');
-        return decrypted;
-      } else {
-        console.error('Decrypted key not found in response JSON:', json);
-        throw new Error('Decrypted key not found');
-      }
-    } catch (err) {
-      console.error(`Attempt ${attempt} to fetch API key failed:`, err.message ?? err);
-      if (attempt < attempts) {
-        // simple backoff
-        await new Promise((res) => setTimeout(res, delayMs * attempt));
-        continue;
-      } else {
-        console.error('All attempts to fetch API key failed.');
-        return null;
-      }
-    }
-  }
-  return null;
-}
 
 serve(async () => {
   try {
-    // Fetch the API key via REST using TOP_GAINERS_KEY_URL with retries
-    const geminiApiKey = await fetchApiKeyWithRetries(TOP_GAINERS_KEY_URL, 3, 500);
-    if (!geminiApiKey) {
-      throw new Error('Unable to retrieve Gemini API key from configured URL');
-    }
-
-    const currentDate = new Date().toLocaleDateString('en-IN', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
-    const headers = {
-      'x-goog-api-key': geminiApiKey,
-      'Content-Type': 'application/json'
-    };
-
+    const targetUrl = 'https://www.hdfcsec.com/market/equity/top-gainer-nse?indicesCode=76394';
+    const functionsUrl = `${SUPABASE_URL}/functions/v1/shared`;
     const prompt = `
-      Using ONLY real-time web version of the web page get Today's ${currentDate} IST latest list of the top 10 gainers from the past 24 hours on the NSE based on https://www.hdfcsec.com/market/equity/top-gainer-nse?indicesCode=76394.
-      For each stock, provide 'name', 'price', 'change', and 'changePercent'.
+      Using the markdown source find the top 10 gainers for today. For each stock provide- 'name', 'price', 'change', and 'changePercent'.
       Return ONLY a single, valid, minified JSON object with a 'topGainers' key. Do not include any text, explanations, or markdown formatting.
     `;
-
-    const body = JSON.stringify({
-      contents: [
-        {
-          parts: [
-            {
-              text: prompt
-            }
-          ]
-        }
-      ],
-      tools: [
-        {
-          url_context: {}
-        },
-        {
-          google_search: {}
-        }
-      ],
-      generationConfig: {
-        thinkingConfig: {
-          thinkingBudget: 0
-        }
-      }
-    });
-
-    const geminiResponse = await fetch(geminiUrl, {
+    const reqHeaders = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+    };
+    const reqBody = {
+      url: targetUrl,
+      prompt,
+      useWatercrawl: false
+    };
+    const scrapeResp = await fetch(functionsUrl, {
       method: 'POST',
-      headers,
-      body
+      headers: reqHeaders,
+      body: JSON.stringify(reqBody)
     });
-
-    if (!geminiResponse.ok) {
-      throw new Error(`Failed to fetch from Gemini: ${await geminiResponse.text()}`);
+    if (!scrapeResp.ok) {
+      console.error(`[fetch-top-gainers] website-data responded non-OK: ${scrapeResp.status}`);
+      throw new Error(`Website-data function error: ${scrapeResp.status}`);
     }
-
-    const geminiData = await geminiResponse.json();
-    const rawJsonText = extractGeminiJsonText(geminiData);
-    if (!rawJsonText) {
-      throw new Error('No content found in Gemini response');
+    const scrape = await scrapeResp.json();
+    console.log(`[fetch-top-gainers] website-data returned source=${scrape.source} hasJson=${!!scrape.json}`);
+    const payload = scrape?.json;
+    if (!payload || typeof payload !== 'object') {
+      throw new Error('No JSON payload returned from website-data');
     }
-
-    const cleanedJsonText = cleanJsonResponse(rawJsonText);
-    const { topGainers } = JSON.parse(cleanedJsonText);
+    const topGainers = (payload as any).topGainers;
     if (!topGainers || !Array.isArray(topGainers)) {
-      throw new Error('Invalid data format from Gemini');
+      throw new Error('Invalid data format: missing topGainers array');
     }
-
     const { error } = await supabase.from('top_gainers').insert(topGainers.map((gainer: any) => ({
       name: gainer.name,
       price: gainer.price,
@@ -156,20 +52,17 @@ serve(async () => {
       console.error('Error upserting top gainers:', error);
       throw error;
     }
-
-    // Delete old records
     const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
     const { error: deleteError } = await supabase.from('top_gainers').delete().lt('updated_at', twoDaysAgo);
     if (deleteError) {
       console.error('Error deleting old top gainers:', deleteError);
     }
-
     return new Response(JSON.stringify({ success: true }), {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
     console.error('Error in fetch-top-gainers function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
