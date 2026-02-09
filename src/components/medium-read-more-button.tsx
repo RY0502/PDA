@@ -1,26 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { buttonVariants } from '@/components/ui/button';
 import { cn, slugify } from '@/lib/utils';
 
 export function MediumReadMoreButton({ url }: { url: string }) {
   const router = useRouter();
-
-  useEffect(() => {
-    const register = async () => {
-      try {
-        const r = await fetch('/api/cache/medium/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key: url }),
-        });
-        r.ok;
-      } catch {}
-    };
-    if (url) register();
-  }, [url]);
 
   const handleClick = async () => {
     try {
