@@ -11,7 +11,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal, Image as ImageIcon, Newspaper } from 'lucide-react';
 import type { MediumArticle } from '@/services/email-service';
 import { UrlOpener } from '@/components/url-opener';
-import { registerKey } from '@/lib/global-cache';
 import { MediumReadMoreButton } from '@/components/medium-read-more-button';
 import { cn, slugify } from '@/lib/utils';
 import Image from 'next/image';
@@ -81,12 +80,6 @@ export default async function Home() {
 
   const articles = response?.articles;
   const isMock = response?.isMock;
-  // Server-side batch register once per revalidation window
-  try {
-    (articles || []).forEach((a) => {
-      if (a?.url) registerKey(a.url);
-    });
-  } catch {}
 
   return (
     <div className="container py-8 sm:py-12 md:py-16">

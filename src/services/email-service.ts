@@ -14,6 +14,7 @@ import {
   GMAIL_CLIENT_SECRET,
   GMAIL_REFRESH_TOKEN,
 } from '@/lib/constants';
+import { registerKey } from '@/lib/global-cache';
 
 export type MediumArticle = {
   id: string;
@@ -156,6 +157,9 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
             if (articleUrls.has(cleanUrl)) {
               continue; // Skip duplicate articles
             }
+            try {
+              registerKey(cleanUrl);
+            } catch {}
 
             const decode = (str: string) =>
               str
