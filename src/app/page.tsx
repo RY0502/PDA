@@ -8,9 +8,10 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Terminal, Image as ImageIcon, FileText, Newspaper } from 'lucide-react';
+import { Terminal, Image as ImageIcon, Newspaper } from 'lucide-react';
 import type { MediumArticle } from '@/services/email-service';
 import { UrlOpener } from '@/components/url-opener';
+import { RegisterCacheKeys } from '@/components/register-cache-keys';
 import { MediumReadMoreButton } from '@/components/medium-read-more-button';
 import Link from 'next/link';
 import { cn, slugify } from '@/lib/utils';
@@ -66,16 +67,6 @@ function ArticleCard({ article }: { article: MediumArticle }) {
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <Link
-                  href={`/medium/news/${anchorSlug}?url=${encodeURIComponent(article.url)}`}
-                  className={cn(
-                    buttonVariants({ variant: 'ghost', size: 'sm' }),
-                    'flex-shrink-0 hover:bg-primary/10 text-primary rounded-xl'
-                  )}
-                  aria-label="Summary"
-                >
-                  <FileText className="h-4 w-4" />
-                </Link>
                 <MediumReadMoreButton url={article.url} />
               </div>
             </div>
@@ -137,6 +128,9 @@ export default async function Home() {
       )}
 
       <UrlOpener />
+      {Array.isArray(articles) && articles.length > 0 && (
+        <RegisterCacheKeys keys={articles.map((a) => a.url)} />
+      )}
     </div>
   );
 }
