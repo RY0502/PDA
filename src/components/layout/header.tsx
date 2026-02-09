@@ -143,6 +143,11 @@ export function Header() {
                   <div className="px-3 py-2 text-xs text-muted-foreground truncate border-b border-border/50 mb-1">
                     {userName ?? userEmail}
                   </div>
+                {userEmail === 'ravi.y0102@gmail.com' ? (
+                  <DropdownMenuItem asChild className="rounded-lg">
+                    <Link href="/maintenance">Maintenance</Link>
+                  </DropdownMenuItem>
+                ) : null}
                   <DropdownMenuItem
                     onClick={async () => {
                       await supabase.auth.signOut();

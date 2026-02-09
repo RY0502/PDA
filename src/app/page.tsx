@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal, Image as ImageIcon, FileText, Newspaper } from 'lucide-react';
 import type { MediumArticle } from '@/services/email-service';
 import { UrlOpener } from '@/components/url-opener';
+import { MediumReadMoreButton } from '@/components/medium-read-more-button';
 import Link from 'next/link';
 import { cn, slugify } from '@/lib/utils';
 import Image from 'next/image';
@@ -75,17 +76,7 @@ function ArticleCard({ article }: { article: MediumArticle }) {
                 >
                   <FileText className="h-4 w-4" />
                 </Link>
-                <Link
-                  href={`https://freedium.cfd/${article.url}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={cn(
-                    buttonVariants({ size: 'sm' }), 
-                    'flex-shrink-0 shadow-md hover:shadow-lg transition-all rounded-xl'
-                  )}
-                >
-                  Read More
-                </Link>
+                <MediumReadMoreButton url={article.url} />
               </div>
             </div>
           </div>

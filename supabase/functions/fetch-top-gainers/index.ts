@@ -10,7 +10,7 @@ serve(async () => {
     const targetUrl = 'https://www.hdfcsec.com/market/equity/top-gainer-nse?indicesCode=76394';
     const functionsUrl = `${SUPABASE_URL}/functions/v1/shared`;
     const prompt = `
-      Using the markdown source find the top 10 gainers for today. For each stock provide- 'name', 'price', 'change', and 'changePercent'.
+      Using the markdown source find the top 10 gainers for today. For each stock provide- 'name', 'price', 'change', and 'changePercent' and sort them in descending order based on change.
       Return ONLY a single, valid, minified JSON object with a 'topGainers' key. Do not include any text, explanations, or markdown formatting.
     `;
     const reqHeaders = {

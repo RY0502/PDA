@@ -11,7 +11,7 @@ serve(async () => {
     const targetUrl = 'https://www.hdfcsec.com/market/equity/top-loser-nse?indicesCode=76394';
     const functionsUrl = `${SUPABASE_URL}/functions/v1/shared`;
     const prompt = `
-      Using the markdown source find the top 10 losers for today. For each stock provide- 'name', 'price', 'change', and 'changePercent'.
+      Using the markdown source find the top 10 losers for today. For each stock provide- 'name', 'price', 'change', and 'changePercent' and sort them descending based on change.
       Return ONLY a single, valid, minified JSON object with a 'topLosers' key. Do not include any text, explanations, or markdown formatting.
     `;
     console.log(`[fetch-top-losers] Hitting shared for ${targetUrl}`);
