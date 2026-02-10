@@ -194,7 +194,7 @@ function PageContent({
           Stock Market Overview
         </h1>
         <p className="max-w-2xl text-xl text-muted-foreground leading-relaxed text-balance">
-          Today's highlights from the National Stock Exchange (NSE).
+          Today's highlights from the National Stock Exchange (NSE)
         </p>
       </section>
 

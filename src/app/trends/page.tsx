@@ -95,11 +95,11 @@ export default async function TrendsPage() {
           Daily Trends
         </h1>
         <p className="max-w-2xl text-xl text-muted-foreground leading-relaxed text-balance">
-          Today's top Google search trends, powered by AI.
+          Today's top Google search trends, powered by AI
         </p>
       </section>
 
-      <div className="py-5">
+      <div className="py-4">
         <Card className="mx-auto max-w-4xl card-hover border-border/50 bg-card/90 backdrop-blur-sm shadow-xl">
           <CardContent className="p-0">
             <SummaryDisplay

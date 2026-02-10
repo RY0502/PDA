@@ -72,7 +72,7 @@ function ClubLogos({ clubs, totalClubs }: { clubs: ClubWithLogo[], totalClubs: n
   const remainingClubs = totalClubs - clubs.length;
 
   return (
-    <div className="mx-auto mb-12 flex max-w-4xl flex-wrap items-center justify-center gap-3 sm:gap-5 md:gap-6">
+    <div className="mx-auto mb-10 flex max-w-4xl flex-wrap items-center justify-center gap-3 sm:gap-5 md:gap-6">
       <TooltipProvider>
         {clubs.map((club) => (
           <Tooltip key={club.name}>
@@ -152,7 +152,7 @@ export default async function FootballPage() {
         </h1>
         <p className="max-w-2xl text-xl text-muted-foreground leading-relaxed text-balance">
           The latest headlines and transfer talk from the world of football,
-          powered by AI.
+          powered by AI
         </p>
       </section>
 

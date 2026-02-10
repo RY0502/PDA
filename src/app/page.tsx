@@ -93,7 +93,7 @@ export default async function Home() {
           Your Daily Brief
         </h1>
         <p className="text-xl text-muted-foreground leading-relaxed text-balance max-w-2xl mx-auto">
-          Discover the latest articles from Medium, curated and powered by AI technology.
+          Discover the latest articles from Medium, curated and powered by AI technology
         </p>
       </header>
 
