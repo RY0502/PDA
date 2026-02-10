@@ -113,9 +113,6 @@ function NewsSummary({ newsSections }: { newsSections: NewsSection[] }) {
         <div className="space-y-7">
           {newsSections.map((section, index) => (
             <div key={index} className="pb-7 last:pb-0 border-b border-border/30 last:border-0">
-              <h3 className="text-xl font-bold tracking-tight text-foreground mb-5 font-headline">
-                {section.title}
-              </h3>
               <ul className="space-y-3.5">
                 {section.items.map((item, itemIndex) => (
                   item.text.toLowerCase().includes("today's top stories") ? null : <NewsListItem key={itemIndex} item={item} />
