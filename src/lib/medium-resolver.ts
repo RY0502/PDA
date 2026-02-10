@@ -116,6 +116,12 @@ export async function resolveMediumLink(url: string, headLimit: number, marker: 
     const href = extractHrefWithNoopener(head);
     if (!href) return null;
     const final = href.startsWith('/') ? `https://medium.com${href}` : href;
+    try {
+      const u = new URL(final);
+      if (!u.searchParams.has('sk=')) return null;
+    } catch {
+      return null;
+    }
     return final;
   } catch {
     return null;
@@ -148,7 +154,15 @@ export async function resolveMediumLinkDetailed(
     const href = extractHrefWithNoopener(head);
     if (!href) return { value: null, memberDetected: true, statusCode: r.status || 200 };
     const final = href.startsWith('/') ? `https://medium.com${href}` : href;
-    return { value: final, memberDetected: true, statusCode: r.status || 200 };
+  try {
+    const u = new URL(final);
+    if (!u.searchParams.has('sk')) {
+      return { value: null, memberDetected: true, statusCode: r.status || 200 };
+    }
+  } catch {
+    return { value: null, memberDetected: true, statusCode: r.status || 200 };
+  }
+  return { value: final, memberDetected: true, statusCode: r.status || 200 };
   } catch {
     return { value: null, memberDetected: null, statusCode: 0 };
   }
