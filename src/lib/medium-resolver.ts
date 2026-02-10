@@ -100,42 +100,14 @@ async function fetchWithProxyFallback(url: string, headers: Record<string, strin
 export async function resolveMediumLink(url: string, headLimit: number, marker: string): Promise<string | null> {
   try {
     const safeUrl = url.replace(/`/g, '').trim();
-    console.log(`[resolver] fetching ${safeUrl}`);
-    let r = await fetch(safeUrl, {
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Referer': 'https://medium.com/',
-      },
+    const proxied = await fetchWithProxyFallback(safeUrl, {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Referer': 'https://medium.com/',
     });
-    if (!r.ok) {
-      //console.log(`[resolver] status=${r.status} retrying with alt UA`);
-      r = await fetch(safeUrl, {
-        method: 'GET',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/17.0 Safari/605.1.15',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.9',
-          'Referer': 'https://medium.com/',
-        },
-      });
-      if (!r.ok) {
-        console.log(`[resolver] failed status=${r.status}, trying proxy fallback`);
-        const proxied = await fetchWithProxyFallback(safeUrl, {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.9',
-          'Referer': 'https://medium.com/',
-        });
-        if (!proxied) {
-          console.log(`[resolver] proxy fallback failed`);
-          return null;
-        }
-        r = proxied;
-      }
-    }
+    if (!proxied) return null;
+    const r = proxied;
     const text = await r.text();
     const head = firstN(text, headLimit);
     if (!marker || !head.includes(marker)) {
@@ -157,42 +129,16 @@ export async function resolveMediumLinkDetailed(
 ): Promise<{ value: string | null; memberDetected: boolean | null; statusCode: number }> {
   try {
     const safeUrl = url.replace(/`/g, '').trim();
-    console.log(`[resolver] fetching ${safeUrl}`);
-    let r = await fetch(safeUrl, {
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Referer': 'https://medium.com/',
-      },
+    const proxied = await fetchWithProxyFallback(safeUrl, {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Referer': 'https://medium.com/',
     });
-    if (!r.ok) {
-      //console.log(`[resolver] status=${r.status} retrying with alt UA`);
-      r = await fetch(safeUrl, {
-        method: 'GET',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/17.0 Safari/605.1.15',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.9',
-          'Referer': 'https://medium.com/',
-        },
-      });
-      if (!r.ok) {
-        console.log(`[resolver] failed status=${r.status}, trying proxy fallback`);
-        const proxied = await fetchWithProxyFallback(safeUrl, {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.9',
-          'Referer': 'https://medium.com/',
-        });
-        if (!proxied) {
-          console.log(`[resolver] proxy fallback failed`);
-          return { value: null, memberDetected: null, statusCode: r.status || 0 };
-        }
-        r = proxied;
-      }
+    if (!proxied) {
+      return { value: null, memberDetected: null, statusCode: 0 };
     }
+    const r = proxied;
     const text = await r.text();
     const head = firstN(text, headLimit);
     const memberDetected = !!marker && head.includes(marker);

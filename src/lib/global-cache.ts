@@ -16,23 +16,37 @@ function ttlMs(): number {
 
 function getSupabase() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Supabase env vars missing');
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  if (!supabaseUrl) {
+    throw new Error('Supabase URL missing');
   }
-  return createClient(supabaseUrl, supabaseAnonKey);
+  const key = serviceKey || anonKey;
+  if (!key) {
+    throw new Error('Supabase key missing');
+  }
+  return createClient(supabaseUrl, key);
 }
 
-export async function registerKey(key: string): Promise<void> {
+export async function registerKey(key: string): Promise<boolean> {
   const supabase = getSupabase();
   const expiresAt = now() + ttlMs();
-  await supabase.from('medium_cache').upsert({ key, value: '', expiresAt }).select();
+  const { error } = await supabase.from('medium_cache').upsert({ key, value: '', expiresAt }).select();
+  if (error) {
+    console.error('[cache] registerKey error', error);
+    return false;
+  }
+  return true;
 }
 
-export async function setValue(key: string, value: string): Promise<void> {
+export async function setValue(key: string, value: string): Promise<boolean> {
   const supabase = getSupabase();
-  // Do not change expiresAt when setting value
-  await supabase.from('medium_cache').update({ value }).eq('key', key);
+  const { error } = await supabase.from('medium_cache').update({ value }).eq('key', key);
+  if (error) {
+    console.error('[cache] setValue error', error);
+    return false;
+  }
+  return true;
 }
 
 export async function getValue(key: string): Promise<string | null> {
