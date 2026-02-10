@@ -99,7 +99,7 @@ export default async function TrendsPage() {
         </p>
       </section>
 
-      <div className="py-6">
+      <div className="py-5">
         <Card className="mx-auto max-w-4xl card-hover border-border/50 bg-card/90 backdrop-blur-sm shadow-xl">
           <CardContent className="p-0">
             <SummaryDisplay
