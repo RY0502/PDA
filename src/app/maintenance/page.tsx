@@ -66,7 +66,7 @@ export default function MaintenancePage() {
   };
 
   return (
-    <div className="container py-8 max-w-5xl">
+    <div className="container py-6 max-w-5xl">
       <Card className="border-border/50 bg-card/90 backdrop-blur-sm shadow-xl">
         <CardHeader>
           <CardTitle>Maintenance</CardTitle>
