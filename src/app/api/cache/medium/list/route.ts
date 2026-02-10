@@ -3,7 +3,7 @@ import { getEntries } from '@/lib/global-cache';
 
 export async function GET(_req: NextRequest) {
   try {
-    const entries = getEntries();
+    const entries = await getEntries();
     return new Response(JSON.stringify({ entries }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

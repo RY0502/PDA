@@ -15,6 +15,7 @@ import {
   GMAIL_REFRESH_TOKEN,
 } from '@/lib/constants';
 import { registerKey } from '@/lib/global-cache';
+// No background resolution here; scheduler /populate will process blanks
 
 export type MediumArticle = {
   id: string;
@@ -158,7 +159,7 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
               continue; // Skip duplicate articles
             }
             try {
-              registerKey(cleanUrl);
+              await registerKey(cleanUrl);
             } catch {}
 
             const decode = (str: string) =>

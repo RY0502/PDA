@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
         headers: { 'Content-Type': 'application/json' },
       });
     }
-    const value = getValue(key);
+    const value = await getValue(key);
     return new Response(JSON.stringify({ value }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

@@ -1,31 +1,49 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { buttonVariants } from '@/components/ui/button';
 import { cn, slugify } from '@/lib/utils';
-import { Sparkles } from 'lucide-react';
+
+let mediumCacheSnapshot: Record<string, string> | null = null;
+let mediumCacheInitPromise: Promise<void> | null = null;
+
+async function initMediumCacheSnapshot() {
+  try {
+    const r = await fetch('/api/cache/medium/list', { method: 'GET' });
+    if (!r.ok) return;
+    const j = await r.json().catch(() => null);
+    const entries = Array.isArray(j?.entries) ? j.entries : [];
+    const map: Record<string, string> = {};
+    for (const e of entries) {
+      const k = typeof e?.key === 'string' ? e.key : '';
+      const v = typeof e?.value === 'string' ? e.value : '';
+      if (k && v) {
+        map[k] = v;
+      }
+    }
+    mediumCacheSnapshot = map;
+  } catch {
+    // ignore
+  }
+}
 
 export function MediumReadMoreButton({ url }: { url: string }) {
   const router = useRouter();
-  const [actionLoading, setActionLoading] = useState(false);
+  useEffect(() => {
+    if (!mediumCacheInitPromise) {
+      mediumCacheInitPromise = initMediumCacheSnapshot();
+    }
+  }, []);
 
   const handleClick = async () => {
-    try {
-      setActionLoading(true);
-      const q = new URLSearchParams({ key: url }).toString();
-      const r = await fetch(`/api/cache/medium/get?${q}`, { method: 'GET' });
-      if (r.ok) {
-        const data = await r.json();
-        const value = data?.value;
-        if (typeof value === 'string' && value.length > 0) {
-          window.open(value, '_blank', 'noopener,noreferrer');
-          setActionLoading(false);
-          return;
-        }
-      }
-    } catch {} finally {
-      setActionLoading(false);
+    const val =
+      mediumCacheSnapshot && typeof url === 'string'
+        ? mediumCacheSnapshot[url]
+        : undefined;
+    if (typeof val === 'string' && val.length > 0) {
+      window.open(val, '_blank', 'noopener,noreferrer');
+      return;
     }
     const anchorSlug = slugify(url || 'medium');
     router.push(`/medium/news/${anchorSlug}?url=${encodeURIComponent(url)}`);
@@ -35,7 +53,6 @@ export function MediumReadMoreButton({ url }: { url: string }) {
     <>
       <button
         onClick={handleClick}
-        disabled={actionLoading}
         className={cn(
           buttonVariants({ size: 'sm' }),
           'flex-shrink-0 shadow-md hover:shadow-lg transition-all rounded-xl'
@@ -43,17 +60,6 @@ export function MediumReadMoreButton({ url }: { url: string }) {
       >
         Read More
       </button>
-      {actionLoading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/50 backdrop-blur-sm">
-          <div className="flex items-center gap-4 px-6 py-4 rounded-2xl bg-card border border-border/40 shadow-xl">
-            <div className="relative">
-              <div className="h-12 w-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin"></div>
-              <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-5 w-5 text-primary animate-pulse" />
-            </div>
-            <div className="text-sm font-medium">Processing...</div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

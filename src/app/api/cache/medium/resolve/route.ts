@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { resolveMediumLink } from '@/lib/medium-resolver';
+import { setValue } from '@/lib/global-cache';
 
 export async function GET(req: NextRequest) {
   try {
@@ -19,6 +20,9 @@ export async function GET(req: NextRequest) {
         headers: { 'Content-Type': 'application/json' },
       });
     }
+    try {
+      await setValue(url, final);
+    } catch {}
     return new Response(JSON.stringify({ value: final }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

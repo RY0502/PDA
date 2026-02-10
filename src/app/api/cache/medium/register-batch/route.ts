@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     let count = 0;
     for (const k of keys) {
       if (typeof k === 'string' && k.trim().length > 0) {
-        registerKey(k.trim());
+        await registerKey(k.trim());
         count++;
       }
     }

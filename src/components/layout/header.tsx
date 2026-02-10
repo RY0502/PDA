@@ -20,6 +20,18 @@ export function Header() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
+    try {
+      const nav = (performance.getEntriesByType('navigation') as any)[0];
+      const isReload = nav?.type === 'reload' || (performance as any).navigation?.type === 1;
+      if (isReload && typeof window !== 'undefined' && window.location.hash) {
+        const nextUrl = `${window.location.pathname}${window.location.search}`;
+        history.replaceState(null, '', nextUrl);
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
     const lastStockCode = localStorage.getItem('lastStockCode');
     if (pathname.startsWith('/stocks/')) {
       setStocksHref(pathname);
