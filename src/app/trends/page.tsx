@@ -126,7 +126,7 @@ export default async function TrendsPage() {
           <CardContent className="p-0">
             <SummaryDisplay
               title="Today's Top Trends"
-              rightContent={aqi != null ? <span>AQI: {aqi}</span> : null}
+              rightContent={aqi != null ? <span className="font-normal">AQI: {aqi}</span> : null}
               initialContent={<TrendsSummary trendSections={trendSections} />}
             />
           </CardContent>
