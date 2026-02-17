@@ -89,6 +89,26 @@ async function getWatchedStock(stockCode: string): Promise<WatchedStock | null> 
   return cached();
 }
 
+const getLatestNifty = unstable_cache(
+  async (): Promise<any | null> => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+    if (!supabaseUrl || !supabaseAnonKey) return null;
+    try {
+      const resp = await fetch(`${supabaseUrl}/functions/v1/read-dashboard-metrics?metric=nifty`, {
+        headers: { Authorization: `Bearer ${supabaseAnonKey}` }
+      });
+      if (!resp.ok) return null;
+      const data = await resp.json();
+      return data;
+    } catch {
+      return null;
+    }
+  },
+  ['nifty-50-status-latest'],
+  { revalidate: 900 }
+);
+
 const getTopGainers = unstable_cache(
   async (): Promise<StockInfo[] | null> => {
     const supabase = createClient();
@@ -146,11 +166,13 @@ function PageContent({
   topGainers,
   topLosers,
   stockCode,
+  nifty,
 }: {
   watchedStock: WatchedStock | null;
   topGainers: StockInfo[] | null;
   topLosers: StockInfo[] | null;
   stockCode: string;
+  nifty: any | null;
 }) {
   const uniqueByName = (list: StockInfo[] | null): StockInfo[] => {
     if (!list) return [];
@@ -204,23 +226,40 @@ function PageContent({
             <CardHeader className="pb-5">
               <CardTitle className="text-2xl font-headline flex items-center gap-2">
                 <span className="text-muted-foreground font-semibold">Watching:</span>
-                <span className="gradient-text">
-                  {watchedStock.name}
-                </span>
+                <span className="gradient-text">{watchedStock.name}</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-row justify-around gap-3 sm:gap-6 text-center">
-              <div className="flex-1 p-4 sm:p-7 rounded-xl sm:rounded-2xl bg-gradient-to-br from-green-50 to-green-100/60 dark:from-green-950/30 dark:to-green-900/20 border-2 border-green-200 dark:border-green-900/40 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5">
-                <p className="text-[10px] sm:text-xs font-bold text-muted-foreground mb-2 sm:mb-3 uppercase tracking-wider">Today's High</p>
-                <p className="text-2xl sm:text-4xl md:text-5xl font-bold text-green-600 font-headline">
-                  {watchedStock.high}
-                </p>
+            <CardContent className="flex flex-row items-stretch gap-6 flex-nowrap">
+              <div className="basis-1/2 flex flex-col gap-4">
+                <div className="p-4 sm:p-7 rounded-xl sm:rounded-2xl bg-gradient-to-br from-green-50 to-green-100/60 dark:from-green-950/30 dark:to-green-900/20 border-2 border-green-200 dark:border-green-900/40 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5 text-center">
+                  <p className="text-[10px] sm:text-xs font-bold text-muted-foreground mb-2 sm:mb-3 uppercase tracking-wider">Today's High</p>
+                  <p className="text-2xl sm:text-4xl md:text-5xl font-bold text-green-600 font-headline">{watchedStock.high}</p>
+                </div>
+                <div className="p-4 sm:p-7 rounded-xl sm:rounded-2xl bg-gradient-to-br from-red-50 to-red-100/60 dark:from-red-950/30 dark:to-red-900/20 border-2 border-red-200 dark:border-red-900/40 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5 text-center">
+                  <p className="text-[10px] sm:text-xs font-bold text-muted-foreground mb-2 sm:mb-3 uppercase tracking-wider">Today's Low</p>
+                  <p className="text-2xl sm:text-4xl md:text-5xl font-bold text-red-600 font-headline">{watchedStock.low}</p>
+                </div>
               </div>
-              <div className="flex-1 p-4 sm:p-7 rounded-xl sm:rounded-2xl bg-gradient-to-br from-red-50 to-red-100/60 dark:from-red-950/30 dark:to-red-900/20 border-2 border-red-200 dark:border-red-900/40 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5">
-                <p className="text-[10px] sm:text-xs font-bold text-muted-foreground mb-2 sm:mb-3 uppercase tracking-wider">Today's Low</p>
-                <p className="text-2xl sm:text-4xl md:text-5xl font-bold text-red-600 font-headline">
-                  {watchedStock.low}
-                </p>
+              <div className="basis-1/2 flex flex-col justify-center items-center relative pl-6 pr-2">
+                <div className="absolute left-6 top-1/2 -translate-y-1/2 h-[80%] w-[3px] bg-primary/80 rounded-full" />
+                {nifty ? (
+                  <div className="flex flex-col gap-3 items-center text-center">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg md:text-xl font-bold">Nifty:</span>
+                      {String(nifty.jump) === 'up' ? (
+                        <ArrowUp className="h-10 w-10 text-green-600" strokeWidth={3} />
+                      ) : (
+                        <ArrowDown className="h-10 w-10 text-red-600" strokeWidth={3} />
+                      )}
+                    </div>
+                    <div className="text-xl font-bold text-foreground">{nifty.points}</div>
+                    <div className="text-base font-semibold text-muted-foreground">
+                      {nifty.change} ({nifty.changePercentage}%)
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">Nifty data unavailable</div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -274,10 +313,11 @@ export default async function StocksPage({
   params: { code: string };
 }) {
   const stockCode = params.code || 'PVRINOX';
-  const [watchedStock, topGainers, topLosers] = await Promise.all([
+  const [watchedStock, topGainers, topLosers, nifty] = await Promise.all([
     getWatchedStock(stockCode),
     getTopGainers(),
     getTopLosers(),
+    getLatestNifty(),
   ]);
 
   return (
@@ -287,6 +327,7 @@ export default async function StocksPage({
         topGainers={topGainers}
         topLosers={topLosers}
         stockCode={stockCode}
+        nifty={nifty}
       />
     </Suspense>
   );

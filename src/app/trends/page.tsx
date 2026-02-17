@@ -5,11 +5,32 @@ import { TrendingUp, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { unstable_cache } from 'next/cache';
 import { slugify, parseSectionsFromSummary } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
 
 // Revalidate the page every hour
 export const revalidate = 3600;
 export const dynamic = 'force-static';
 const getCachedTrendingSearches = unstable_cache(async () => await fetchTrendingSearches(), ['trends'], { revalidate: 3600 });
+
+const getLatestAQI = unstable_cache(
+  async (): Promise<number | null> => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+    if (!supabaseUrl || !supabaseAnonKey) return null;
+    try {
+      const resp = await fetch(`${supabaseUrl}/functions/v1/read-dashboard-metrics?metric=aqi`, {
+        headers: { Authorization: `Bearer ${supabaseAnonKey}` }
+      });
+      if (!resp.ok) return null;
+      const data = await resp.json();
+      return typeof data?.aqi === 'number' ? data.aqi : null;
+    } catch {
+      return null;
+    }
+  },
+  ['delhi-aqi-status-latest'],
+  { revalidate: 900 }
+);
 
 interface TrendItem {
   text: string;
@@ -81,6 +102,7 @@ export default async function TrendsPage() {
   const res = await getCachedTrendingSearches();
   summary = res.summary;
   const trendSections: TrendSection[] = parseSectionsFromSummary(summary, "Today's Top Trends");
+  const aqi = await getLatestAQI();
 
   return (
     <div className="container py-6 sm:py-10 md:py-16">
@@ -104,6 +126,7 @@ export default async function TrendsPage() {
           <CardContent className="p-0">
             <SummaryDisplay
               title="Today's Top Trends"
+              rightContent={aqi != null ? <span>AQI: {aqi}</span> : null}
               initialContent={<TrendsSummary trendSections={trendSections} />}
             />
           </CardContent>
