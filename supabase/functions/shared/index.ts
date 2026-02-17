@@ -195,15 +195,10 @@ serve(async (req) => {
           engine,
           formats: ['markdown', 'json'],
           proxy: 'auto',
-          wait_for: 5000,
-          ...(prompt
-            ? {
                 json_options: {
                   user_prompt: prompt,
                   extract_source: 'markdown'
                 }
-              }
-            : {})
         };
         console.log(`[shared] AnyCrawl request (${engine})`, JSON.stringify({
           method: 'POST',
