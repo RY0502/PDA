@@ -35,9 +35,8 @@ serve(async () => {
       },
       body: JSON.stringify({
         url: TARGET_URL,
-        prompt: PROMPT,
-        watercrawlSchema: SCHEMA,
-        useWatercrawl: true
+        prompt: `${PROMPT} Output strictly as JSON with schema: { \"aqi\": number }. No extra text.`,
+        useWatercrawl: false
       })
     });
     if (!scrapeResp.ok) {
