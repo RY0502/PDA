@@ -241,7 +241,7 @@ function PageContent({
                 </div>
               </div>
               <div className="basis-1/2 flex flex-col justify-center items-center relative pl-6 pr-2">
-                <div className="absolute left-6 top-1/2 -translate-y-1/2 h-[80%] w-[3px] bg-primary/80 rounded-full" />
+                <div className="absolute left-5 lg:left-8 top-1/2 -translate-y-1/2 h-[80%] w-[3px] bg-primary/80 rounded-full" />
                 {nifty ? (
                   <div className="flex flex-col gap-3 items-center text-center">
                     <div className="flex items-center gap-2">
