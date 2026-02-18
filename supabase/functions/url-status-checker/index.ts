@@ -44,10 +44,9 @@ function isMainSiteTimeValid() {
 function isEarlyMorningAllowed() {
   const now = getISTDate();
   const hour = now.getHours(); // 0‑23
-  // Restricted between 01:00 (inclusive) and 09:00 (exclusive)
-  // The original code inverted this; keep behavior: return false if between 1 and 9 (exclusive 1? original used >1 && <=9)
-  // We'll preserve previous semantics: restricted when hour > 1 && hour <= 9
-  return !(hour > 1 && hour <= 9);
+  // Restricted between 05:00 (inclusive) and 07:00 (exclusive)
+  // We'll preserve previous semantics: restricted when hour > 5 && hour <= 7
+  return !(hour > 5 && hour <= 7);
 }
 
 /**
