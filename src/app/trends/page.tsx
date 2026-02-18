@@ -129,7 +129,20 @@ export default async function TrendsPage() {
               rightContent={
                 aqi != null ? (
                   <div className="font-normal font-sans text-base tracking-tight px-3 py-1 rounded-lg bg-card/40 shadow-inner ring-1 ring-border/30 text-foreground/70">
-                    AQI: {aqi}
+                    AQI:{' '}
+                    <span
+                      className={
+                        aqi <= 150
+                          ? 'text-green-600'
+                          : aqi <= 200
+                          ? 'text-yellow-600'
+                          : aqi < 250
+                          ? 'text-orange-600'
+                          : 'text-red-600'
+                      }
+                    >
+                      {aqi}
+                    </span>
                   </div>
                 ) : null
               }
