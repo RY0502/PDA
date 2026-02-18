@@ -44,14 +44,14 @@ serve(async (req)=>{
       },
       body: JSON.stringify({
         url: targetUrl,
-        prompt: "Extract the stock's name, today's High, and today's Low. Return ONLY a minified JSON object with keys: name (string), high (string or number), low (string or number). You should return high and low but not 52 week high and 52 week low. No extra text.",
+        prompt: "Extract the stock's name, today's High, and today's Low. Return ONLY a minified JSON object with keys: name (string), high (number), low (number). You should return high and low for today but not 52 week high and 52 week low. No extra text.",
         useWatercrawl: true,
         watercrawlSchema: {
           type: "object",
           properties: {
             name: { type: "string" },
-            high: { oneOf: [{ type: "number" }, { type: "string" }] },
-            low: { oneOf: [{ type: "number" }, { type: "string" }] }
+            high: { type: "number" },
+            low: { type: "number" }
           },
           required: ["name", "high", "low"]
         }
