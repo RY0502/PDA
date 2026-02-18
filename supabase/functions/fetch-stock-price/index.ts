@@ -44,7 +44,7 @@ serve(async (req)=>{
       },
       body: JSON.stringify({
         url: targetUrl,
-        prompt: "Extract the stock's name, today's High, and today's Low. Return ONLY a minified JSON object with keys: name (string), high (number), low (number). You should return high and low for today but not 52 week high and 52 week low. No extra text.",
+        prompt: `Identify the stock name and its INTRADAY (Today's) High and Low prices. ### RULES: 1. Extract ONLY the daily high and low. 2. STRICTLY IGNORE 52-week high, 52-week low, and all-time highs. 3. If today's high/low is not found, return null for those keys. ### EXAMPLES: Input: 'AAPL: Today High 150.50, Low 148.20. 52W High 190.' -> {"name":"Apple","high":150.50,"low":148.20}. ### OUTPUT: Return ONLY a minified JSON object: {"name":string, "high":number, "low":number}. No extra text.`,
         useWatercrawl: true,
         watercrawlSchema: {
           type: "object",
