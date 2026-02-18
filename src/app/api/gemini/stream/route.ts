@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { fetchGeminiApiKey } from '@/ai/gemini';
+import { fetchGeminiApiKey, isRateLimitError } from '@/ai/gemini';
 import { GEMINI_BASE_MODEL_URL } from '@/lib/constants';
 
 export const runtime = 'edge';
@@ -45,39 +45,67 @@ export async function GET(req: NextRequest) {
       ? `Give me detailed contents of the following page: ${title}. When the content contains several concepts, topics, frameworks, tools, technologies etc, make sure there is line break between them in generated text to show separation.`
       : `Generate a short text summary of the given news regarding ${tab}. Provide the latest available contents through search quickly for this: ${title}`;
 
-  const url = `${GEMINI_BASE_MODEL_URL}:streamGenerateContent?key=${apiKey}&alt=sse`;
+  const makeUrl = (key: string) => `${GEMINI_BASE_MODEL_URL}:streamGenerateContent?key=${key}&alt=sse`;
+  const body = JSON.stringify({
+    contents: [
+      {
+        parts: [{ text: prompt }],
+      },
+    ],
+    tools: [
+      {
+        google_search: {},
+      },
+    ],
+    generationConfig: {
+      thinkingConfig: {
+        thinkingBudget: 0,
+      },
+    },
+  });
 
   try {
-    const upstream = await fetch(url, {
+    const upstream = await fetch(makeUrl(apiKey), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [{ text: prompt }],
-          },
-        ],
-        tools: [
-          {
-            google_search: {},
-          },
-        ],
-        generationConfig: {
-          thinkingConfig: {
-            thinkingBudget: 0,
-          },
-        },
-      }),
+      body,
     });
 
     if (!upstream.ok || !upstream.body) {
       const text = await upstream.text().catch(() => '');
-      return new Response(
-        JSON.stringify({ error: 'Gemini upstream error', details: text }),
-        { status: upstream.status || 502, headers: { 'Content-Type': 'application/json' } }
-      );
+      const fallbackUrl = process.env.PDA_FALLBACK_KEY_URL || '';
+      const shouldFallback = isRateLimitError(upstream.status, { message: text });
+      if (shouldFallback && fallbackUrl) {
+        const anotherKey = await fetchGeminiApiKey(fallbackUrl, 3, 1000);
+        if (anotherKey) {
+          const second = await fetch(makeUrl(anotherKey), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body,
+          });
+          if (second.ok && second.body) {
+            return new Response(second.body, {
+              status: 200,
+              headers: {
+                'Content-Type': 'text/event-stream',
+                'Cache-Control': 'no-cache',
+                Connection: 'keep-alive',
+              },
+            });
+          }
+          const secondText = await second.text().catch(() => '');
+          return new Response(
+            JSON.stringify({ error: 'Gemini upstream error (fallback failed)', details: secondText }),
+            { status: second.status || 502, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+      return new Response(JSON.stringify({ error: 'Gemini upstream error', details: text }), {
+        status: upstream.status || 502,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     return new Response(upstream.body, {
