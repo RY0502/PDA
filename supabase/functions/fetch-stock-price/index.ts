@@ -44,7 +44,7 @@ serve(async (req)=>{
       },
       body: JSON.stringify({
         url: targetUrl,
-        prompt: `Identify the stock name and its INTRADAY (Today's) High and Low prices. ### RULES: 1. Extract ONLY the daily high and low. 2. STRICTLY IGNORE 52-week high, 52-week low, and all-time highs. 3. If today's high/low is not found, return null for those keys. ### EXAMPLES: Input: 'AAPL: Today High 150.50, Low 148.20. 52W High 190.' -> {"name":"Apple","high":150.50,"low":148.20}. ### OUTPUT: Return ONLY a minified JSON object: {"name":string, "high":number, "low":number}. No extra text.`,
+        prompt: `Identify the stock name and its INTRADAY (Today's) High and Low prices. ### RULES: 1. Extract ONLY today's high and low. 2. STRICTLY IGNORE 52-week high/low and all-time highs. 3. Prefer values labeled "Today's Low" and "Today's High". 4. If numbers contain commas, return numeric values (e.g., 1,017.55 -> 1017.55). 5. If today's high/low is not found, return null for those keys. 6. Set "name" to the stock/company name shown on the page. ### EXAMPLES: Input: "Today's Low Today's High 1,017.55 __ 1,057.25 52W Low 52W High 830.00 __ 1,249.70" -> {"name":"Company","high":1057.25,"low":1017.55}. Input: "AAPL: Today High 150.50, Low 148.20. 52W High 190." -> {"name":"Apple","high":150.50,"low":148.20}. ### OUTPUT: Return ONLY a minified JSON object: {"name":string, "high":number, "low":number}. No extra text.`,
         useWatercrawl: true,
         watercrawlSchema: {
           type: "object",
