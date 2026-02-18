@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
-import { fetchGeminiApiKey, isRateLimitError } from '@/ai/gemini';
+import { fetchGeminiApiKey } from '@/ai/gemini';
+import { isRateLimitError } from '@/ai/rate-limit';
 import { GEMINI_BASE_MODEL_URL } from '@/lib/constants';
 
 export const runtime = 'edge';
