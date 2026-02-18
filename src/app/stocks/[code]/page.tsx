@@ -223,27 +223,27 @@ function PageContent({
       <div className="grid grid-cols-1 gap-7 lg:grid-cols-3 max-w-7xl mx-auto">
         {watchedStock && (
           <Card className="lg:col-span-3 card-hover border-border/50 bg-gradient-to-br from-card to-card/80 backdrop-blur-sm shadow-xl">
-            <CardHeader className="pb-5">
+            <CardHeader className="pb-3 md:pb-5">
               <CardTitle className="text-2xl font-headline flex items-center gap-2">
                 <span className="text-muted-foreground font-semibold">Watching:</span>
                 <span className="gradient-text">{watchedStock.name}</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-row items-stretch gap-6 flex-nowrap">
+            <CardContent className="flex flex-row items-stretch gap-4 md:gap-6 flex-nowrap">
               <div className="basis-1/2 flex flex-col gap-4">
-                <div className="p-4 sm:p-7 rounded-xl sm:rounded-2xl bg-gradient-to-br from-green-50 to-green-100/60 dark:from-green-950/30 dark:to-green-900/20 border-2 border-green-200 dark:border-green-900/40 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5 text-center">
-                  <p className="text-xs sm:text-sm font-bold text-muted-foreground mb-2 sm:mb-3 uppercase tracking-wider">Today's High</p>
-                  <p className="text-3xl sm:text-4xl md:text-5xl font-bold text-green-600 font-headline">{watchedStock.high}</p>
+                <div className="p-3 sm:p-6 md:p-7 rounded-xl sm:rounded-2xl bg-gradient-to-br from-green-50 to-green-100/60 dark:from-green-950/30 dark:to-green-900/20 border-2 border-green-200 dark:border-green-900/40 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5 text-center">
+                  <p className="text-xs sm:text-sm font-bold text-muted-foreground mb-1 sm:mb-3 uppercase tracking-wider">Today's High</p>
+                  <p className="text-[1.75rem] sm:text-4xl md:text-5xl font-bold text-green-600 font-headline">{watchedStock.high}</p>
                 </div>
-                <div className="p-4 sm:p-7 rounded-xl sm:rounded-2xl bg-gradient-to-br from-red-50 to-red-100/60 dark:from-red-950/30 dark:to-red-900/20 border-2 border-red-200 dark:border-red-900/40 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5 text-center">
-                  <p className="text-xs sm:text-sm font-bold text-muted-foreground mb-2 sm:mb-3 uppercase tracking-wider">Today's Low</p>
-                  <p className="text-3xl sm:text-4xl md:text-5xl font-bold text-red-600 font-headline">{watchedStock.low}</p>
+                <div className="p-3 sm:p-6 md:p-7 rounded-xl sm:rounded-2xl bg-gradient-to-br from-red-50 to-red-100/60 dark:from-red-950/30 dark:to-red-900/20 border-2 border-red-200 dark:border-red-900/40 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5 text-center">
+                  <p className="text-xs sm:text-sm font-bold text-muted-foreground mb-1 sm:mb-3 uppercase tracking-wider">Today's Low</p>
+                  <p className="text-[1.75rem] sm:text-4xl md:text-5xl font-bold text-red-600 font-headline">{watchedStock.low}</p>
                 </div>
               </div>
-              <div className="basis-1/2 flex flex-col justify-center items-center relative pl-6 pr-2">
+              <div className="basis-1/2 flex flex-col justify-center items-center relative pl-6 lg:pl-8 pr-2">
                 <div className="absolute left-4 lg:left-8 top-1/2 -translate-y-1/2 h-[80%] w-[3px] bg-primary/80 rounded-full" />
                 {nifty ? (
-                  <div className="flex flex-col gap-3 items-center text-center">
+                  <div className="flex flex-col gap-2 sm:gap-3 items-start text-left w-fit mx-auto">
                     <div className="flex items-center gap-2">
                       <span className="text-lg md:text-xl font-bold">Nifty:</span>
                       {String(nifty.jump) === 'up' ? (

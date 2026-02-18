@@ -31,8 +31,14 @@ function getSupabase() {
 export async function registerKey(key: string): Promise<boolean> {
   const supabase = getSupabase();
   const expiresAt = now() + ttlMs();
-  const { error } = await supabase.from('medium_cache').upsert({ key, value: '', expiresAt }).select();
+  const { error } = await supabase.from('medium_cache').insert({ key, value: '', expiresAt });
   if (error) {
+    const msg = String((error as any)?.message || '');
+    const code = (error as any)?.code || '';
+    if (code === '23505' || msg.toLowerCase().includes('duplicate key')) {
+      console.warn('[cache] registerKey duplicate', { key });
+      return true;
+    }
     console.error('[cache] registerKey error', error);
     return false;
   }
