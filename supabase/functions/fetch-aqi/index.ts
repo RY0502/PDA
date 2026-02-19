@@ -4,8 +4,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
 
-const TARGET_URL = 'https://www.aqi.in/in/dashboard/india/delhi';
-const PROMPT = "From the given markdown find out today's aqi value for delhi: The value will be available between 'Live AQI' and 'Air Quality is'. The first line in between these two tags will be like this : 110AQI (US). The numbers is the aqi. Your entire response should be this json.Do not provide any extra commentary or anything else";
+const TARGET_URL = 'https://www.iqair.com/india/delhi/delhi';
+const PROMPT = "From the given markdown find out current aqi value for delhi: The value will be available above 'US AQI⁺' text in the markdown. E.g. : 181 US AQI⁺. The numbers before US AQI⁺ is the aqi. Your entire response should be a json.Do not provide any extra commentary or anything else";
 const SCHEMA = {
   type: 'object',
   properties: {
