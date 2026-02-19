@@ -44,7 +44,21 @@ serve(async (req)=>{
       },
       body: JSON.stringify({
         url: targetUrl,
-        prompt: `Identify the stock name and its INTRADAY (Today's) High and Low prices. ### RULES: 1. Extract ONLY today's high and low. 2. STRICTLY IGNORE 52-week high/low and all-time highs. 3. Prefer values labeled "Today's Low" and "Today's High". 4. If numbers contain commas, return numeric values (e.g., 1,017.55 -> 1017.55). 5. If today's high/low is not found, return null for those keys. 6. Set "name" to the stock/company name shown on the page. ### EXAMPLES: Input: "Today's Low Today's High 1,017.55 __ 1,057.25 52W Low 52W High 830.00 __ 1,249.70" -> {"name":"Company","high":1057.25,"low":1017.55}. Input: "AAPL: Today High 150.50, Low 148.20. 52W High 190." -> {"name":"Apple","high":150.50,"low":148.20}. ### OUTPUT: Return ONLY a minified JSON object: {"name":string, "high":number, "low":number}. No extra text.`,
+        prompt: `From the provided markup, identify the stock name and ONLY the INTRADAY (Today's) High and Low prices.
+
+### DATA EXTRACTION RULES:
+1. ANCHOR: Locate the specific text "Today's Low Today's High". The two numbers appearing IMMEDIATELY after this phrase are your "low" and "high" respectively.
+2. SHIELD (IGNORE): If you see "52W Low" or "52W High", DO NOT extract those numbers. Treat them as noise.
+3. PRICE CHECK: Today's High/Low will usually be closer to the "Open Price" than the 52W values are.
+4. CLEANING: Remove all commas. Return numeric values only.
+5. NAME: Extract the company name from the main H1 header (e.g., "PVR Inox Ltd").
+
+### EXAMPLE FROM MARKUP:
+Text: "Today's Low Today's High 1,012.55 __ 1,056.50 52W Low 52W High 830.00 __ 1,249.70"
+Target: {"name": "PVR Inox Ltd", "high": 1056.50, "low": 1012.55}
+
+### OUTPUT:
+Return ONLY a minified JSON object: {"name":string, "high":number, "low":number}. No conversational text.`,
         useWatercrawl: true,
         watercrawlSchema: {
           type: "object",
