@@ -3,9 +3,23 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
 const TARGET_URL = 'https://www.iqair.com/india/delhi/delhi';
-const PROMPT = "From the given markdown find out current aqi value for delhi: The value will be available above 'US AQI⁺' text in the markdown. E.g. : 181 US AQI⁺. The numbers before US AQI⁺ is the aqi. Your entire response should be a json.Do not provide any extra commentary or anything else";
+const PROMPT = `You are a data extraction specialist. From the provided markdown, extract the CURRENT AQI value for Delhi.
+
+### EXTRACTION RULE:
+- Locate the text string 'US AQI⁺'.
+- Extract only the digits appearing immediately BEFORE this string.
+- Example Template: 'XXX US AQI⁺' -> You extract XXX.
+
+### CONSTRAINTS:
+- Do not use any numbers found in the instructions or examples.
+- Scan the provided input text only.
+- If no such value is found, return {"aqi": null}.
+
+### OUTPUT FORMAT:
+Return ONLY a minified JSON object: {"aqi": number}. No extra text or explanation.`;
 const SCHEMA = {
   type: 'object',
   properties: {
@@ -19,13 +33,13 @@ const SCHEMA = {
 
 serve(async () => {
   try {
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY) {
       return new Response(JSON.stringify({ error: 'Missing Supabase env config' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
     }
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const functionsUrl = `${SUPABASE_URL}/functions/v1/shared`;
     const scrapeResp = await fetch(functionsUrl, {
       method: 'POST',
@@ -70,16 +84,23 @@ serve(async () => {
       .select('id')
       .order('updated_at', { ascending: false })
       .range(10, 10000);
-    if (!selectError) {
-      const ids = (oldRows || []).map((r: any) => r.id).filter(Boolean);
-      if (ids.length > 0) {
-        const { error: deleteError } = await supabase
-          .from('delhi_aqi_status')
-          .delete()
-          .in('id', ids);
-        if (deleteError) {
-          // proceed without failing the function
-        }
+    if (selectError) {
+      return new Response(JSON.stringify({ error: 'Database cleanup query failed', details: selectError.message }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    const ids = (oldRows || []).map((r: any) => r.id).filter(Boolean);
+    if (ids.length > 0) {
+      const { error: deleteError } = await supabase
+        .from('delhi_aqi_status')
+        .delete()
+        .in('id', ids);
+      if (deleteError) {
+        return new Response(JSON.stringify({ error: 'Database cleanup delete failed', details: deleteError.message }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        });
       }
     }
     return new Response(JSON.stringify({ success: true, data: row }), {
