@@ -9,9 +9,10 @@ const TARGET_URL = 'https://www.iqair.com/india/delhi/delhi';
 const PROMPT = `You are a data extraction specialist. From the provided markdown, extract the CURRENT AQI value for Delhi.
 
 ### EXTRACTION RULE:
+- Locate the link '[View alert](https://www.iqair.com/newsroom/india-air-quality-alert)'
 - Locate the text string 'US AQI⁺'.
-- Extract only the digits appearing immediately BEFORE this string.
-- Example Template: 'XXX US AQI⁺' -> You extract XXX.
+- Extract only the digits appearing between the link and text string.
+- Example Template: '[View alert](https://www.iqair.com/newsroom/india-air-quality-alert) XXX US AQI⁺' -> You extract XXX.
 
 ### CONSTRAINTS:
 - Do not use any numbers found in the instructions or examples.

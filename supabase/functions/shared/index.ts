@@ -194,6 +194,7 @@ serve(async (req) => {
           url,
           engine,
           formats: ['markdown', 'json'],
+          only_main_content: false,
           proxy: 'auto',
                 json_options: {
                   user_prompt: prompt,

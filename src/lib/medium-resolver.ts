@@ -13,6 +13,21 @@ function extractHrefWithNoopener(html: string): string | null {
   return href || null;
 }
 
+function extractAuthorBase(html: string): string | null {
+  const re = /<link[^>]*\brel=["']\s*author\s*["'][^>]*\bhref=["']([^"']+)["'][^>]*>/i;
+  const m = html.match(re);
+  if (!m) return null;
+  let href = m[1] || '';
+  if (!href) return null;
+  href = href.replace(/`/g, '').trim();
+  return href || null;
+}
+
+function joinBaseWithPath(base: string, path: string): string {
+  const cleanBase = base.replace(/\/+$/, '');
+  return `${cleanBase}${path}`;
+}
+
 type WebshareProxy = {
   id?: string;
   username: string;
@@ -115,7 +130,13 @@ export async function resolveMediumLink(url: string, headLimit: number, marker: 
     }
     const href = extractHrefWithNoopener(head);
     if (!href) return null;
-    const final = href.startsWith('/') ? `https://medium.com${href}` : href;
+    const final = href.startsWith('/')
+      ? (() => {
+          const authorBase = extractAuthorBase(head);
+          if (authorBase) return joinBaseWithPath(authorBase, href);
+          return `https://medium.com${href}`;
+        })()
+      : href;
     try {
       const u = new URL(final);
       if (!u.searchParams.has('sk=')) return null;
@@ -153,7 +174,13 @@ export async function resolveMediumLinkDetailed(
     }
     const href = extractHrefWithNoopener(head);
     if (!href) return { value: null, memberDetected: true, statusCode: r.status || 200 };
-    const final = href.startsWith('/') ? `https://medium.com${href}` : href;
+    const final = href.startsWith('/')
+      ? (() => {
+          const authorBase = extractAuthorBase(head);
+          if (authorBase) return joinBaseWithPath(authorBase, href);
+          return `https://medium.com${href}`;
+        })()
+      : href;
   try {
     const u = new URL(final);
     if (!u.searchParams.has('sk')) {
