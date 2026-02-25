@@ -17,9 +17,15 @@ function extractAuthorBase(html: string): string | null {
   const re = /<link[^>]*\brel=["']\s*author\s*["'][^>]*\bhref=["']([^"']+)["'][^>]*>/i;
   const m = html.match(re);
   if (!m) return null;
-  let href = m[1] || '';
+
+  let href = (m[1] || '').replace(/`/g, '').trim();
   if (!href) return null;
-  href = href.replace(/`/g, '').trim();
+
+  const atPathIndex = href.indexOf('/@');
+  if (atPathIndex !== -1) {
+    href = href.slice(0, atPathIndex).trim();
+  }
+
   return href || null;
 }
 
