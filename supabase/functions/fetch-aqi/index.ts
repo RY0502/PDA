@@ -4,6 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+const ANYCRAWL_API_KEY = Deno.env.get('ANYCRAWL_API_KEY');
 
 const EVEN_TARGET_URL = 'https://www.aqi.in/in/dashboard/india/delhi';
 const EVEN_PROMPT = `You are a data extraction specialist. From the provided scraped markdown, extract the CURRENT AQI value for Delhi.
@@ -56,6 +57,12 @@ serve(async () => {
         headers: { 'Content-Type': 'application/json' }
       });
     }
+    if (!ANYCRAWL_API_KEY) {
+      return new Response(JSON.stringify({ error: 'Missing AnyCrawl API key' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const functionsUrl = `${SUPABASE_URL}/functions/v1/shared`;
     const isEvenHour = new Date().getUTCHours() % 2 === 0;
@@ -70,6 +77,7 @@ serve(async () => {
       body: JSON.stringify({
         url: targetUrl,
         prompt: `${prompt} Output strictly as JSON with schema: { \"aqi\": number }. No extra text.`,
+        anycrawlApiKey: ANYCRAWL_API_KEY,
         useWatercrawl: false
       })
     });

@@ -1,5 +1,4 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-const ANYCRAWL_API_KEY = Deno.env.get('ANYCRAWL_API_KEY');
 const WATERCRAWL_API_KEY = Deno.env.get('WATERCRAWL_API_KEY');
 export type WebsiteDataResult = {
   url: string;
@@ -33,6 +32,7 @@ serve(async (req) => {
     const prompt = body?.prompt != null ? String(body.prompt) : undefined;
     const watercrawlSchema = body?.watercrawlSchema;
     const useWatercrawl = body?.useWatercrawl !== false;
+    const anycrawlApiKey = body?.anycrawlApiKey != null ? String(body.anycrawlApiKey) : '';
     if (!url) {
       return new Response(JSON.stringify({ error: 'Missing url' }), {
         status: 400,
@@ -45,7 +45,13 @@ serve(async (req) => {
         headers: { 'Content-Type': 'application/json' }
       });
     }
-    const result = await getWebsiteData({ url, prompt, useWatercrawl, watercrawlSchema });
+    if (!useWatercrawl && !anycrawlApiKey) {
+      return new Response(JSON.stringify({ error: 'Missing anycrawlApiKey' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    const result = await getWebsiteData({ url, prompt, useWatercrawl, watercrawlSchema, anycrawlApiKey });
     return new Response(JSON.stringify(result), {
       headers: { 'Content-Type': 'application/json' }
     });
@@ -57,8 +63,8 @@ serve(async (req) => {
   }
 });
 
- async function getWebsiteData(input: { url: string; prompt?: string; useWatercrawl?: boolean; watercrawlSchema?: unknown }): Promise<WebsiteDataResult> {
-  const { url, prompt, useWatercrawl = true, watercrawlSchema } = input;
+ async function getWebsiteData(input: { url: string; prompt?: string; useWatercrawl?: boolean; watercrawlSchema?: unknown; anycrawlApiKey?: string }): Promise<WebsiteDataResult> {
+  const { url, prompt, useWatercrawl = true, watercrawlSchema, anycrawlApiKey } = input;
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
   if (useWatercrawl) {
     if (!WATERCRAWL_API_KEY) {
@@ -178,12 +184,12 @@ serve(async (req) => {
     }
     throw new Error('Watercrawl timed out after 60s without available results');
   } else {
-    if (!ANYCRAWL_API_KEY) {
+    if (!anycrawlApiKey) {
       throw new Error('AnyCrawl is selected but API key is missing');
     }
     const anycrawlUrl = "https://api.anycrawl.dev/v1/scrape";
     const headers = {
-      'Authorization': `Bearer ${ANYCRAWL_API_KEY}`,
+      'Authorization': `Bearer ${anycrawlApiKey}`,
       'Content-Type': 'application/json'
     };
     const engines = ['playwright', 'puppeteer', 'cheerio'];

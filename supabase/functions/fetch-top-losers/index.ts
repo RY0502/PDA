@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
+const ANYCRAWL_API_KEY = Deno.env.get('LOSERS_ANYCRAWL_API_KEY');
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -14,6 +15,12 @@ serve(async () => {
       Using the markdown source find the top 10 losers for today. For each stock provide- 'name', 'price', 'change', and 'changePercent' and sort them descending based on change.
       Return ONLY a single, valid, minified JSON object with a 'topLosers' key. Do not include any text, explanations, or markdown formatting.
     `;
+    if (!ANYCRAWL_API_KEY) {
+      return new Response(JSON.stringify({ error: 'Missing AnyCrawl API key' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
     console.log(`[fetch-top-losers] Hitting shared for ${targetUrl}`);
     const reqHeaders = {
       'Content-Type': 'application/json',
@@ -22,6 +29,7 @@ serve(async () => {
     const reqBody = {
       url: targetUrl,
       prompt,
+      anycrawlApiKey: ANYCRAWL_API_KEY,
       useWatercrawl: false
     };
     const scrapeResp = await fetch(functionsUrl, {
