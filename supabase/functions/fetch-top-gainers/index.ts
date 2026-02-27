@@ -41,11 +41,32 @@ serve(async () => {
     }
     const scrape = await scrapeResp.json();
     console.log(`[fetch-top-gainers] website-data returned source=${scrape.source} hasJson=${!!scrape.json}`);
-    const payload = scrape?.json;
+    let payload: any = scrape?.json;
+    if (typeof payload === 'string') {
+      try {
+        payload = JSON.parse(payload);
+      } catch {
+        payload = null;
+      }
+    }
     if (!payload || typeof payload !== 'object') {
       throw new Error('No JSON payload returned from website-data');
     }
-    const topGainers = (payload as any).topGainers;
+    let topGainers = (payload as any).topGainers;
+    if (!Array.isArray(topGainers)) {
+      const alt = (payload as any).top_gainers;
+      if (Array.isArray(alt)) {
+        topGainers = alt;
+      }
+    }
+    if (!Array.isArray(topGainers) && typeof topGainers === 'string') {
+      try {
+        const parsed = JSON.parse(topGainers);
+        if (Array.isArray(parsed)) {
+          topGainers = parsed;
+        }
+      } catch {}
+    }
     if (!topGainers || !Array.isArray(topGainers)) {
       throw new Error('Invalid data format: missing topGainers array');
     }
