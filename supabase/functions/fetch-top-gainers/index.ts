@@ -24,10 +24,34 @@ serve(async () => {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
     };
+    const schema = {
+      type: 'object',
+      properties: {
+        topGainers: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              price: { type: 'number' },
+              change: { type: 'number' },
+              changePercent: { type: 'number' }
+            },
+            required: ['name', 'price', 'change', 'changePercent']
+          }
+        }
+      },
+      required: ['topGainers']
+    };
     const reqBody = {
       url: targetUrl,
       prompt,
       anycrawlApiKey: ANYCRAWL_API_KEY,
+      json_options: {
+        schema,
+        user_prompt: prompt,
+        extract_source: 'markdown'
+      },
       useWatercrawl: false
     };
     const scrapeResp = await fetch(functionsUrl, {
@@ -52,21 +76,7 @@ serve(async () => {
     if (!payload || typeof payload !== 'object') {
       throw new Error('No JSON payload returned from website-data');
     }
-    let topGainers = (payload as any).topGainers;
-    if (!Array.isArray(topGainers)) {
-      const alt = (payload as any).top_gainers;
-      if (Array.isArray(alt)) {
-        topGainers = alt;
-      }
-    }
-    if (!Array.isArray(topGainers) && typeof topGainers === 'string') {
-      try {
-        const parsed = JSON.parse(topGainers);
-        if (Array.isArray(parsed)) {
-          topGainers = parsed;
-        }
-      } catch {}
-    }
+    const topGainers = (payload as any).topGainers;
     if (!topGainers || !Array.isArray(topGainers)) {
       throw new Error('Invalid data format: missing topGainers array');
     }

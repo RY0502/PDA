@@ -26,10 +26,34 @@ serve(async () => {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
     };
+    const schema = {
+      type: 'object',
+      properties: {
+        topLosers: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              price: { type: 'number' },
+              change: { type: 'number' },
+              changePercent: { type: 'number' }
+            },
+            required: ['name', 'price', 'change', 'changePercent']
+          }
+        }
+      },
+      required: ['topLosers']
+    };
     const reqBody = {
       url: targetUrl,
       prompt,
       anycrawlApiKey: ANYCRAWL_API_KEY,
+      json_options: {
+        schema,
+        user_prompt: prompt,
+        extract_source: 'markdown'
+      },
       useWatercrawl: false
     };
     const scrapeResp = await fetch(functionsUrl, {
@@ -54,21 +78,7 @@ serve(async () => {
     if (!payload || typeof payload !== 'object') {
       throw new Error('No JSON payload returned from website-data');
     }
-    let topLosers = (payload as any).topLosers;
-    if (!Array.isArray(topLosers)) {
-      const alt = (payload as any).top_losers;
-      if (Array.isArray(alt)) {
-        topLosers = alt;
-      }
-    }
-    if (!Array.isArray(topLosers) && typeof topLosers === 'string') {
-      try {
-        const parsed = JSON.parse(topLosers);
-        if (Array.isArray(parsed)) {
-          topLosers = parsed;
-        }
-      } catch {}
-    }
+    const topLosers = (payload as any).topLosers;
     if (!topLosers || !Array.isArray(topLosers)) {
       throw new Error('Invalid data format: missing topLosers array');
     }

@@ -51,7 +51,8 @@ serve(async (req) => {
         headers: { 'Content-Type': 'application/json' }
       });
     }
-    const result = await getWebsiteData({ url, prompt, useWatercrawl, watercrawlSchema, anycrawlApiKey });
+    const anycrawlJsonOptions = typeof body?.json_options === 'object' ? body.json_options : undefined;
+    const result = await getWebsiteData({ url, prompt, useWatercrawl, watercrawlSchema, anycrawlApiKey, anycrawlJsonOptions });
     return new Response(JSON.stringify(result), {
       headers: { 'Content-Type': 'application/json' }
     });
@@ -63,8 +64,8 @@ serve(async (req) => {
   }
 });
 
- async function getWebsiteData(input: { url: string; prompt?: string; useWatercrawl?: boolean; watercrawlSchema?: unknown; anycrawlApiKey?: string }): Promise<WebsiteDataResult> {
-  const { url, prompt, useWatercrawl = true, watercrawlSchema, anycrawlApiKey } = input;
+ async function getWebsiteData(input: { url: string; prompt?: string; useWatercrawl?: boolean; watercrawlSchema?: unknown; anycrawlApiKey?: string; anycrawlJsonOptions?: Record<string, unknown> }): Promise<WebsiteDataResult> {
+  const { url, prompt, useWatercrawl = true, watercrawlSchema, anycrawlApiKey, anycrawlJsonOptions } = input;
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
   if (useWatercrawl) {
     if (!WATERCRAWL_API_KEY) {
@@ -206,7 +207,8 @@ serve(async (req) => {
           proxy: 'auto',
                 json_options: {
                   user_prompt: prompt,
-                  extract_source: 'markdown'
+                  extract_source: 'markdown',
+                  ...(anycrawlJsonOptions ? anycrawlJsonOptions : {})
                 }
         };
         console.log(`[shared] AnyCrawl request (${engine})`, JSON.stringify({

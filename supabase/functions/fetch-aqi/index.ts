@@ -76,7 +76,12 @@ serve(async () => {
       },
       body: JSON.stringify({
         url: targetUrl,
-        prompt: `${prompt} Output strictly as JSON with schema: { \"aqi\": number }. No extra text.`,
+        prompt: prompt,
+        json_options: {
+          schema: SCHEMA,
+          user_prompt: prompt,
+          extract_source: 'markdown'
+        },
         anycrawlApiKey: ANYCRAWL_API_KEY,
         useWatercrawl: false
       })
@@ -88,16 +93,30 @@ serve(async () => {
       });
     }
     const scrape = await scrapeResp.json();
-    const jsonPayload = scrape?.json;
-    if (!jsonPayload || typeof jsonPayload !== 'object') {
-      return new Response(JSON.stringify({ error: 'No JSON payload returned from shared' }), {
+    let payload: any = scrape?.json;
+    if (typeof payload === 'string') {
+      try {
+        payload = JSON.parse(payload);
+      } catch {
+        payload = null;
+      }
+    }
+    if (!payload || typeof payload !== 'object' || (payload as any).aqi == null) {
+      return new Response(JSON.stringify({ error: 'No AQI value returned from shared' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
     }
-    const payload = jsonPayload as any;
+    const rawAqi = (payload as any).aqi;
+    const aqiValue = typeof rawAqi === 'number' ? rawAqi : Number(String(rawAqi).replace(/,/g, ''));
+    if (!Number.isFinite(aqiValue)) {
+      return new Response(JSON.stringify({ error: 'Invalid AQI value' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
     const row = {
-      aqi: Number(payload.aqi),
+      aqi: Number(aqiValue),
       updated_at: new Date().toISOString()
     };
     const { error } = await supabase.from('delhi_aqi_status').insert(row);
