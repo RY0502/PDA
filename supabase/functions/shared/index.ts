@@ -201,10 +201,9 @@ serve(async (req) => {
           url,
           engine,
           formats: ['markdown', 'json'],
-          only_main_content: false,
+          only_main_content: true,
           max_age: 0,
           store_in_cache: false,
-          proxy: 'auto',
                 json_options: {
                   user_prompt: prompt,
                   extract_source: 'markdown',

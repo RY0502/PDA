@@ -132,7 +132,7 @@ serve(async () => {
       .order('updated_at', { ascending: false })
       .range(10, 10000);
     if (selectError) {
-      return new Response(JSON.stringify({ error: 'Database cleanup query failed', details: selectError.message }), {
+      return new Response(JSON.stringify({ error: 'Database cleanup query failed...', details: selectError.message }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
