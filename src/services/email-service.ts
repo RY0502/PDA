@@ -112,8 +112,8 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
     const htmlPart = payload?.parts
       ? findHtmlPart(payload.parts)
       : payload?.body?.data
-      ? payload
-      : null;
+        ? payload
+        : null;
     if (!htmlPart || !htmlPart.body?.data) {
       console.log('No HTML part found in the email.');
       return { articles: [], isMock: false };
@@ -122,75 +122,111 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
     const articles: MediumArticle[] = [];
     const articleUrls = new Set<string>();
 
-    const articleBlocks = emailBodyHtml.split(/<div class="[^"]+"\s+style="margin-top: 16px;"/);
-    
-    for (let i = 1; i < articleBlocks.length; i++) {
-        const block = articleBlocks[i];
+    const decode = (str: string) =>
+      str
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&nbsp;/g, ' ')
+        .replace(/—/g, '—')
+        .replace(/\s+/g, ' ')
+        .trim();
 
-        const urlRegex = /<a[^>]+href="([^"]+)"/;
-        const imgRegex = /<img[^>]+src="(https:\/\/miro\.medium\.com[^"]+)"/;
-        const titleRegex = /<h2[^>]*>([\s\S]*?)<\/h2>/;
-        const descRegex = /<h3[^>]*>([\s\S]*?)<\/h3>/;
-        const authorRegex = /<a[^>]+href="[^"]+\/@.+"[^>]+>([\s\S]*?)<\/a>/;
+    // Use a more universal approach: Find all <h2> tags as titles
+    const h2Regex = /<h2[^>]*>([\s\S]*?)<\/h2>/gi;
+    let titleMatch: RegExpExecArray | null;
 
+    while ((titleMatch = h2Regex.exec(emailBodyHtml)) !== null) {
+      const h2Start = titleMatch.index;
+      const h2End = h2Regex.lastIndex;
+      const rawTitle = titleMatch[1];
 
-        const urlMatch = urlRegex.exec(block);
-        const imgMatch = imgRegex.exec(block);
-        const titleMatch = titleRegex.exec(block);
-        const descMatch = descRegex.exec(block);
-        const authorMatch = authorRegex.exec(block);
-        
-        if (urlMatch && titleMatch && descMatch) {
-            let rawUrl = urlMatch[1];
-             if (rawUrl.startsWith('https://medium.r.axd.email/')) {
-              try {
-                const urlObj = new URL(rawUrl);
-                const targetUrl = urlObj.searchParams.get('url');
-                if (targetUrl) {
-                  rawUrl = decodeURIComponent(targetUrl);
-                }
-              } catch (e) {
-                // Ignore if URL parsing fails
+      // Block vicinity: look back 2000 chars for URL/Image and forward 1000 for Description
+      const beforeH2 = emailBodyHtml.substring(Math.max(0, h2Start - 1500), h2Start);
+      const afterH2 = emailBodyHtml.substring(h2End, h2End + 1000);
+
+      // Article URL: The last <a href> before <h2> that hasn't been closed
+      const urlRegex = /<a[^>]+href="([^"]+)"[^>]*>(?:(?!<\/a>)[\s\S])*?$/i;
+      // Article Image: miro.medium.com link in the vicinity before title
+      const imgRegex = /<img[^>]+src="[^"]*?(https:\/\/miro\.medium\.com\/[^"]+)"/i;
+      // Description: Either <h3> or a <div> with specific styles (handles both formats)
+      const descRegex = /<h3[^>]*>([\s\S]*?)<\/h3>/i;
+      const fallbackDescRegex = /<(?:div|h3)[^>]*style="[^"]*?(?:font-size:\s*14px|line-height:\s*20px|color:rgba\(117,117,117,1\))[^"]*"[^>]*>([\s\S]*?)<\/(?:div|h3)>/i;
+
+      const urlMatch = urlRegex.exec(beforeH2);
+      const imgMatch = imgRegex.exec(beforeH2);
+      const descMatch = descRegex.exec(afterH2) || fallbackDescRegex.exec(afterH2);
+
+      if (urlMatch && rawTitle) {
+        let rawUrl = urlMatch[1];
+        if (rawUrl.startsWith('https://medium.r.axd.email/')) {
+          try {
+            const urlObj = new URL(rawUrl);
+            const targetUrl = urlObj.searchParams.get('url');
+            if (targetUrl) {
+              rawUrl = decodeURIComponent(targetUrl);
+            }
+          } catch (e) { }
+        }
+
+        const cleanUrl = rawUrl.split('?')[0].split('#')[0];
+        if (articleUrls.has(cleanUrl)) continue;
+
+        try {
+          await registerKey(cleanUrl);
+        } catch { }
+
+        // Author Extraction logic: handles both linked handles and plain text names
+        let author: string | undefined = undefined;
+        const vicinity = beforeH2 + afterH2;
+
+        // 1. Try finding linked author handle (Format 1)
+        const authorLinkRegex = /<a[^>]+href="[^"]*?\/@([^"/?]+)(?:\?[^"]*)?"[^>]*>([\s\S]*?)<\/a>/gi;
+        let authM;
+        while ((authM = authorLinkRegex.exec(vicinity)) !== null) {
+          const text = decode(authM[2]);
+          if (text && !authM[2].includes('<img') && !/become a member|upgrade|follow/i.test(text)) {
+            author = text;
+            break;
+          }
+        }
+
+        // 2. Fallback: Search for author name in alt text of small profile images (Format 2)
+        if (!author) {
+          const authorImgRegex = /<img[^>]+alt="([^"]+)"[^>]+width="20"[^>]+height="20"/i;
+          const imgM = authorImgRegex.exec(vicinity);
+          if (imgM && !/member|clap|response|arrow/i.test(imgM[1])) {
+            author = imgM[1];
+          }
+
+          // 3. Last fallback: Look for a span that likely contains the author name near an image
+          if (!author) {
+            const authorSpanRegex = /<span[^>]*style="[^"]*?rgba\(41,41,41,1\)[^"]*"[^>]*>([\s\S]*?)<\/span>/gi;
+            let spanM;
+            while ((spanM = authorSpanRegex.exec(afterH2)) !== null) {
+              const text = decode(spanM[1]);
+              if (text && text.length > 2 && text.length < 50 && !/min read|member|upgrade/i.test(text)) {
+                author = text;
+                break;
               }
             }
-            const cleanUrl = rawUrl.split('?')[0].split('#')[0];
-
-            if (articleUrls.has(cleanUrl)) {
-              continue; // Skip duplicate articles
-            }
-            try {
-              await registerKey(cleanUrl);
-            } catch {}
-
-            const decode = (str: string) =>
-              str
-                .replace(/<[^>]+>/g, ' ')
-                .replace(/&amp;/g, '&')
-                .replace(/&lt;/g, '<')
-                .replace(/&gt;/g, '>')
-                .replace(/&quot;/g, '"')
-                .replace(/&#39;/g, "'")
-                .replace(/&nbsp;/g, ' ')
-                .replace(/—/g, '—')
-                .replace(/\s+/g, ' ')
-                .trim();
-            
-            const title = decode(titleMatch[1]);
-            const description = decode(descMatch[1]);
-            const imageUrl = imgMatch ? imgMatch[1] : undefined;
-            const author = authorMatch ? decode(authorMatch[1]) : undefined;
-            
-            articles.push({
-              id: `${latestMessageId}-${articles.length}`,
-              title,
-              description,
-              url: cleanUrl,
-              source,
-              imageUrl,
-              author
-            });
-            articleUrls.add(cleanUrl);
+          }
         }
+
+        articles.push({
+          id: `${latestMessageId}-${articles.length}`,
+          title: decode(rawTitle),
+          description: descMatch ? decode(descMatch[1]) : '',
+          url: cleanUrl,
+          source,
+          imageUrl: imgMatch ? imgMatch[1] : undefined,
+          author
+        });
+        articleUrls.add(cleanUrl);
+      }
     }
 
 
@@ -203,9 +239,9 @@ export async function getMediumArticles(): Promise<MediumArticleResponse> {
     if (error.message && error.message.includes('invalid_grant')) {
       console.error(
         'Gmail API Error: The refresh token is invalid or has been revoked. ' +
-          'Please generate a new one by running `npm run get-token` and update your .env file. ' +
-          'You may need to revoke app access in your Google Account settings first. ' +
-          'Falling back to mock data.'
+        'Please generate a new one by running `npm run get-token` and update your .env file. ' +
+        'You may need to revoke app access in your Google Account settings first. ' +
+        'Falling back to mock data.'
       );
     } else {
       console.error(
