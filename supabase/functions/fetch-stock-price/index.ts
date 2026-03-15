@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-serve(async (req)=>{
+serve(async (req) => {
   try {
     // Fetch latest stock code from supabase 'stock_code' table by updated_at desc
     const { data: latestStockRow, error: fetchError } = await supabase.from('stock_code').select('code').order('updatedAt', {
@@ -44,26 +44,30 @@ serve(async (req)=>{
       },
       body: JSON.stringify({
         url: targetUrl,
-        prompt: `You are a precision data extractor. Your task is to extract TODAY'S INTRADAY stock prices.
+        prompt: `You are a precision stock data extractor. Your task is to extract the CURRENT DAY'S (TODAY'S) High and Low stock prices.
+
+### THE GOAL:
+Extract "Today's High" and "Today's Low". These are the intraday price limits for the current trading session.
 
 ### CRITICAL: WHAT TO IGNORE
-- IGNORE all values labeled '52W High', '52W Low', or '52-Week'.
-- DO NOT extract the values 830.00 or 1249.70 (these are common 52W examples).
-- If you see two pairs of numbers, IGNORE the second pair.
+- ABSOLUTELY IGNORE any values labeled '52W High', '52W Low', '52-Week', or 'Yearly High/Low'.
+- Historical or 52-week data is WRONG for this task.
+- If you see two sets of ranges, the first is usually 'Today' and the second is '52W'. Double-check the labels.
 
 ### EXTRACTION STEPS:
-1. Find the H1 header for the 'name'.
-2. Search for the exact phrase 'Today\'s Low Today\'s High'.
-3. The VERY FIRST number following that phrase is the 'low'.
-4. The SECOND number following that phrase is the 'high'.
-5. Convert to numbers (remove commas).
+1. Identify the 'name' from the main header (H1).
+2. Locate the "Today's Low" and "Today's High" section or labels.
+3. Extract the two numbers associated ONLY with the "Today" labels.
+4. Ensure 'low' is the smaller number and 'high' is the larger number of the pair.
+5. If the values you picked are labeled '52W' anywhere nearby, you have made a mistake. Re-extract the other pair.
 
-### PLACEHOLDER EXAMPLE:
-If text is 'Today\'s Low Today\'s High AAA __ BBB 52W Low 52W High CCC __ DDD'
-Result: {"name": "...", "high": BBB, "low": AAA}
+### LOGICAL CHECK:
+- "Today's" values are usually within a close range (e.g., 1-3% apart).
+- "52-Week" values are usually very far apart (e.g., 20-50% apart).
+- If your high is much higher than the low (e.g., 830 vs 1250), it is almost certainly the 52-week data and you MUST ignore it.
 
 ### OUTPUT:
-Return ONLY a minified JSON object: {"name":string, "high":number, "low":number}.`,
+Return ONLY a minified JSON object: {"name": string, "high": number, "low": number}.`,
         useWatercrawl: true,
         watercrawlSchema: {
           type: "object",
