@@ -44,39 +44,30 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         url: targetUrl,
-        prompt: `You are a precision stock data extractor. Your task is to extract the CURRENT DAY'S (TODAY'S) High and Low stock prices.
+        prompt: `Using the markdown source, extract "Today's High" and "Today's Low" for the stock.
+CRITICAL: DO NOT extract "52W High" or "52W Low" (the yearly range).
 
-### THE GOAL:
-Extract "Today's High" and "Today's Low". These are the intraday price limits for the current trading session.
+Identify these ranges in the "Overview" section:
+- CORRECT: "Today's Low Today's High" -> (e.g., 956.00 and 980.50)
+- WRONG: "52W Low 52W High" -> (e.g., 830.00 and 1,249.70)
 
-### CRITICAL: WHAT TO IGNORE
-- ABSOLUTELY IGNORE any values labeled '52W High', '52W Low', '52-Week', or 'Yearly High/Low'.
-- Historical or 52-week data is WRONG for this task.
-- If you see two sets of ranges, the first is usually 'Today' and the second is '52W'. Double-check the labels.
+Rules:
+1. Extract Name from the H1 (e.g., "PVR Inox Ltd").
+2. Extract the numbers from the "Today's" range ONLY.
+3. High must be larger than Low.
+4. If High is > 20% higher than Low (like 1249 vs 830), it's the 52-week data and MUST be rejected. Pick the other pair.
 
-### EXTRACTION STEPS:
-1. Identify the 'name' from the main header (H1).
-2. Locate the "Today's Low" and "Today's High" section or labels.
-3. Extract the two numbers associated ONLY with the "Today" labels.
-4. Ensure 'low' is the smaller number and 'high' is the larger number of the pair.
-5. If the values you picked are labeled '52W' anywhere nearby, you have made a mistake. Re-extract the other pair.
-
-### LOGICAL CHECK:
-- "Today's" values are usually within a close range (e.g., 1-3% apart).
-- "52-Week" values are usually very far apart (e.g., 20-50% apart).
-- If your high is much higher than the low (e.g., 830 vs 1250), it is almost certainly the 52-week data and you MUST ignore it.
-
-### OUTPUT:
-Return ONLY a minified JSON object: {"name": string, "high": number, "low": number}.`,
+Return JSON: {"name": string, "high": number, "low": number}`,
         useWatercrawl: true,
         watercrawlSchema: {
           type: "object",
           properties: {
             name: { type: "string" },
             high: { type: "number" },
-            low: { type: "number" }
+            low: { type: "number" },
+            reasoning: { type: "string", description: "Reason for choosing these numbers (must be Today's range, not 52W)." }
           },
-          required: ["name", "high", "low"]
+          required: ["name", "high", "low", "reasoning"]
         }
       })
     });
@@ -90,6 +81,7 @@ Return ONLY a minified JSON object: {"name": string, "high": number, "low": numb
       throw new Error('No JSON data returned from scraper');
     }
     const j = scrape.json as any;
+    console.log(`[fetch-stock-price] extracted: name=${j.name}, high=${j.high}, low=${j.low}, reasoning=${j.reasoning}`);
     const highVal = j.high ?? j.High;
     const lowVal = j.low ?? j.Low;
     if (highVal == null || lowVal == null) {
