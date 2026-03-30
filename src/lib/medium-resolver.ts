@@ -4,13 +4,36 @@ function firstN(input: string, n: number): string {
 }
 
 function extractHrefWithNoopener(html: string): string | null {
-  const re = /<a[^>]*\brel=["']\s*noopener\s*["'][^>]*\bhref=["']([^"']+)["'][^>]*>/i;
-  const m = html.match(re);
-  if (!m) return null;
-  let href = m[1] || '';
-  if (!href) return null;
-  href = href.replace(/`/g, '').trim();
-  return href || null;
+  const matches = Array.from(html.matchAll(/<a\s+([^>]+)>([\s\S]*?)<\/a>/gi));
+  
+  // First pass: look for strong indicators of a friend/free link
+  for (const m of matches) {
+    const attrs = m[1];
+    const text = m[2];
+    // Match rel="noopener" anywhere in the rel attribute
+    if (/\brel=["'][^"']*?\bnoopener\b[^"']*?["']/i.test(attrs)) {
+      const hrefMatch = /\bhref=["']([^"']+)["']/i.exec(attrs);
+      if (hrefMatch) {
+        const href = hrefMatch[1].replace(/`/g, '').trim();
+        const lowText = text.toLowerCase();
+        if (href.includes('sk=') || lowText.includes('free') || lowText.includes('member')) {
+          return href;
+        }
+      }
+    }
+  }
+  
+  // Second pass: fallback to first noopener link
+  for (const m of matches) {
+    const attrs = m[1];
+    if (/\brel=["'][^"']*?\bnoopener\b[^"']*?["']/i.test(attrs)) {
+      const hrefMatch = /\bhref=["']([^"']+)["']/i.exec(attrs);
+      if (hrefMatch) {
+        return hrefMatch[1].replace(/`/g, '').trim();
+      }
+    }
+  }
+  return null;
 }
 
 function extractAuthorBase(html: string): string | null {
@@ -105,7 +128,7 @@ async function fetchWithProxyFallback(url: string, headers: Record<string, strin
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache',
         };
-        const r = await fetch(url, { method: 'GET', headers: attemptHeaders, dispatcher: agent as any });
+        const r = await fetch(url, { method: 'GET', headers: attemptHeaders, dispatcher: agent } as any);
         if (r.ok) {
           console.log(`[resolver] proxy succeeded id=${p.id || 'n/a'}`);
           return r;
@@ -131,7 +154,10 @@ export async function resolveMediumLink(url: string, headLimit: number, marker: 
     const r = proxied;
     const text = await r.text();
     const head = firstN(text, headLimit);
-    if (!marker || !head.includes(marker)) {
+    const memberIndicators = [marker, 'Member-only story', 'non-member readers'].filter(Boolean);
+    const isMemberArticle = memberIndicators.some(mi => head.includes(mi!));
+    
+    if (!isMemberArticle) {
       return url;
     }
     const href = extractHrefWithNoopener(head);
@@ -145,7 +171,7 @@ export async function resolveMediumLink(url: string, headLimit: number, marker: 
       : href;
     try {
       const u = new URL(final);
-      if (!u.searchParams.has('sk=')) return null;
+      if (!u.searchParams.has('sk')) return null;
     } catch {
       return null;
     }
@@ -174,7 +200,8 @@ export async function resolveMediumLinkDetailed(
     const r = proxied;
     const text = await r.text();
     const head = firstN(text, headLimit);
-    const memberDetected = !!marker && head.includes(marker);
+    const memberIndicators = [marker, 'Member-only story', 'non-member readers'].filter(Boolean);
+    const memberDetected = memberIndicators.some(mi => head.includes(mi!));
     if (!memberDetected) {
       return { value: url, memberDetected: false, statusCode: r.status || 200 };
     }
