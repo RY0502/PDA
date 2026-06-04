@@ -1,9 +1,30 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { jsonrepair } from 'npm:jsonrepair';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const GAINER_KEYS = ['name', 'price', 'change', 'changePercent'] as const;
+
+function preRepair(raw: string): string {
+  return raw.replace(/"(name|price|change|changePercent)"(\s*[,}])/g, '"$1": ""$2');
+}
+
+function sanitizeGainer(gainer: any): any {
+  const out: any = {};
+  for (const key of GAINER_KEYS) {
+    const val = gainer[key] ?? '';
+    if (key === 'name') {
+      out[key] = String(val).trim();
+    } else {
+      const num = parseFloat(String(val).replace(/[^0-9.\-]/g, ''));
+      out[key] = isNaN(num) ? null : num;
+    }
+  }
+  return out;
+}
 
 serve(async () => {
   try {
@@ -12,7 +33,13 @@ serve(async () => {
     const prompt = `
       Using the markdown source find the top 10 gainers for today. For each stock provide- 'name', 'price', 'change', and 'changePercent' and sort them in descending order based on change.
       Return ONLY a single, valid, minified JSON object with a 'topGainers' key. Do not include any text, explanations, or markdown formatting.
+      STRICT RULES:
+      1. Every object must contain ALL four keys: 'name', 'price', 'change', 'changePercent'.
+      2. Never emit a bare key. Always include a colon and a value. INVALID: "price" VALID: "price": "".
+      3. If a value cannot be extracted, use an empty string "". Example: "price": "".
+      4. Follow this exact shape for each object: {"name":"...","price":"...","change":"...","changePercent":"..."}
     `;
+
     const reqHeaders = {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
@@ -39,38 +66,45 @@ serve(async () => {
     const reqBody = {
       url: targetUrl,
       prompt,
-      json_options: {
-        schema,
-        user_prompt: prompt,
-        extract_source: 'markdown'
-      }
+      json_options: { schema, user_prompt: prompt, extract_source: 'markdown' }
     };
+
+    console.log(`[fetch-top-gainers] Hitting shared for ${targetUrl}`);
     const scrapeResp = await fetch(functionsUrl, {
       method: 'POST',
       headers: reqHeaders,
       body: JSON.stringify(reqBody)
     });
     if (!scrapeResp.ok) {
-      console.error(`[fetch-top-gainers] website-data responded non-OK: ${scrapeResp.status}`);
-      throw new Error(`Website-data function error: ${scrapeResp.status}`);
+      console.error(`[fetch-top-gainers] shared responded non-OK: ${scrapeResp.status}`);
+      throw new Error(`Shared function error: ${scrapeResp.status}`);
     }
+
     const scrape = await scrapeResp.json();
-    console.log(`[fetch-top-gainers] website-data returned source=${scrape.source} hasJson=${!!scrape.json}`);
+    console.log(`[fetch-top-gainers] shared returned source=${scrape.source} hasJson=${!!scrape.json}`);
+
     let payload: any = scrape?.json;
+    console.log('[fetch-top-gainers] Raw JSON from shared:', String(payload).substring(0, 600));
+
     if (typeof payload === 'string') {
       try {
-        payload = JSON.parse(payload);
-      } catch {
+        const prePatched = preRepair(payload);
+        payload = JSON.parse(jsonrepair(prePatched));
+      } catch (e) {
+        console.error('[fetch-top-gainers] JSON repair+parse failed:', e);
+        console.error('[fetch-top-gainers] Full raw payload:', payload);
         payload = null;
       }
     }
-    if (!payload || typeof payload !== 'object') {
-      throw new Error('No JSON payload returned from website-data');
-    }
-    const topGainers = (payload as any).topGainers;
-    if (!topGainers || !Array.isArray(topGainers)) {
-      throw new Error('Invalid data format: missing topGainers array');
-    }
+
+    if (!payload || typeof payload !== 'object') throw new Error('No JSON payload returned from shared');
+
+    const rawGainers = payload.topGainers;
+    if (!rawGainers || !Array.isArray(rawGainers)) throw new Error('Invalid data format: missing topGainers array');
+
+    const topGainers = rawGainers.map(sanitizeGainer).filter((g: any) => g.name);
+    console.log(`[fetch-top-gainers] Sanitized ${topGainers.length} gainers`);
+
     const { error } = await supabase.from('top_gainers').insert(topGainers.map((gainer: any) => ({
       name: gainer.name,
       price: gainer.price,
@@ -78,16 +112,13 @@ serve(async () => {
       change_percent: gainer.changePercent,
       updated_at: new Date().toISOString()
     })));
-    if (error) {
-      console.error('Error upserting top gainers:', error);
-      throw error;
-    }
+    if (error) { console.error('Error inserting top gainers:', error); throw error; }
+
     const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
     const { error: deleteError } = await supabase.from('top_gainers').delete().lt('updated_at', twoDaysAgo);
-    if (deleteError) {
-      console.error('Error deleting old top gainers:', deleteError);
-    }
-    return new Response(JSON.stringify({ success: true }), {
+    if (deleteError) console.error('Error deleting old top gainers:', deleteError);
+
+    return new Response(JSON.stringify({ success: true, count: topGainers.length }), {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
