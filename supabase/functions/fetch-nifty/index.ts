@@ -49,8 +49,11 @@ serve(async () => {
       body: JSON.stringify({
         url: TARGET_URL,
         prompt: PROMPT,
-        watercrawlSchema: SCHEMA,
-        useWatercrawl: true
+        json_options: {
+          schema: SCHEMA,
+          user_prompt: PROMPT,
+          extract_source: 'markdown'
+        }
       })
     });
     if (!scrapeResp.ok) {

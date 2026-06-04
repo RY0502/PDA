@@ -58,16 +58,19 @@ Rules:
 4. If High is > 20% higher than Low (like 1249 vs 830), it's the 52-week data and MUST be rejected. Pick the other pair.
 
 Return JSON: {"name": string, "high": number, "low": number}`,
-        useWatercrawl: true,
-        watercrawlSchema: {
-          type: "object",
-          properties: {
-            name: { type: "string" },
-            high: { type: "number" },
-            low: { type: "number" },
-            reasoning: { type: "string", description: "Reason for choosing these numbers (must be Today's range, not 52W)." }
+        json_options: {
+          schema: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              high: { type: "number" },
+              low: { type: "number" },
+              reasoning: { type: "string", description: "Reason for choosing these numbers (must be Today's range, not 52W)." }
+            },
+            required: ["name", "high", "low", "reasoning"]
           },
-          required: ["name", "high", "low", "reasoning"]
+          user_prompt: `Using the markdown source, extract "Today's High" and "Today's Low" for the stock.\nCRITICAL: DO NOT extract "52W High" or "52W Low" (the yearly range).\n\nIdentify these ranges in the "Overview" section:\n- CORRECT: "Today's Low Today's High" -> (e.g., 956.00 and 980.50)\n- WRONG: "52W Low 52W High" -> (e.g., 830.00 and 1,249.70)\n\nRules:\n1. Extract Name from the H1 (e.g., "PVR Inox Ltd").\n2. Extract the numbers from the "Today's" range ONLY.\n3. High must be larger than Low.\n4. If High is > 20% higher than Low (like 1249 vs 830), it's the 52-week data and MUST be rejected. Pick the other pair.\n\nReturn JSON: {"name": string, "high": number, "low": number}`,
+          extract_source: 'markdown'
         }
       })
     });

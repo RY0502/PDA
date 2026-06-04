@@ -3,7 +3,6 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
-const ANYCRAWL_API_KEY = Deno.env.get('LOSERS_ANYCRAWL_API_KEY');
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -15,12 +14,6 @@ serve(async () => {
       Using the markdown source find the top 10 losers for today. For each stock provide- 'name', 'price', 'change', and 'changePercent' and sort them descending based on change.
       Return ONLY a single, valid, minified JSON object with a 'topLosers' key. Do not include any text, explanations, or markdown formatting.
     `;
-    if (!ANYCRAWL_API_KEY) {
-      return new Response(JSON.stringify({ error: 'Missing AnyCrawl API key' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
     console.log(`[fetch-top-losers] Hitting shared for ${targetUrl}`);
     const reqHeaders = {
       'Content-Type': 'application/json',
@@ -48,13 +41,11 @@ serve(async () => {
     const reqBody = {
       url: targetUrl,
       prompt,
-      anycrawlApiKey: ANYCRAWL_API_KEY,
       json_options: {
         schema,
         user_prompt: prompt,
         extract_source: 'markdown'
-      },
-      useWatercrawl: false
+      }
     };
     const scrapeResp = await fetch(functionsUrl, {
       method: 'POST',
@@ -62,11 +53,11 @@ serve(async () => {
       body: JSON.stringify(reqBody)
     });
     if (!scrapeResp.ok) {
-      console.error(`[fetch-top-losers] website-data responded non-OK: ${scrapeResp.status}`);
-      throw new Error(`Website-data function error: ${scrapeResp.status}`);
+      console.error(`[fetch-top-losers] shared responded non-OK: ${scrapeResp.status}`);
+      throw new Error(`Shared function error: ${scrapeResp.status}`);
     }
     const scrape = await scrapeResp.json();
-    console.log(`[fetch-top-losers] website-data returned source=${scrape.source} hasJson=${!!scrape.json}`);
+    console.log(`[fetch-top-losers] shared returned source=${scrape.source} hasJson=${!!scrape.json}`);
     let payload: any = scrape?.json;
     if (typeof payload === 'string') {
       try {
@@ -76,7 +67,7 @@ serve(async () => {
       }
     }
     if (!payload || typeof payload !== 'object') {
-      throw new Error('No JSON payload returned from website-data');
+      throw new Error('No JSON payload returned from shared');
     }
     const topLosers = (payload as any).topLosers;
     if (!topLosers || !Array.isArray(topLosers)) {
