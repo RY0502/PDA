@@ -31,23 +31,38 @@ serve(async () => {
     const targetUrl = 'https://www.hdfcsec.com/market/equity/top-gainer-nse?indicesCode=76394';
     const functionsUrl = `${SUPABASE_URL}/functions/v1/shared`;
     const prompt = `
-  You are given a screenshot of HDFC Securities "Top Gainer NSE" page.
-  The page lists stock cards. Each card has the following structure:
-  - Company name (the heading/title of the card, e.g. "Wockhardt Ltd")
-  - LTP: Last Traded Price (this is the 'price', e.g. 1,933)
-  - GAIN: the point change (this is 'change', always a positive number, e.g. 139.95)
-  - GAIN (%): the percentage change (this is 'changePercent', always a postive number, e.g. 6.75)
+  You are reading the screenshot of the HDFC Securities "Top Gainer NSE" page.
+  The page contains a list of stock cards. Each card follows this exact pattern:
 
-  Extract the top 10 gainers and sort them descending by 'change'.
-  For each stock provide: 'name', 'price', 'change', 'changePercent'.
-  Strip commas from numbers (e.g. 1,933 → 1933).
+  <Company Name>
+  LTP      GAIN      GAIN (%)
+  <price>  <change>  <changePercent>
 
-  Return ONLY a single, valid, minified JSON object with a 'topGainers' key. Do not include any text, explanations, or markdown formatting.
+  Example card:
+  Network 18 Media & Investments Ltd
+  LTP      GAIN      GAIN (%)
+  33.58    3.59      11.97
+
+  From this card extract:
+  - "name"          → "Network 18 Media & Investments Ltd"
+  - "price"         → "33.58"
+  - "change"        → "3.59"
+  - "changePercent" → "11.97"
+
+  Rules for extraction:
+  - Ignore all other fields on the card: Day's Low, Day's High, Day's Volume, BUY, SELL buttons.
+  - Strip commas from numbers (5,14,97,471 → 51497471).
+  - Keep positive values for change and changePercent (no minus sign).
+  - If a value is present on the page, you MUST extract it. Do NOT leave it blank unless it is truly absent.
+  - Process every card on the page before deciding the top 10. Do not skip any card.
+  - Sort the final 10 descending by 'change' (highest first).
+
+  Return ONLY a single, valid, minified JSON object with a 'topGainers' key. No text, no explanations, no markdown.
   STRICT RULES:
   1. Every object must contain ALL four keys: 'name', 'price', 'change', 'changePercent'.
   2. Never emit a bare key. Always include a colon and a value. INVALID: "price" VALID: "price": "".
   3. If a value cannot be extracted, use an empty string "". Example: "price": "".
-  4. Follow this exact shape for each object: {"name":"...","price":"...","change":"...","changePercent":"..."}
+  4. Follow this exact shape: {"name":"...","price":"...","change":"...","changePercent":"..."}
 `;
 
     const reqHeaders = {
