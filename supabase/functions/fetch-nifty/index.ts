@@ -7,15 +7,23 @@ const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
 
 const TARGET_URL = 'https://www.tickertape.in/indices/nifty-50-index-.NSEI';
 const PROMPT = `
-  From the given markdown find out today's status for Nifty 50: The value will be available between 'NIFTY 50 Share Price' and 'ETFs tracking NIFTY 50'.
-  The first line in between these two tags should be ignored having value 'INDEX'. The second line will be like this: 25,725.40 __0.17 % (+42.65).
-  The first number is current points. After '__' is the change % and the third value in the () will be the changed point with increase(+) and decrease(-).
+  You are given a screenshot of the tickertape.in Nifty 50 index page.
+  Locate the card that contains the text "NIFTY 50 Share Price". Directly below it is a line showing the current index value in this format:
+  ₹23,457.85 ▲ 0.18% (+41.30)
+
+  Extract the following four values from that line:
+  - "points": the number after the ₹ symbol (remove commas, e.g. 23457.85)
+  - "changePercentage": the number before the % sign (without % sign, e.g. 0.18)
+  - "change": the number inside the parentheses (without + or - sign, e.g. 41.30)
+  - "jump": "up" if there is an upward triangle ▲ or the number is preceded by +, "down" if there is a downward triangle ▼ or the number is preceded by -
+
   Return ONLY a single, valid, minified JSON object. Do not include any text, explanations, or markdown formatting.
   STRICT RULES:
   1. Every object must contain ALL four keys: 'points', 'changePercentage', 'change', 'jump'.
   2. Never emit a bare key. Always include a colon and a value. INVALID: "points" VALID: "points": "".
   3. If a value cannot be extracted, use an empty string "". Example: "points": "".
-  4. Follow this exact shape: {"points":"...","changePercentage":"...","change":"...","jump":"..."}
+  4. All numeric values must be plain numbers without currency symbols, commas, %, or +/- signs.
+  5. Follow this exact shape: {"points":"...","changePercentage":"...","change":"...","jump":"..."}
 `;
 const SCHEMA = {
   type: 'object',
@@ -76,7 +84,7 @@ serve(async () => {
       body: JSON.stringify({
         url: TARGET_URL,
         prompt: PROMPT,
-        json_options: { schema: SCHEMA, user_prompt: PROMPT, extract_source: 'markdown' }
+        json_options: { schema: SCHEMA, user_prompt: PROMPT, extract_source: 'screenshot' }
       })
     });
 
