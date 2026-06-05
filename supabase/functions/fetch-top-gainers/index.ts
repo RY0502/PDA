@@ -9,7 +9,11 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const GAINER_KEYS = ['name', 'price', 'change', 'changePercent'] as const;
 
 function preRepair(raw: string): string {
-  return raw.replace(/"(name|price|change|changePercent)"(\s*[,}])/g, '"$1": ""$2');
+  // Fix "key","value" → "key":"value"  (comma instead of colon between key and value)
+  raw = raw.replace(/"(name|price|change|changePercent)","([^"]*)"/g, '"$1":"$2"');
+  // Fix bare keys with no value: "key", or "key"}
+  raw = raw.replace(/"(name|price|change|changePercent)"(\s*[,}])/g, '"$1": ""$2');
+  return raw;
 }
 
 function sanitizeGainer(gainer: any): any {
