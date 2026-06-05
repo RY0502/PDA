@@ -32,23 +32,38 @@ serve(async () => {
     const targetUrl = 'https://www.hdfcsec.com/market/equity/top-loser-nse?indicesCode=76394';
     const functionsUrl = `${SUPABASE_URL}/functions/v1/shared`;
     const prompt = `
-  You are given a screenshot of the HDFC Securities "Top Loser NSE" page.
-  The page lists stock cards. Each card has the following structure:
-  - Company name (the heading/title of the card, e.g. "Wockhardt Ltd")
-  - LTP: Last Traded Price (this is the 'price', e.g. 1,933)
-  - LOSS: the point change (this is 'change', always a negative number, e.g. -139.95)
-  - LOSS (%): the percentage change (this is 'changePercent', always a negative number, e.g. -6.75)
+  You are reading the screenshot of the HDFC Securities "Top Loser NSE" page.
+  The page contains a list of stock cards. Each card follows this exact pattern:
 
-  Extract the top 10 losers and sort them descending by 'change' (most negative first).
-  For each stock provide: 'name', 'price', 'change', 'changePercent'.
-  Strip commas from numbers (e.g. 1,933 → 1933). Keep the minus sign on 'change' and 'changePercent'.
+  <Company Name>
+  LTP      LOSS      LOSS (%)
+  <price>  <change>  <changePercent>
 
-  Return ONLY a single, valid, minified JSON object with a 'topLosers' key. Do not include any text, explanations, or markdown formatting.
+  Example card:
+  Wockhardt Ltd
+  LTP      LOSS      LOSS (%)
+  1933     -139.95   -6.75
+
+  From this card extract:
+  - "name"          → "Wockhardt Ltd"
+  - "price"         → "1933"
+  - "change"        → "-139.95"
+  - "changePercent" → "-6.75"
+
+  Rules for extraction:
+  - Ignore all other fields on the card: Day's Low, Day's High, Day's Volume, BUY, SELL buttons.
+  - Strip commas from numbers (1,933 → 1933).
+  - Keep the minus sign on change and changePercent.
+  - If a value is present on the page, you MUST extract it. Do NOT leave it blank unless it is truly absent.
+  - Process every card on the page before deciding the top 10. Do not skip any card.
+  - Sort the final 10 descending by 'change' (most negative first).
+
+  Return ONLY a single, valid, minified JSON object with a 'topLosers' key. No text, no explanations, no markdown.
   STRICT RULES:
   1. Every object must contain ALL four keys: 'name', 'price', 'change', 'changePercent'.
   2. Never emit a bare key. Always include a colon and a value. INVALID: "price" VALID: "price": "".
   3. If a value cannot be extracted, use an empty string "". Example: "price": "".
-  4. Follow this exact shape for each object: {"name":"...","price":"...","change":"...","changePercent":"..."}
+  4. Follow this exact shape: {"name":"...","price":"...","change":"...","changePercent":"..."}
 `;
 
     const reqHeaders = {
