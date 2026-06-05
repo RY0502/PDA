@@ -31,14 +31,24 @@ serve(async () => {
     const targetUrl = 'https://www.hdfcsec.com/market/equity/top-gainer-nse?indicesCode=76394';
     const functionsUrl = `${SUPABASE_URL}/functions/v1/shared`;
     const prompt = `
-      Using the markdown source find the top 10 gainers for today. For each stock provide- 'name', 'price', 'change', and 'changePercent' and sort them in descending order based on change.
-      Return ONLY a single, valid, minified JSON object with a 'topGainers' key. Do not include any text, explanations, or markdown formatting.
-      STRICT RULES:
-      1. Every object must contain ALL four keys: 'name', 'price', 'change', 'changePercent'.
-      2. Never emit a bare key. Always include a colon and a value. INVALID: "price" VALID: "price": "".
-      3. If a value cannot be extracted, use an empty string "". Example: "price": "".
-      4. Follow this exact shape for each object: {"name":"...","price":"...","change":"...","changePercent":"..."}
-    `;
+  You are given a screenshot of HDFC Securities "Top Gainer NSE" page.
+  The page lists stock cards. Each card has the following structure:
+  - Company name (the heading/title of the card, e.g. "Wockhardt Ltd")
+  - LTP: Last Traded Price (this is the 'price', e.g. 1,933)
+  - GAIN: the point change (this is 'change', always a positive number, e.g. 139.95)
+  - GAIN (%): the percentage change (this is 'changePercent', always a postive number, e.g. 6.75)
+
+  Extract the top 10 gainers and sort them descending by 'change'.
+  For each stock provide: 'name', 'price', 'change', 'changePercent'.
+  Strip commas from numbers (e.g. 1,933 → 1933).
+
+  Return ONLY a single, valid, minified JSON object with a 'topGainers' key. Do not include any text, explanations, or markdown formatting.
+  STRICT RULES:
+  1. Every object must contain ALL four keys: 'name', 'price', 'change', 'changePercent'.
+  2. Never emit a bare key. Always include a colon and a value. INVALID: "price" VALID: "price": "".
+  3. If a value cannot be extracted, use an empty string "". Example: "price": "".
+  4. Follow this exact shape for each object: {"name":"...","price":"...","change":"...","changePercent":"..."}
+`;
 
     const reqHeaders = {
       'Content-Type': 'application/json',
@@ -66,7 +76,7 @@ serve(async () => {
     const reqBody = {
       url: targetUrl,
       prompt,
-      json_options: { schema, user_prompt: prompt, extract_source: 'markdown' }
+      json_options: { schema, user_prompt: prompt, extract_source: 'screenshot' }
     };
 
     console.log(`[fetch-top-gainers] Hitting shared for ${targetUrl}`);
