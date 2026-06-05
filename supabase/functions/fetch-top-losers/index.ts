@@ -10,9 +10,12 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const LOSER_KEYS = ['name', 'price', 'change', 'changePercent'] as const;
 
 function preRepair(raw: string): string {
-  // Fix "key","value" → "key":"value"  (comma instead of colon)
-  raw = raw.replace(/"(name|price|change|changePercent)","([^"]*)"/g, '"$1":"$2"');
-  // Fix bare keys with no value: "key", or "key"}
+  // Fix "key","value" → "key":"value" ONLY when value is not another known key
+  raw = raw.replace(
+    /"(name|price|change|changePercent)","(?!(?:name|price|change|changePercent)")([^"]*)"/g,
+    '"$1":"$2"'
+  );
+  // Fix all remaining bare keys: "key", or "key"}
   raw = raw.replace(/"(name|price|change|changePercent)"(\s*[,}])/g, '"$1": ""$2');
   return raw;
 }
