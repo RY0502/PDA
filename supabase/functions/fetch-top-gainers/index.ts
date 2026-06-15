@@ -38,16 +38,16 @@ serve(async () => {
     const targetUrl = 'https://www.hdfcsec.com/market/equity/top-gainer-nse?indicesCode=76394';
     const functionsUrl = `${SUPABASE_URL}/functions/v1/shared`;
     const prompt = `
-  You are reading the screenshot of the HDFC Securities "Top Gainer NSE" page.
+  You are an expert in data extraction from images. You are  given a screenshot of the HDFC Securities "Top Gainer NSE" page.Analyse the page carefully.
   The page contains a list of stock cards. Each card follows this exact pattern:
 
   <Company Name>
-  LTP      GAIN      GAIN (%)
+  LTP      GAIN      GAIN(%)
   <price>  <change>  <changePercent>
 
   Example card:
   Network 18 Media & Investments Ltd
-  LTP      GAIN      GAIN (%)
+  LTP      GAIN      GAIN(%)
   33.58    3.59      11.97
 
   From this card extract:
@@ -58,11 +58,13 @@ serve(async () => {
 
   Rules for extraction:
   - Ignore all other fields on the card: Day's Low, Day's High, Day's Volume, BUY, SELL buttons.
+  - LTP value is the price 
+  - GAIN value is the change
+  - GAIN(%) is the changePercent
   - Strip commas from numbers (5,14,97,471 → 51497471).
-  - Keep positive values for change and changePercent (no minus sign).
-  - If a value is present on the page, you MUST extract it. Do NOT leave it blank unless it is truly absent.
-  - Process every card on the page before deciding the top 10. Do not skip any card.
-  - Sort the final 10 descending by 'change' (highest first).
+  - You MUST extract all the values from the page as they will always be there.
+  - Do not skip any card untill it is not visible properly.
+  - Sort the final extracted values descending by 'change' (highest first).
 
   Return ONLY a single, valid, minified JSON object with a 'topGainers' key. No text, no explanations, no markdown.
   STRICT RULES:
