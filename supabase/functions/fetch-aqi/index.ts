@@ -6,37 +6,20 @@ const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
 const EVEN_TARGET_URL = 'https://www.aqi.in/in/dashboard/india/delhi';
-const EVEN_PROMPT = `You are a data extraction specialist. From the provided scraped markdown, extract the CURRENT AQI value for Delhi.
+const EVEN_PROMPT = `You are an expert in data extraction from images. You are  given a screenshot of AQI website page. Analyse the page carefully and  extract the CURRENT AQI value for Delhi.
 
 ### EXTRACTION RULE:
-- Locate the text string 'Live AQI'
-- Locate the text string 'AQI (US)'.
-- Extract only the digits appearing between both text strings.
-- Example Template: 'Live AQI XXX AQI (US)' -> You extract XXX.
+- Locate the box containing string 'US AQI⁺'
+- The number in this box is the AQI.
+- Extract only the digits 
 
 ### CONSTRAINTS:
 - Do not use any numbers found in the instructions or examples.
-- Scan the provided input text only.
 - If no such value is found, return {"aqi": null}.
 
 ### OUTPUT FORMAT:
 Return ONLY a minified JSON object: {"aqi": number}. No extra text or explanation.`;
-const ODD_TARGET_URL = 'https://www.iqair.com/india/delhi/delhi';
-const ODD_PROMPT = `You are a data extraction specialist. From the provided markdown, extract the CURRENT AQI value for Delhi.
 
-### EXTRACTION RULE:
-- Locate the link 'https://www.iqair.com/newsroom/india-air-quality-alert'
-- Locate the text string 'US AQI⁺'.
-- Extract only the digits appearing between the link and text string.
-- Example Template: 'https://www.iqair.com/newsroom/india-air-quality-alert XXX US AQI⁺' -> You extract XXX.
-
-### CONSTRAINTS:
-- Do not use any numbers found in the instructions or examples.
-- Scan the provided input text only.
-- If no such value is found, return {"aqi": null}.
-
-### OUTPUT FORMAT:
-Return ONLY a minified JSON object: {"aqi": number}. No extra text or explanation.`;
 const SCHEMA = {
   type: 'object',
   properties: {
@@ -56,11 +39,14 @@ serve(async () => {
         headers: { 'Content-Type': 'application/json' }
       });
     }
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const functionsUrl = `${SUPABASE_URL}/functions/v1/shared`;
-    const isEvenHour = new Date().getUTCHours() % 2 === 0;
-    const targetUrl = isEvenHour ? EVEN_TARGET_URL : ODD_TARGET_URL;
-    const prompt = isEvenHour ? EVEN_PROMPT : ODD_PROMPT;
+
+    // Hardcoded to EVEN flow (default)
+    const targetUrl = EVEN_TARGET_URL;
+    const prompt = EVEN_PROMPT;
+
     const scrapeResp = await fetch(functionsUrl, {
       method: 'POST',
       headers: {
@@ -77,14 +63,17 @@ serve(async () => {
         }
       })
     });
+
     if (!scrapeResp.ok) {
       return new Response(JSON.stringify({ error: `shared responded ${scrapeResp.status}` }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
     }
+
     const scrape = await scrapeResp.json();
     let payload: any = scrape?.json;
+
     if (typeof payload === 'string') {
       try {
         payload = JSON.parse(payload);
@@ -92,12 +81,14 @@ serve(async () => {
         payload = null;
       }
     }
+
     if (!payload || typeof payload !== 'object' || (payload as any).aqi == null) {
       return new Response(JSON.stringify({ error: 'No AQI value returned from shared' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
     }
+
     const rawAqi = (payload as any).aqi;
     const aqiValue = typeof rawAqi === 'number' ? rawAqi : Number(String(rawAqi).replace(/,/g, ''));
     if (!Number.isFinite(aqiValue)) {
@@ -106,10 +97,12 @@ serve(async () => {
         headers: { 'Content-Type': 'application/json' }
       });
     }
+
     const row = {
       aqi: Number(aqiValue),
       updated_at: new Date().toISOString()
     };
+
     const { error } = await supabase.from('delhi_aqi_status').insert(row);
     if (error) {
       return new Response(JSON.stringify({ error: 'Database insert failed', details: error.message }), {
@@ -117,23 +110,27 @@ serve(async () => {
         headers: { 'Content-Type': 'application/json' }
       });
     }
+
     const { data: oldRows, error: selectError } = await supabase
       .from('delhi_aqi_status')
       .select('id')
       .order('updated_at', { ascending: false })
       .range(10, 10000);
+
     if (selectError) {
       return new Response(JSON.stringify({ error: 'Database cleanup query failed...', details: selectError.message }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
     }
+
     const ids = (oldRows || []).map((r: any) => r.id).filter(Boolean);
     if (ids.length > 0) {
       const { error: deleteError } = await supabase
         .from('delhi_aqi_status')
         .delete()
         .in('id', ids);
+
       if (deleteError) {
         return new Response(JSON.stringify({ error: 'Database cleanup delete failed', details: deleteError.message }), {
           status: 500,
@@ -141,6 +138,7 @@ serve(async () => {
         });
       }
     }
+
     return new Response(JSON.stringify({ success: true, data: row }), {
       headers: { 'Content-Type': 'application/json' }
     });
