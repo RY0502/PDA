@@ -44,7 +44,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         url: targetUrl,
-        prompt: `Using the markdown source, extract "Today's High" and "Today's Low" for the stock.
+        prompt: `You are an expert in data extraction from images. You are  given a screenshot of Equity Pandit share price page. Analyse the page carefully and  extract "Today's High" and "Today's Low" for the stock.
 CRITICAL: DO NOT extract "52W High" or "52W Low" (the yearly range).
 
 Identify these ranges in the "Overview" section:
@@ -56,6 +56,7 @@ Rules:
 2. Extract the numbers from the "Today's" range ONLY.
 3. High must be larger than Low.
 4. If High is > 20% higher than Low (like 1249 vs 830), it's the 52-week data and MUST be rejected. Pick the other pair.
+5. The values are placed below each label on the page.
 
 Return JSON: {"name": string, "high": number, "low": number}`,
         json_options: {
