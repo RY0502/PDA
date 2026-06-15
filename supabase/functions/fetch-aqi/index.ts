@@ -9,8 +9,8 @@ const EVEN_TARGET_URL = 'https://www.aqi.in/in/dashboard/india/delhi';
 const EVEN_PROMPT = `You are an expert in data extraction from images. You are  given a screenshot of AQI website page. Analyse the page carefully and  extract the CURRENT AQI value for Delhi.
 
 ### EXTRACTION RULE:
-- Locate the box containing string 'US AQI⁺'
-- The number in this box is the AQI.
+- Locate the text string 'Live AQI'
+- The number below the 'Live AQI' text is the AQI.
 - Extract only the digits 
 
 ### CONSTRAINTS:
