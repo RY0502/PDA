@@ -120,43 +120,60 @@ export default function MaintenancePage() {
             </Alert>
           ) : (
             <>
-              {/* Freedium Toggle */}
-              <div className="mb-6 rounded-lg border border-border/50 bg-muted/30 p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm font-semibold text-foreground">Freedium Mode</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {freediumEnabled
-                        ? 'Articles open via Freedium mirror in a new tab'
-                        : 'Articles use proxy resolve + AI summary flow'}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={freediumEnabled}
-                    disabled={freediumLoading}
-                    onClick={handleFreediumToggle}
-                    className={`
-                      relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full
-                      border-2 border-transparent transition-colors duration-200 ease-in-out
-                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
-                      disabled:cursor-not-allowed disabled:opacity-50
-                      ${freediumEnabled ? 'bg-primary' : 'bg-muted-foreground/30'}
-                    `}
-                  >
-                    <span
+              {/* Section 1: Medium Article Read Mode Settings */}
+              <div className="mb-8">
+                <h3 className="text-base font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                  Read Mode Settings
+                </h3>
+                <div className="rounded-lg border border-border/50 bg-muted/30 p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground">Freedium Mode</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {freediumEnabled
+                          ? 'Articles open via Freedium mirror in a new tab'
+                          : 'Articles use proxy resolve + AI summary flow'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={freediumEnabled}
+                      disabled={freediumLoading}
+                      onClick={handleFreediumToggle}
                       className={`
-                        pointer-events-none inline-block h-5 w-5 transform rounded-full
-                        bg-white shadow-lg ring-0 transition duration-200 ease-in-out
-                        ${freediumEnabled ? 'translate-x-5' : 'translate-x-0'}
+                        relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full
+                        border-2 border-transparent transition-colors duration-200 ease-in-out
+                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
+                        disabled:cursor-not-allowed disabled:opacity-50
+                        ${freediumEnabled ? 'bg-primary' : 'bg-muted-foreground/30'}
                       `}
-                    />
-                  </button>
+                    >
+                      <span
+                        className={`
+                          pointer-events-none inline-block h-5 w-5 transform rounded-full
+                          bg-white shadow-lg ring-0 transition duration-200 ease-in-out
+                          ${freediumEnabled ? 'translate-x-5' : 'translate-x-0'}
+                        `}
+                      />
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <div className="mb-6 flex flex-col sm:flex-row gap-3">
+              <hr className="my-8 border-border/40" />
+
+              {/* Section 2: Cache Management Settings */}
+              <div className="mb-8">
+                <h3 className="text-base font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
+                  Cache Management
+                </h3>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Manage database cache entries for resolved Medium URLs. Note: These actions only affect the proxy resolve / AI summary flow.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   className="w-full sm:w-auto"
                   variant="destructive"
@@ -211,9 +228,10 @@ export default function MaintenancePage() {
                   Populate
                 </Button>
               </div>
+            </div>
             </>
           )}
-          <div className="mb-3 text-xs text-muted-foreground">
+          <div className="mb-3 text-xs text-muted-foreground mt-4">
             {lastProcessed !== null && lastUpdated !== null
               ? `Last populate: processed ${lastProcessed}, updated ${lastUpdated}`
               : 'Last populate: no recent run'}
