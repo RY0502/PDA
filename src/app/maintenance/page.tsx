@@ -20,6 +20,8 @@ export default function MaintenancePage() {
   const [actionLoading, setActionLoading] = useState<boolean>(false);
   const [lastProcessed, setLastProcessed] = useState<number | null>(null);
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
+  const [freediumEnabled, setFreediumEnabled] = useState<boolean>(false);
+  const [freediumLoading, setFreediumLoading] = useState<boolean>(true);
 
   const isAllowed = email === ALLOWED_EMAIL;
 
@@ -28,6 +30,21 @@ export default function MaintenancePage() {
       const { data } = await supabase.auth.getSession();
       setEmail(data.session?.user?.email ?? null);
       setToken(data.session?.access_token ?? null);
+    })();
+  }, []);
+
+  // Fetch freedium flag on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await fetch('/api/settings/freedium', { method: 'GET' });
+        if (r.ok) {
+          const j = await r.json();
+          setFreediumEnabled(!!j?.enabled);
+        }
+      } catch {} finally {
+        setFreediumLoading(false);
+      }
     })();
   }, []);
 
@@ -65,6 +82,28 @@ export default function MaintenancePage() {
     setActionLoading(false);
   };
 
+  const handleFreediumToggle = async () => {
+    if (!token) return;
+    try {
+      setFreediumLoading(true);
+      setError(null);
+      const r = await fetch('/api/settings/freedium', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!r.ok) {
+        const t = await r.text();
+        throw new Error(t || 'Failed to toggle freedium');
+      }
+      const j = await r.json();
+      setFreediumEnabled(!!j?.enabled);
+    } catch (e: any) {
+      setError(e?.message || 'Failed to toggle freedium');
+    } finally {
+      setFreediumLoading(false);
+    }
+  };
+
   return (
     <div className="container py-6 max-w-5xl">
       <Card className="border-border/50 bg-card/90 backdrop-blur-sm shadow-xl">
@@ -80,61 +119,99 @@ export default function MaintenancePage() {
               </AlertDescription>
             </Alert>
           ) : (
-            <div className="mb-6 flex flex-col sm:flex-row gap-3">
-              <Button
-                className="w-full sm:w-auto"
-                variant="destructive"
-                disabled={actionLoading}
-                onClick={() => {
-                  setError(null);
-                  postWithAuth('/api/cache/medium/clear-all').catch((e) => {
-                    setError(e.message);
-                    setActionLoading(false);
-                  });
-                }}
-              >
-                Clear Cache Entries
-              </Button>
-              <Button
-                className="w-full sm:w-auto"
-                variant="secondary"
-                disabled={actionLoading}
-                onClick={() => {
-                  setError(null);
-                  postWithAuth('/api/cache/medium/clear-values').catch((e) => {
-                    setError(e.message);
-                    setActionLoading(false);
-                  });
-                }}
-              >
-                Clear Values Only
-              </Button>
-              <Button
-                className="w-full sm:w-auto"
-                disabled={actionLoading}
-                onClick={async () => {
-                  setError(null);
-                  try {
-                    setActionLoading(true);
-                    const r = await fetch('/api/cache/medium/populate', { method: 'GET' });
-                    if (r.ok) {
-                      const j = await r.json().catch(() => null);
-                      const processed = Number(j?.processed ?? 0);
-                      const updated = Number(j?.updated ?? 0);
-                      setLastProcessed(isFinite(processed) ? processed : 0);
-                      setLastUpdated(isFinite(updated) ? updated : 0);
+            <>
+              {/* Freedium Toggle */}
+              <div className="mb-6 rounded-lg border border-border/50 bg-muted/30 p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">Freedium Mode</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {freediumEnabled
+                        ? 'Articles open via Freedium mirror in a new tab'
+                        : 'Articles use proxy resolve + AI summary flow'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={freediumEnabled}
+                    disabled={freediumLoading}
+                    onClick={handleFreediumToggle}
+                    className={`
+                      relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full
+                      border-2 border-transparent transition-colors duration-200 ease-in-out
+                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
+                      disabled:cursor-not-allowed disabled:opacity-50
+                      ${freediumEnabled ? 'bg-primary' : 'bg-muted-foreground/30'}
+                    `}
+                  >
+                    <span
+                      className={`
+                        pointer-events-none inline-block h-5 w-5 transform rounded-full
+                        bg-white shadow-lg ring-0 transition duration-200 ease-in-out
+                        ${freediumEnabled ? 'translate-x-5' : 'translate-x-0'}
+                      `}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              <div className="mb-6 flex flex-col sm:flex-row gap-3">
+                <Button
+                  className="w-full sm:w-auto"
+                  variant="destructive"
+                  disabled={actionLoading}
+                  onClick={() => {
+                    setError(null);
+                    postWithAuth('/api/cache/medium/clear-all').catch((e) => {
+                      setError(e.message);
+                      setActionLoading(false);
+                    });
+                  }}
+                >
+                  Clear Cache Entries
+                </Button>
+                <Button
+                  className="w-full sm:w-auto"
+                  variant="secondary"
+                  disabled={actionLoading}
+                  onClick={() => {
+                    setError(null);
+                    postWithAuth('/api/cache/medium/clear-values').catch((e) => {
+                      setError(e.message);
+                      setActionLoading(false);
+                    });
+                  }}
+                >
+                  Clear Values Only
+                </Button>
+                <Button
+                  className="w-full sm:w-auto"
+                  disabled={actionLoading}
+                  onClick={async () => {
+                    setError(null);
+                    try {
+                      setActionLoading(true);
+                      const r = await fetch('/api/cache/medium/populate', { method: 'GET' });
+                      if (r.ok) {
+                        const j = await r.json().catch(() => null);
+                        const processed = Number(j?.processed ?? 0);
+                        const updated = Number(j?.updated ?? 0);
+                        setLastProcessed(isFinite(processed) ? processed : 0);
+                        setLastUpdated(isFinite(updated) ? updated : 0);
+                      }
+                      await loadEntries();
+                    } catch (e: any) {
+                      setError(e?.message || 'Failed to populate cache');
+                    } finally {
+                      setActionLoading(false);
                     }
-                    await loadEntries();
-                  } catch (e: any) {
-                    setError(e?.message || 'Failed to populate cache');
-                  } finally {
-                    setActionLoading(false);
-                  }
-                }}
-              >
-                Populate
-              </Button>
-            </div>
+                  }}
+                >
+                  Populate
+                </Button>
+              </div>
+            </>
           )}
           <div className="mb-3 text-xs text-muted-foreground">
             {lastProcessed !== null && lastUpdated !== null

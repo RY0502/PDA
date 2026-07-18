@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -8,14 +8,43 @@ import { Button } from '@/components/ui/button';
 import { slugify } from '@/lib/utils';
 import { Sparkles } from 'lucide-react';
 
+const FREEDIUM_BASE_URL = 'https://freedium-mirror.cfd/';
+
 export function UrlOpener() {
   const [url, setUrl] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [freediumEnabled, setFreediumEnabled] = useState<boolean | null>(null);
   const router = useRouter();
+
+  // Fetch freedium flag on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await fetch('/api/settings/freedium', { method: 'GET' });
+        if (r.ok) {
+          const j = await r.json().catch(() => null);
+          setFreediumEnabled(!!j?.enabled);
+        } else {
+          setFreediumEnabled(false);
+        }
+      } catch {
+        setFreediumEnabled(false);
+      }
+    })();
+  }, []);
 
   const handleGoClick = async () => {
     const link = url.trim();
     if (!link) return;
+
+    // Freedium mode: simply open via freedium mirror
+    if (freediumEnabled) {
+      const freediumUrl = `${FREEDIUM_BASE_URL}${link}`;
+      window.open(freediumUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    // Default mode: existing proxy-resolve flow
     try {
       setActionLoading(true);
       const q = new URLSearchParams({ url: link }).toString();
