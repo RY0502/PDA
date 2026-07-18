@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { buttonVariants } from '@/components/ui/button';
 import { cn, slugify } from '@/lib/utils';
 
-const FREEDIUM_BASE_URL = 'https://freedium-mirror.cfd/';
+const FREEDIUM_BASE_URL = process.env.NEXT_PUBLIC_FREEDIUM_BASE_URL || 'https://freedium-mirror.cfd/';
 
 let mediumCacheSnapshot: Record<string, string> | null = null;
 let mediumCacheInitPromise: Promise<void> | null = null;

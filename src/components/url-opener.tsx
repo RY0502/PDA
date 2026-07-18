@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { slugify } from '@/lib/utils';
 import { Sparkles } from 'lucide-react';
 
-const FREEDIUM_BASE_URL = 'https://freedium-mirror.cfd/';
+const FREEDIUM_BASE_URL = process.env.NEXT_PUBLIC_FREEDIUM_BASE_URL || 'https://freedium-mirror.cfd/';
 
 export function UrlOpener() {
   const [url, setUrl] = useState('');
