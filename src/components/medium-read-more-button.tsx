@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { buttonVariants } from '@/components/ui/button';
 import { cn, slugify } from '@/lib/utils';
 
-const FREEDIUM_BASE_URL = process.env.NEXT_PUBLIC_FREEDIUM_BASE_URL || 'https://freedium-mirror.cfd/';
+const FREEDIUM_BASE_URL = process.env.NEXT_PUBLIC_FREEDIUM_BASE_URL || 'https://freedium-mirror-web.vercel.app';
 
 let mediumCacheSnapshot: Record<string, string> | null = null;
 let mediumCacheInitPromise: Promise<void> | null = null;
@@ -63,8 +63,9 @@ export function MediumReadMoreButton({ url }: { url: string }) {
 
     // Freedium mode: open via freedium mirror in a new tab
     if (freediumFlagValue) {
-      const freediumUrl = `${FREEDIUM_BASE_URL}${url}`;
-      window.open(freediumUrl, '_blank', 'noopener,noreferrer');
+      const freediumUrl = new URL('/read', FREEDIUM_BASE_URL);
+      freediumUrl.searchParams.set('url', url);
+      window.open(freediumUrl.toString(), '_blank', 'noopener,noreferrer');
       return;
     }
 

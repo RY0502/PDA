@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { slugify } from '@/lib/utils';
 import { Sparkles } from 'lucide-react';
 
-const FREEDIUM_BASE_URL = process.env.NEXT_PUBLIC_FREEDIUM_BASE_URL || 'https://freedium-mirror.cfd/';
+const FREEDIUM_BASE_URL = process.env.NEXT_PUBLIC_FREEDIUM_BASE_URL || 'https://freedium-mirror-web.vercel.app';
 
 export function UrlOpener() {
   const [url, setUrl] = useState('');
@@ -39,8 +39,9 @@ export function UrlOpener() {
 
     // Freedium mode: simply open via freedium mirror
     if (freediumEnabled) {
-      const freediumUrl = `${FREEDIUM_BASE_URL}${link}`;
-      window.open(freediumUrl, '_blank', 'noopener,noreferrer');
+      const freediumUrl = new URL('/read', FREEDIUM_BASE_URL);
+      freediumUrl.searchParams.set('url', link);
+      window.open(freediumUrl.toString(), '_blank', 'noopener,noreferrer');
       return;
     }
 
