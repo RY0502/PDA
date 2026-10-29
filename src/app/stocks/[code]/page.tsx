@@ -4,7 +4,7 @@ import {
   type WatchedStock,
 } from '@/ai/flows/get-stock-market-overview';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AreaChart } from 'lucide-react';
+import { AreaChart, ArrowUp, ArrowDown } from 'lucide-react';
 import { WatchlistManager } from './watchlist-manager';
 import { createClient } from '@/lib/supabase/client';
 import { Suspense } from 'react';
@@ -253,9 +253,10 @@ function PageContent({
 export default async function StocksPage({
   params,
 }: {
-  params: { code: string };
+  params: Promise<{ code: string }>;
 }) {
-  const stockCode = params.code || 'PVRINOX';
+  const resolvedParams = await params;
+  const stockCode = resolvedParams?.code || 'PVRINOX';
   const [watchedStock, topGainers, /* topLosers, */ nifty] = await Promise.all([
     getWatchedStock(stockCode),
     getTopGainers(),
