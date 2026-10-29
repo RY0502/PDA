@@ -4,13 +4,44 @@ import {
   type WatchedStock,
 } from '@/ai/flows/get-stock-market-overview';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AreaChart, ArrowDown, ArrowUp, LineChart } from 'lucide-react';
+import { AreaChart, ArrowDown, ArrowUp, ExternalLink, LineChart } from 'lucide-react';
 import { WatchlistManager } from './watchlist-manager';
 import { createClient } from '@/lib/supabase/client';
 import { Suspense } from 'react';
 
 export const revalidate = 3600; // Revalidate the page every 1 hour
 export const dynamic = 'force-static';
+
+function getProfitProbabilityBadge(probability?: string | null) {
+  const norm = (probability ?? '').trim().toLowerCase();
+  if (norm === 'high') {
+    return {
+      label: 'High',
+      className: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30',
+    };
+  }
+  if (norm === 'medium' || norm === 'med') {
+    return {
+      label: 'Medium',
+      className: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30',
+    };
+  }
+  if (norm === 'low') {
+    return {
+      label: 'Low',
+      className: 'bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/30',
+    };
+  }
+  // null, empty, 'unsure' or unknown values -> grey badge
+  const displayLabel = !probability || !probability.trim() || norm === 'unsure'
+    ? 'Unsure'
+    : probability.trim();
+
+  return {
+    label: displayLabel,
+    className: 'bg-muted text-muted-foreground border-border/60',
+  };
+}
 
 function StockCard({
   stock,
@@ -20,27 +51,60 @@ function StockCard({
   variant: 'gainer' | 'loser';
 }) {
   const isGainer = variant === 'gainer';
-  const colorClass = isGainer ? 'text-green-600' : 'text-red-600';
-  const bgClass = isGainer ? 'bg-green-50 dark:bg-green-950/20' : 'bg-red-50 dark:bg-red-950/20';
+  const colorClass = isGainer ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
+  const bgClass = isGainer
+    ? 'bg-gradient-to-br from-green-50/80 to-white dark:from-green-950/20 dark:to-card'
+    : 'bg-gradient-to-br from-red-50/80 to-white dark:from-red-950/20 dark:to-card';
   const borderClass = isGainer ? 'border-green-200 dark:border-green-900/30' : 'border-red-200 dark:border-red-900/30';
   const glowClass = isGainer ? 'hover:shadow-green-200/50 dark:hover:shadow-green-900/20' : 'hover:shadow-red-200/50 dark:hover:shadow-red-900/20';
 
+  const probBadge = getProfitProbabilityBadge(stock.profit_probability);
+
   return (
-    <div className={`flex items-center justify-between rounded-2xl border-2 ${borderClass} ${bgClass} p-4 transition-all hover:shadow-lg ${glowClass} hover:-translate-y-0.5 group`}>
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold text-foreground text-sm mb-1.5 truncate group-hover:text-primary transition-colors">{stock.name}</p>
-        <p className="text-xl font-bold text-foreground font-headline">{stock.price}</p>
-      </div>
-      <div className={`text-right font-semibold ${colorClass} flex flex-col items-end gap-1.5`}>
-        <div className="flex items-center gap-1.5">
-          {isGainer ? (
-            <ArrowUp className="h-5 w-5" />
-          ) : (
-            <ArrowDown className="h-5 w-5" />
-          )}
-          <span className="text-base font-bold">{stock.change}</span>
+    <div className={`flex flex-col justify-between rounded-2xl border-2 ${borderClass} ${bgClass} p-4 sm:p-5 transition-all hover:shadow-lg ${glowClass} hover:-translate-y-0.5 group gap-3.5`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-foreground text-sm sm:text-base truncate group-hover:text-primary transition-colors" title={stock.name}>
+            {stock.name}
+          </p>
+          <p className="text-xl sm:text-2xl font-bold text-foreground font-headline mt-0.5">{stock.price}</p>
         </div>
-        <span className="text-sm font-bold bg-white dark:bg-gray-900 px-2 py-0.5 rounded-lg">{stock.changePercent}%</span>
+        <div className={`text-right font-semibold ${colorClass} flex flex-col items-end gap-1 shrink-0`}>
+          <div className="flex items-center gap-1">
+            {isGainer ? (
+              <ArrowUp className="h-4 w-4 sm:h-5 sm:w-5" />
+            ) : (
+              <ArrowDown className="h-4 w-4 sm:h-5 sm:w-5" />
+            )}
+            <span className="text-sm sm:text-base font-bold">{stock.change}</span>
+          </div>
+          <span className="text-xs sm:text-sm font-bold bg-white/90 dark:bg-gray-900/90 shadow-xs border border-border/40 px-2 py-0.5 rounded-md">
+            {stock.changePercent}%
+          </span>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+            Profit Prob:
+          </span>
+          <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full border ${probBadge.className}`}>
+            {probBadge.label}
+          </span>
+        </div>
+
+        {stock.report_url ? (
+          <a
+            href={stock.report_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80 hover:underline underline-offset-4 transition-colors shrink-0"
+          >
+            <span>More</span>
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        ) : null}
       </div>
     </div>
   );
@@ -116,7 +180,7 @@ const getTopGainers = unstable_cache(
       .from('top_gainers')
       .select('*')
       .order('updated_at', { ascending: false })
-      .limit(10);
+      .limit(25);
 
     if (error) {
       console.error('Error fetching top gainers:', error);
@@ -127,6 +191,8 @@ const getTopGainers = unstable_cache(
       price: row.price,
       change: row.change,
       changePercent: row.change_percent,
+      report_url: row.report_url ?? null,
+      profit_probability: row.profit_probability ?? null,
       updated_at: row.updated_at,
     }));
     return mapped as unknown as StockInfo[];
@@ -135,6 +201,7 @@ const getTopGainers = unstable_cache(
   { revalidate: 3600 }
 );
 
+// Top losers fetch function (kept in sync, commented out usage for now)
 const getTopLosers = unstable_cache(
   async (): Promise<StockInfo[] | null> => {
     const supabase = createClient();
@@ -142,7 +209,7 @@ const getTopLosers = unstable_cache(
       .from('top_losers')
       .select('*')
       .order('updated_at', { ascending: false })
-      .limit(10);
+      .limit(25);
 
     if (error) {
       console.error('Error fetching top losers:', error);
@@ -153,6 +220,8 @@ const getTopLosers = unstable_cache(
       price: row.price,
       change: row.change,
       changePercent: row.change_percent,
+      report_url: row.report_url ?? null,
+      profit_probability: row.profit_probability ?? null,
       updated_at: row.updated_at,
     }));
     return mapped as unknown as StockInfo[];
@@ -164,13 +233,13 @@ const getTopLosers = unstable_cache(
 function PageContent({
   watchedStock,
   topGainers,
-  topLosers,
+  // topLosers,
   stockCode,
   nifty,
 }: {
   watchedStock: WatchedStock | null;
   topGainers: StockInfo[] | null;
-  topLosers: StockInfo[] | null;
+  topLosers?: StockInfo[] | null;
   stockCode: string;
   nifty: any | null;
 }) {
@@ -195,6 +264,7 @@ function PageContent({
       )
     : [];
 
+  /* Top losers commented out for now
   const sortedLosers = uniqueByName(topLosers)
     ? [...uniqueByName(topLosers)]
         .filter(
@@ -202,6 +272,7 @@ function PageContent({
         )
         .sort((a, b) => parseFloat(a.change) - parseFloat(b.change))
     : [];
+  */
 
   return (
     <div className="container py-6 sm:py-12 md:py-16">
@@ -265,6 +336,7 @@ function PageContent({
           </Card>
         )}
 
+        {/* Top Losers commented out for now
         {sortedLosers.length > 0 && (
           <Card className="lg:col-span-1 card-hover border-border/50 bg-card/90 backdrop-blur-sm shadow-xl">
             <CardHeader className="pb-5">
@@ -282,18 +354,24 @@ function PageContent({
             </CardContent>
           </Card>
         )}
+        */}
 
         {sortedGainers.length > 0 && (
-          <Card className="lg:col-span-2 card-hover border-border/50 bg-card/90 backdrop-blur-sm shadow-xl">
+          <Card className="lg:col-span-3 card-hover border-border/50 bg-card/90 backdrop-blur-sm shadow-xl">
             <CardHeader className="pb-5">
-              <CardTitle className="flex items-center gap-3 text-xl font-headline">
-                <div className="p-2.5 rounded-xl bg-green-100 dark:bg-green-950/40 shadow-md">
-                  <ArrowUp className="h-6 w-6 text-green-600" />
-                </div>
-                Today's Gainers
-              </CardTitle>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <CardTitle className="flex items-center gap-3 text-xl font-headline">
+                  <div className="p-2.5 rounded-xl bg-green-100 dark:bg-green-950/40 shadow-md">
+                    <ArrowUp className="h-6 w-6 text-green-600" />
+                  </div>
+                  Today's Gainers
+                </CardTitle>
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20">
+                  {sortedGainers.length} {sortedGainers.length === 1 ? 'Stock' : 'Stocks'}
+                </span>
+              </div>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {sortedGainers.map((stock) => (
                 <StockCard key={`${stock.name}-${(stock as any).updated_at ?? ''}`} stock={stock} variant="gainer" />
               ))}
@@ -313,10 +391,10 @@ export default async function StocksPage({
   params: { code: string };
 }) {
   const stockCode = params.code || 'PVRINOX';
-  const [watchedStock, topGainers, topLosers, nifty] = await Promise.all([
+  const [watchedStock, topGainers, /* topLosers, */ nifty] = await Promise.all([
     getWatchedStock(stockCode),
     getTopGainers(),
-    getTopLosers(),
+    // getTopLosers(), // Commented out for now
     getLatestNifty(),
   ]);
 
@@ -325,7 +403,7 @@ export default async function StocksPage({
       <PageContent
         watchedStock={watchedStock}
         topGainers={topGainers}
-        topLosers={topLosers}
+        // topLosers={topLosers}
         stockCode={stockCode}
         nifty={nifty}
       />

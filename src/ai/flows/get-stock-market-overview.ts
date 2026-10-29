@@ -15,6 +15,9 @@ export interface StockInfo {
   price: string;
   change: string;
   changePercent: string;
+  report_url?: string | null;
+  profit_probability?: string | null;
+  updated_at?: string;
 }
 
 export interface WatchedStock {

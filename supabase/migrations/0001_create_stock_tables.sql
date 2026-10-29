@@ -13,6 +13,8 @@ CREATE TABLE top_gainers (
   price NUMERIC,
   change NUMERIC,
   change_percent NUMERIC,
+  report_url TEXT,
+  profit_probability TEXT,
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -22,5 +24,7 @@ CREATE TABLE top_losers (
   price NUMERIC,
   change NUMERIC,
   change_percent NUMERIC,
+  report_url TEXT,
+  profit_probability TEXT,
   updated_at TIMESTAMPTZ DEFAULT now()
 );
