@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowUp, ArrowDown, ExternalLink } from 'lucide-react';
+import { ArrowUp, ArrowDown, ExternalLink, RotateCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { type StockInfo } from '@/ai/flows/get-stock-market-overview';
 
 const ALLOWED_EMAIL = 'ravi.y0102@gmail.com';
@@ -113,15 +114,61 @@ function StockCard({
   );
 }
 
+function processStockList(data: any[], variant: 'gainer' | 'loser' = 'gainer'): StockInfo[] {
+  const mapped = (data ?? []).map((row: any) => ({
+    name: row.name,
+    price: row.price,
+    change: row.change,
+    changePercent: row.change_percent,
+    report_url: row.report_url ?? null,
+    profit_probability: row.profit_probability ?? null,
+    updated_at: row.updated_at,
+  }));
+
+  const map = new Map<string, StockInfo>();
+  for (const item of mapped) {
+    const key = item.name.toLowerCase();
+    const prev = map.get(key);
+    const prevTime = prev && (prev as any).updated_at ? new Date((prev as any).updated_at).getTime() : -Infinity;
+    const currTime = (item as any).updated_at ? new Date((item as any).updated_at).getTime() : -Infinity;
+    if (!prev || currTime > prevTime) {
+      map.set(key, item);
+    }
+  }
+
+  const list = Array.from(map.values());
+  if (variant === 'loser') {
+    return list
+      .filter((stock) => stock.name.toLowerCase() !== 'hdfc bank ltd')
+      .sort((a, b) => parseFloat(a.change) - parseFloat(b.change));
+  }
+  return list.sort((a, b) => parseFloat(b.change) - parseFloat(a.change));
+}
+
 export function GainersLosersSection({
   sortedGainers,
-  sortedLosers,
+  sortedLosers = [],
 }: {
   sortedGainers: StockInfo[];
   sortedLosers?: StockInfo[];
 }) {
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [checkedAuth, setCheckedAuth] = useState<boolean>(false);
+
+  const [gainers, setGainers] = useState<StockInfo[]>(sortedGainers);
+  const [losers, setLosers] = useState<StockInfo[]>(sortedLosers ?? []);
+  const [isRefreshingGainers, setIsRefreshingGainers] = useState<boolean>(false);
+  const [isRefreshingLosers, setIsRefreshingLosers] = useState<boolean>(false);
+  const [lastRefreshedGainers, setLastRefreshedGainers] = useState<string | null>(null);
+  const [lastRefreshedLosers, setLastRefreshedLosers] = useState<string | null>(null);
+
+  useEffect(() => {
+    setGainers(sortedGainers);
+  }, [sortedGainers]);
+
+  useEffect(() => {
+    setLosers(sortedLosers ?? []);
+  }, [sortedLosers]);
 
   useEffect(() => {
     let isMounted = true;
@@ -149,6 +196,64 @@ export function GainersLosersSection({
     };
   }, []);
 
+  const refreshGainers = async () => {
+    setIsRefreshingGainers(true);
+    try {
+      const { data, error } = await supabase
+        .from('top_gainers')
+        .select('*')
+        .order('updated_at', { ascending: false })
+        .limit(25);
+
+      if (error) {
+        console.error('Error refreshing top gainers from Supabase:', error);
+        return;
+      }
+
+      if (data) {
+        const processed = processStockList(data, 'gainer');
+        setGainers(processed);
+        const now = new Date();
+        setLastRefreshedGainers(
+          now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+        );
+      }
+    } catch (err) {
+      console.error('Error refreshing top gainers:', err);
+    } finally {
+      setIsRefreshingGainers(false);
+    }
+  };
+
+  const refreshLosers = async () => {
+    setIsRefreshingLosers(true);
+    try {
+      const { data, error } = await supabase
+        .from('top_losers')
+        .select('*')
+        .order('updated_at', { ascending: false })
+        .limit(25);
+
+      if (error) {
+        console.error('Error refreshing top losers from Supabase:', error);
+        return;
+      }
+
+      if (data) {
+        const processed = processStockList(data, 'loser');
+        setLosers(processed);
+        const now = new Date();
+        setLastRefreshedLosers(
+          now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+        );
+      }
+    } catch (err) {
+      console.error('Error refreshing top losers:', err);
+    } finally {
+      setIsRefreshingLosers(false);
+    }
+  };
+
   // Only render for admin email user
   if (!checkedAuth || !isAdmin) {
     return null;
@@ -156,27 +261,46 @@ export function GainersLosersSection({
 
   return (
     <>
-      {/* Top Losers commented out for now
-      {sortedLosers && sortedLosers.length > 0 && (
-        <Card className="lg:col-span-1 card-hover border-border/50 bg-card/90 backdrop-blur-sm shadow-xl">
+      {/* Top Losers (hidden by default) */}
+      {losers && losers.length > 0 && (
+        <Card className="lg:col-span-1 card-hover border-border/50 bg-card/90 backdrop-blur-sm shadow-xl hidden">
           <CardHeader className="pb-5">
-            <CardTitle className="flex items-center gap-3 text-xl font-headline">
-              <div className="p-2.5 rounded-xl bg-red-100 dark:bg-red-950/40 shadow-md">
-                <ArrowDown className="h-6 w-6 text-red-600" />
-              </div>
-              Today's Losers
-            </CardTitle>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <CardTitle className="flex items-center gap-3 text-xl font-headline">
+                <div className="p-2.5 rounded-xl bg-red-100 dark:bg-red-950/40 shadow-md">
+                  <ArrowDown className="h-6 w-6 text-red-600" />
+                </div>
+                Today&apos;s Losers
+              </CardTitle>
+              <span className="text-xs sm:text-sm font-semibold px-3 py-1 rounded-full bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20">
+                {losers.length} {losers.length === 1 ? 'Stock' : 'Stocks'}
+              </span>
+            </div>
+
+            {/* Losers refresh button remains hidden */}
+            <div className="mt-2.5 hidden items-center justify-between flex-wrap gap-2.5 pt-1 border-t border-border/40" aria-hidden="true">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={refreshLosers}
+                disabled={isRefreshingLosers}
+                className="h-8 sm:h-9 px-3 sm:px-4 text-xs sm:text-sm font-medium gap-1.5 rounded-xl border-red-200 dark:border-red-900/40 bg-red-50/60 hover:bg-red-100/80 text-red-800 dark:bg-red-950/30 dark:hover:bg-red-900/50 dark:text-red-300 shadow-xs hover:shadow-sm transition-all"
+              >
+                <RotateCw className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isRefreshingLosers ? 'animate-spin' : ''}`} />
+                <span>{isRefreshingLosers ? 'Refreshing...' : 'Refresh'}</span>
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="grid grid-cols-1 gap-4">
-            {sortedLosers.map((stock) => (
+            {losers.map((stock) => (
               <StockCard key={`${stock.name}-${(stock as any).updated_at ?? ''}`} stock={stock} variant="loser" />
             ))}
           </CardContent>
         </Card>
       )}
-      */}
 
-      {sortedGainers.length > 0 && (
+      {gainers.length > 0 && (
         <Card className="lg:col-span-3 card-hover border-border/50 bg-card/90 backdrop-blur-sm shadow-xl">
           <CardHeader className="pb-5">
             <div className="flex items-center justify-between flex-wrap gap-2">
@@ -184,15 +308,35 @@ export function GainersLosersSection({
                 <div className="p-2.5 rounded-xl bg-green-100 dark:bg-green-950/40 shadow-md">
                   <ArrowUp className="h-6 w-6 text-green-600" />
                 </div>
-                Today's Gainers
+                Today&apos;s Gainers
               </CardTitle>
               <span className="text-xs sm:text-sm font-semibold px-3 py-1 rounded-full bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20">
-                {sortedGainers.length} {sortedGainers.length === 1 ? 'Stock' : 'Stocks'}
+                {gainers.length} {gainers.length === 1 ? 'Stock' : 'Stocks'}
               </span>
+            </div>
+
+            {/* Next line below Top gainer's heading: Responsive Refresh button */}
+            <div className="mt-2.5 flex items-center justify-between flex-wrap gap-2.5 pt-2 border-t border-border/40">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={refreshGainers}
+                disabled={isRefreshingGainers}
+                className="h-8 sm:h-9 px-3 sm:px-4 text-xs sm:text-sm font-medium gap-1.5 rounded-xl border-green-200 dark:border-green-900/40 bg-green-50/60 hover:bg-green-100/80 text-green-800 dark:bg-green-950/30 dark:hover:bg-green-900/50 dark:text-green-300 shadow-xs hover:shadow-sm transition-all active:scale-95"
+              >
+                <RotateCw className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isRefreshingGainers ? 'animate-spin' : ''}`} />
+                <span>{isRefreshingGainers ? 'Refreshing...' : 'Refresh'}</span>
+              </Button>
+              {lastRefreshedGainers && (
+                <span className="text-[11px] sm:text-xs font-medium text-muted-foreground">
+                  Updated: {lastRefreshedGainers}
+                </span>
+              )}
             </div>
           </CardHeader>
           <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {sortedGainers.map((stock) => (
+            {gainers.map((stock) => (
               <StockCard key={`${stock.name}-${(stock as any).updated_at ?? ''}`} stock={stock} variant="gainer" />
             ))}
           </CardContent>
