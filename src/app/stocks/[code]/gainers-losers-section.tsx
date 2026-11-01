@@ -199,10 +199,27 @@ export function GainersLosersSection({
   const refreshGainers = async () => {
     setIsRefreshingGainers(true);
     try {
+      const { data: latestRow } = await supabase
+        .from('top_gainers')
+        .select('updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!latestRow?.updated_at) {
+        setGainers([]);
+        return;
+      }
+
+      const latestTime = new Date(latestRow.updated_at).getTime();
+      const windowStart = new Date(latestTime - 60 * 1000).toISOString();
+      const windowEnd = new Date(latestTime + 60 * 1000).toISOString();
+
       const { data, error } = await supabase
         .from('top_gainers')
         .select('*')
-        .order('updated_at', { ascending: false })
+        .gte('updated_at', windowStart)
+        .lte('updated_at', windowEnd)
         .limit(25);
 
       if (error) {
@@ -228,10 +245,27 @@ export function GainersLosersSection({
   const refreshLosers = async () => {
     setIsRefreshingLosers(true);
     try {
+      const { data: latestRow } = await supabase
+        .from('top_losers')
+        .select('updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!latestRow?.updated_at) {
+        setLosers([]);
+        return;
+      }
+
+      const latestTime = new Date(latestRow.updated_at).getTime();
+      const windowStart = new Date(latestTime - 60 * 1000).toISOString();
+      const windowEnd = new Date(latestTime + 60 * 1000).toISOString();
+
       const { data, error } = await supabase
         .from('top_losers')
         .select('*')
-        .order('updated_at', { ascending: false })
+        .gte('updated_at', windowStart)
+        .lte('updated_at', windowEnd)
         .limit(25);
 
       if (error) {
