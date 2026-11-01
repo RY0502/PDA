@@ -5,12 +5,12 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-const EVEN_TARGET_URL = 'https://www.aqi.in/in/dashboard/india/delhi';
-const EVEN_PROMPT = `You are an expert in data extraction from images. You are  given a screenshot of AQI website page. Analyse the page carefully and  extract the CURRENT AQI value for Delhi.
+const EVEN_TARGET_URL = 'https://aqi.delhi.gov.in/';
+const EVEN_PROMPT = `You are an expert in data extraction from images. You are  given a screenshot of AQI website page. Analyse the page carefully and  extract the Current AQI value for Delhi.
 
 ### EXTRACTION RULE:
-- Locate the text string 'Live AQI'
-- The number below the 'Live AQI' text is the AQI.
+- Locate the text string 'Current AQI'
+- The number below the 'Current AQI' text is the AQI.
 - Extract only the digits 
 
 ### CONSTRAINTS:
