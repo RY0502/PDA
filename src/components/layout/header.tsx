@@ -25,7 +25,7 @@ export function Header() {
       const isReload = nav?.type === 'reload' || (performance as any).navigation?.type === 1;
       if (isReload && typeof window !== 'undefined' && window.location.hash) {
         const nextUrl = `${window.location.pathname}${window.location.search}`;
-        history.replaceState(null, '', nextUrl);
+        history.replaceState(window.history.state, '', nextUrl);
         window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
       }
     } catch {}
@@ -51,12 +51,15 @@ export function Header() {
   useEffect(() => {
     let isMounted = true;
     (async () => {
-      const { data } = await supabase.auth.getUser();
-      if (!isMounted) return;
-      setUserName(data.user?.user_metadata?.name ?? null);
-      setUserEmail(data.user?.email ?? null);
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!isMounted) return;
+        setUserName(data.session?.user?.user_metadata?.name ?? null);
+        setUserEmail(data.session?.user?.email ?? null);
+      } catch {}
     })();
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) return;
       setUserName(session?.user?.user_metadata?.name ?? null);
       setUserEmail(session?.user?.email ?? null);
     });
@@ -66,25 +69,24 @@ export function Header() {
     };
   }, []);
 
-  const isSupabaseReferrer = () => {
-    if (typeof document === 'undefined') return false;
-    const ref = document.referrer || '';
-    return /supabase\.(co|com)/i.test(ref);
-  };
-
-  const handleNavClick = async (e: React.MouseEvent, targetHref: string) => {
-    // Skip checks for Supabase referrer (e.g., right after OAuth redirect)
-    if (isSupabaseReferrer()) return;
-    // If not logged in, initiate Google OAuth and redirect back to desired page
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) {
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, targetHref: string) => {
+    // If clicking on current route, scroll smoothly to top
+    if (pathname === targetHref) {
       e.preventDefault();
-      const redirectTo = `${window.location.origin}${targetHref}`;
-      await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo },
-      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
     }
+
+    // Safety fallback for Next.js 15 stale-tab / router-freeze issue:
+    // If a tab sits idle for some time, Next.js client-side router transitions
+    // can stall or fail to commit silently. If pathname doesn't update within 1200ms,
+    // force a clean hard navigation so the user is never stranded.
+    const startPath = window.location.pathname;
+    setTimeout(() => {
+      if (window.location.pathname === startPath && targetHref !== startPath) {
+        window.location.href = targetHref;
+      }
+    }, 1200);
   };
 
   const navLinks = [
@@ -98,7 +100,12 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 glass-effect">
       <div className="container flex h-16 items-center px-4">
         <div className="flex items-center w-full gap-2">
-          <Link href="/" className="mr-4 sm:mr-10 md:mr-12 flex items-center space-x-3 group flex-shrink-0">
+          <Link
+            href="/"
+            prefetch={false}
+            onClick={(e) => handleNavClick(e, '/')}
+            className="mr-4 sm:mr-10 md:mr-12 flex items-center space-x-3 group flex-shrink-0"
+          >
             <div className="relative">
               <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-lg group-hover:blur-xl transition-all"></div>
               <div className="relative bg-gradient-to-br from-primary to-accent p-2 rounded-xl shadow-md group-hover:shadow-lg transition-all">
@@ -119,6 +126,7 @@ export function Header() {
               <Link
                 key={link.label}
                 href={link.href}
+                prefetch={false}
                 onClick={(e) => handleNavClick(e, link.href)}
                 className={cn(
                   'px-3 py-2 sm:px-4 sm:py-2 rounded-xl transition-all duration-200',
