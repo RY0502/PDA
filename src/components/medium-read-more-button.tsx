@@ -1,11 +1,15 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { buttonVariants } from '@/components/ui/button';
 import { cn, slugify } from '@/lib/utils';
-
-const FREEDIUM_BASE_URL = process.env.NEXT_PUBLIC_FREEDIUM_BASE_URL || 'https://freedium-mirror-web.vercel.app';
+import {
+  buildFreediumUrl,
+  getStoredFreediumMode,
+  FREEDIUM_MODE_CHANGE_EVENT,
+  type FreediumMode,
+} from '@/lib/freedium';
 
 let mediumCacheSnapshot: Record<string, string> | null = null;
 let mediumCacheInitPromise: Promise<void> | null = null;
@@ -46,6 +50,8 @@ async function initFreediumFlag() {
 
 export function MediumReadMoreButton({ url }: { url: string }) {
   const router = useRouter();
+  const [, setOpenerMode] = useState<FreediumMode>('web');
+
   useEffect(() => {
     if (!mediumCacheInitPromise) {
       mediumCacheInitPromise = initMediumCacheSnapshot();
@@ -53,6 +59,25 @@ export function MediumReadMoreButton({ url }: { url: string }) {
     if (!freediumFlagPromise) {
       freediumFlagPromise = initFreediumFlag();
     }
+
+    setOpenerMode(getStoredFreediumMode());
+
+    const handleModeChange = (e: Event) => {
+      const customEvent = e as CustomEvent<FreediumMode>;
+      if (customEvent.detail) {
+        setOpenerMode(customEvent.detail);
+      } else {
+        setOpenerMode(getStoredFreediumMode());
+      }
+    };
+
+    window.addEventListener(FREEDIUM_MODE_CHANGE_EVENT, handleModeChange);
+    window.addEventListener('storage', handleModeChange);
+
+    return () => {
+      window.removeEventListener(FREEDIUM_MODE_CHANGE_EVENT, handleModeChange);
+      window.removeEventListener('storage', handleModeChange);
+    };
   }, []);
 
   const handleClick = async () => {
@@ -61,15 +86,17 @@ export function MediumReadMoreButton({ url }: { url: string }) {
       await freediumFlagPromise;
     }
 
-    // Freedium mode: open via freedium mirror in a new tab
-    if (freediumFlagValue) {
-      const freediumUrl = new URL('/read', FREEDIUM_BASE_URL);
-      freediumUrl.searchParams.set('url', url);
-      window.open(freediumUrl.toString(), '_blank', 'noopener,noreferrer');
+    // Always fetch latest mode from localStorage
+    const mode = getStoredFreediumMode();
+
+    // Freedium mode: open via selected freedium mechanism in a new tab
+    if (freediumFlagValue || freediumFlagValue === null) {
+      const targetUrl = buildFreediumUrl(url, mode);
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
       return;
     }
 
-    // Default mode: check cache snapshot, then fallback to detail page
+    // Default fallback mode if freedium is explicitly disabled: check cache snapshot, then fallback to detail page
     const val =
       mediumCacheSnapshot && typeof url === 'string'
         ? mediumCacheSnapshot[url]
