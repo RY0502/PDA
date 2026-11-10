@@ -51,7 +51,7 @@ async function getWatchedStock(stockCode: string): Promise<WatchedStock | null> 
       return data as WatchedStock;
     },
     ['watched-stock', stockCode],
-    { revalidate: 3600 }
+    { revalidate: 3600, tags: ['watched-stock', `watched-stock-${stockCode}`] }
   );
   return cached();
 }

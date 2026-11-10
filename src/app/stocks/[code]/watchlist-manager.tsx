@@ -6,50 +6,40 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Loader2 } from 'lucide-react';
+import { updateWatchedStock } from '@/app/stocks/actions';
 
-export function WatchlistManager({ stockCode }: { stockCode: string }) {
+export function WatchlistManager({ stockCode = '' }: { stockCode?: string }) {
   const router = useRouter();
   const [code, setCode] = useState(stockCode);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
-    setCode(stockCode);
+    if (stockCode) {
+      setCode(stockCode);
+    } else if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('lastStockCode');
+      if (saved) setCode(saved);
+    }
   }, [stockCode]);
 
   const handleUpdate = async () => {
     const newCode = code.trim().toUpperCase();
-    if (newCode) {
+    if (!newCode || isUpdating) return;
+
+    setIsUpdating(true);
+    try {
       localStorage.setItem('lastStockCode', newCode);
+
+      // Call server action to upsert stock code, trigger fetch, and revalidate cache
+      await updateWatchedStock(newCode);
+
       router.push(`/stocks/${newCode}`);
-
-      try {
-        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-        if (!supabaseAnonKey) {
-          console.error('Supabase anon key is not configured.');
-          return;
-        }
-
-        const response = await fetch(
-          `https://usdiugdjvlmeteiwsrwg.supabase.co/functions/v1/upsert-stock-code?stockcode=${newCode}`,
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${supabaseAnonKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ name: 'Functions' }),
-          }
-        );
-
-        if (!response.ok) {
-          const errorData = await response.text();
-          console.error('Supabase function call failed:', errorData);
-        } else {
-          const data = await response.json();
-          console.log('Supabase function call successful:', data);
-        }
-      } catch (error) {
-        console.error('Error calling Supabase function:', error);
-      }
+      router.refresh();
+    } catch (error) {
+      console.error('Error updating watched stock:', error);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -68,10 +58,20 @@ export function WatchlistManager({ stockCode }: { stockCode: string }) {
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder="e.g., RELIANCE"
+                disabled={isUpdating}
                 onKeyDown={(e) => e.key === 'Enter' && handleUpdate()}
               />
             </div>
-            <Button onClick={handleUpdate}>Update</Button>
+            <Button onClick={handleUpdate} disabled={isUpdating}>
+              {isUpdating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                'Update'
+              )}
+            </Button>
           </div>
         </CardContent>
       </Card>

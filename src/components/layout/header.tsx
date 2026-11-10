@@ -15,7 +15,7 @@ import {
 
 export function Header() {
   const pathname = usePathname();
-  const [stocksHref, setStocksHref] = useState('/stocks/PVRINOX');
+  const [stocksHref, setStocksHref] = useState('/stocks');
   const [userName, setUserName] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
@@ -43,7 +43,7 @@ export function Header() {
     } else if (lastStockCode) {
       setStocksHref(`/stocks/${lastStockCode}`);
     } else {
-      setStocksHref('/stocks/PVRINOX');
+      setStocksHref('/stocks');
     }
   }, [pathname]);
 

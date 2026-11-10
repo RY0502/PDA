@@ -70,7 +70,7 @@ export default function StocksLoading() {
         </Card>
       </div>
       
-      <WatchlistManager stockCode="PVRINOX" />
+      <WatchlistManager />
 
     </div>
   );
