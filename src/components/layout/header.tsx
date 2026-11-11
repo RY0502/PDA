@@ -15,7 +15,6 @@ import {
 
 export function Header() {
   const pathname = usePathname();
-  const [stocksHref, setStocksHref] = useState('/stocks');
   const [userName, setUserName] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
@@ -30,22 +29,6 @@ export function Header() {
       }
     } catch {}
   }, []);
-
-  useEffect(() => {
-    const lastStockCode = localStorage.getItem('lastStockCode');
-    if (pathname.startsWith('/stocks/')) {
-      setStocksHref(pathname);
-      // Also update localStorage in case the user landed here directly
-      const currentCode = pathname.split('/').pop();
-      if (currentCode) {
-        localStorage.setItem('lastStockCode', currentCode);
-      }
-    } else if (lastStockCode) {
-      setStocksHref(`/stocks/${lastStockCode}`);
-    } else {
-      setStocksHref('/stocks');
-    }
-  }, [pathname]);
 
   // Load Supabase user session
   useEffect(() => {
@@ -92,7 +75,7 @@ export function Header() {
   const navLinks = [
     { href: '/', label: 'Home' },
     { href: '/football', label: 'Football' },
-    { href: stocksHref, label: 'Stocks' },
+    { href: '/stocks', label: 'Stocks' },
     { href: '/trends', label: 'Trends' },
   ];
 

@@ -4,10 +4,10 @@ CREATE EXTENSION IF NOT EXISTS pg_cron WITH SCHEMA extensions;
 -- Grant usage to postgres role
 GRANT USAGE ON SCHEMA cron TO postgres;
 
--- fetch-stock-price every hour from 8am to 6pm on weekdays
+-- fetch-stock-price every hour from 8:30am to 6:30pm IST (03:00 to 13:00 UTC) on weekdays
 SELECT cron.schedule(
   'fetch-stock-price',
-  '0 8-18 * * 1-5',
+  '0 3-13 * * 1-5',
   $$
     SELECT net.http_post(
         url:='https://project-ref.supabase.co/functions/v1/fetch-stock-price',
@@ -19,10 +19,10 @@ SELECT cron.schedule(
   $$
 );
 
--- fetch-top-gainers every hour from 8am to 6pm on weekdays
+-- fetch-top-gainers every hour from 8:30am to 6:30pm IST (03:00 to 13:00 UTC) on weekdays
 SELECT cron.schedule(
   'fetch-top-gainers',
-  '0 8-18 * * 1-5',
+  '0 3-13 * * 1-5',
   $$
     SELECT net.http_post(
         url:='https://project-ref.supabase.co/functions/v1/fetch-top-gainers',
