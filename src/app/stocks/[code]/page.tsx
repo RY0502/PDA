@@ -11,7 +11,7 @@ import { Suspense } from 'react';
 import { GainersLosersSection } from './gainers-losers-section';
 
 export const revalidate = 3600; // Revalidate the page every 1 hour
-export const dynamic = 'force-static';
+export const dynamic = 'auto';
 
 
 function StocksPageSkeleton() {
@@ -34,7 +34,22 @@ function StocksPageSkeleton() {
   );
 }
 
-async function getWatchedStock(stockCode: string): Promise<WatchedStock | null> {
+async function getWatchedStock(stockCode: string, bypassCache = false): Promise<WatchedStock | null> {
+  if (bypassCache) {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('watched_stocks')
+      .select('*')
+      .eq('code', stockCode)
+      .single();
+
+    if (error) {
+      console.error('Error fetching watched stock (cache-bypassed):', error);
+      return null;
+    }
+    return data as WatchedStock;
+  }
+
   const cached = unstable_cache(
     async (): Promise<WatchedStock | null> => {
       const supabase = createClient();
@@ -225,7 +240,7 @@ function PageContent({
       </section>
 
       <div className="grid grid-cols-1 gap-7 lg:grid-cols-3 max-w-7xl mx-auto">
-        {watchedStock && (
+        {watchedStock ? (
           <Card className="lg:col-span-3 card-hover border-border/50 bg-gradient-to-br from-card to-card/80 backdrop-blur-sm shadow-xl">
             <CardHeader className="pb-3 md:pb-5">
               <CardTitle className="text-2xl font-headline flex items-center gap-2">
@@ -267,6 +282,16 @@ function PageContent({
               </div>
             </CardContent>
           </Card>
+        ) : (
+          <Card className="lg:col-span-3 card-hover border-border/50 bg-gradient-to-br from-card to-card/80 backdrop-blur-sm shadow-xl p-6 text-center">
+            <CardTitle className="text-xl font-headline">
+              <span className="text-muted-foreground font-semibold">Watching:</span>{' '}
+              <span className="gradient-text">{stockCode}</span>
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-2">
+              Fetching latest market data for {stockCode}. Please refresh in a few moments.
+            </p>
+          </Card>
         )}
 
         <GainersLosersSection
@@ -282,13 +307,17 @@ function PageContent({
 
 export default async function StocksPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ code: string }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const resolvedParams = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const isFresh = Boolean(resolvedSearchParams?.fresh || resolvedSearchParams?.t);
   const stockCode = resolvedParams?.code || 'PVRINOX';
   const [watchedStock, topGainers, /* topLosers, */ nifty] = await Promise.all([
-    getWatchedStock(stockCode),
+    getWatchedStock(stockCode, isFresh),
     getTopGainers(),
     // getTopLosers(), // Commented out for now
     getLatestNifty(),

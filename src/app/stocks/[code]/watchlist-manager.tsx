@@ -23,6 +23,13 @@ export function WatchlistManager({ stockCode = '' }: { stockCode?: string }) {
     }
   }, [stockCode]);
 
+  // Clean fresh query parameter from URL after initial load
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes('fresh=')) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, []);
+
   const handleUpdate = async () => {
     const newCode = code.trim().toUpperCase();
     if (!newCode || isUpdating) return;
@@ -31,13 +38,15 @@ export function WatchlistManager({ stockCode = '' }: { stockCode?: string }) {
     try {
       localStorage.setItem('lastStockCode', newCode);
 
-      // Call server action to upsert stock code, trigger fetch, and revalidate cache
+      // Call server action to upsert stock code, trigger fetch, and invalidate cache tags
       await updateWatchedStock(newCode);
 
-      router.push(`/stocks/${newCode}`);
-      router.refresh();
+      // Navigate to the new URL with fresh=true to bypass Next.js cache for this navigation
+      window.location.href = `/stocks/${newCode}?fresh=true`;
     } catch (error) {
       console.error('Error updating watched stock:', error);
+      // Ensure we navigate to the new stock URL even if server action threw an exception
+      window.location.href = `/stocks/${newCode}?fresh=true`;
     } finally {
       setIsUpdating(false);
     }

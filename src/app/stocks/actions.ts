@@ -1,7 +1,6 @@
 'use server';
 
 import { revalidatePath, revalidateTag } from 'next/cache';
-import { createClient } from '@/lib/supabase/client';
 
 export async function updateWatchedStock(newCode: string) {
   const cleanCode = newCode.trim().toUpperCase();
@@ -35,10 +34,10 @@ export async function updateWatchedStock(newCode: string) {
     }
 
     // 2. Trigger fetch-stock-price scraper to populate watched_stocks immediately
-    // Wait up to 6 seconds for fresh data if available; otherwise let it complete in background
+    // Wait up to 3 seconds for fresh data if available; otherwise let it complete in background
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
 
       await fetch(`${supabaseUrl}/functions/v1/fetch-stock-price`, {
         method: 'POST',
@@ -51,7 +50,7 @@ export async function updateWatchedStock(newCode: string) {
       });
       clearTimeout(timeoutId);
     } catch {
-      // Aborted or failed in background, continue
+      // Aborted or continuing in background
     }
 
     // 3. Invalidate caches on-demand specifically for this updated stock
@@ -71,4 +70,3 @@ export async function updateWatchedStock(newCode: string) {
     return { success: false, error: error?.message || 'Update failed' };
   }
 }
-
