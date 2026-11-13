@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowUp, ArrowDown, ExternalLink, RotateCw } from 'lucide-react';
+import { ArrowUp, ArrowDown, ExternalLink, RotateCw, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type StockInfo } from '@/ai/flows/get-stock-market-overview';
 
@@ -87,7 +87,7 @@ function StockCard({
         </div>
       </div>
 
-      {/* Bottom Footer: Profit Probability Tag, Fortified Tag & More Link */}
+      {/* Bottom Footer: Profit Probability Tag, Short-term Flash Symbol & More Link */}
       <div className="flex items-center justify-between gap-2 pt-3 border-t border-border/50">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">
@@ -96,9 +96,12 @@ function StockCard({
           <span className={`inline-flex items-center text-xs sm:text-sm font-semibold px-2.5 py-0.5 rounded-full border ${probBadge.className}`}>
             {probBadge.label}
           </span>
-          {typeof stock.insight_fortified === 'number' && stock.insight_fortified > 0 && (
-            <span className="inline-flex items-center text-xs sm:text-sm font-semibold px-2.5 py-0.5 rounded-full border bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 border-indigo-500/30">
-              Fortified-{stock.insight_fortified}
+          {stock.short_term_gain_potential && (
+            <span
+              title="Short-term gain potential"
+              className="inline-flex items-center justify-center p-1 rounded-full bg-amber-500/15 text-amber-500 dark:text-amber-400 border border-amber-500/30 shadow-xs"
+            >
+              <Zap className="h-3.5 w-3.5 fill-amber-500 text-amber-500 dark:fill-amber-400 dark:text-amber-400" />
             </span>
           )}
         </div>
@@ -127,7 +130,7 @@ function processStockList(data: any[], variant: 'gainer' | 'loser' = 'gainer'): 
     changePercent: row.change_percent,
     report_url: row.report_url ?? null,
     profit_probability: row.profit_probability ?? null,
-    insight_fortified: typeof row.insight_fortified === 'number' ? row.insight_fortified : (row.insight_fortified != null ? parseInt(String(row.insight_fortified), 10) || null : null),
+    short_term_gain_potential: row.short_term_gain_potential === true || row.shortterm === true || String(row.short_term_gain_potential).toLowerCase() === 'true' || String(row.shortterm).toLowerCase() === 'true',
     updated_at: row.updated_at,
   }));
 

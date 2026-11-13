@@ -110,7 +110,7 @@ const getTopGainers = unstable_cache(
       changePercent: row.change_percent,
       report_url: row.report_url ?? null,
       profit_probability: row.profit_probability ?? null,
-      insight_fortified: typeof row.insight_fortified === 'number' ? row.insight_fortified : (row.insight_fortified != null ? parseInt(String(row.insight_fortified), 10) || null : null),
+      short_term_gain_potential: row.short_term_gain_potential === true || row.shortterm === true || String(row.short_term_gain_potential).toLowerCase() === 'true' || String(row.shortterm).toLowerCase() === 'true',
       updated_at: row.updated_at,
     }));
     return mapped as unknown as StockInfo[];
@@ -154,7 +154,7 @@ const getTopLosers = unstable_cache(
       changePercent: row.change_percent,
       report_url: row.report_url ?? null,
       profit_probability: row.profit_probability ?? null,
-      insight_fortified: typeof row.insight_fortified === 'number' ? row.insight_fortified : (row.insight_fortified != null ? parseInt(String(row.insight_fortified), 10) || null : null),
+      short_term_gain_potential: row.short_term_gain_potential === true || row.shortterm === true || String(row.short_term_gain_potential).toLowerCase() === 'true' || String(row.shortterm).toLowerCase() === 'true',
       updated_at: row.updated_at,
     }));
     return mapped as unknown as StockInfo[];
