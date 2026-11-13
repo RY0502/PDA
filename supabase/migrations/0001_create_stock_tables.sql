@@ -15,6 +15,7 @@ CREATE TABLE top_gainers (
   change_percent NUMERIC,
   report_url TEXT,
   profit_probability TEXT,
+  insight_fortified INTEGER,
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -26,5 +27,6 @@ CREATE TABLE top_losers (
   change_percent NUMERIC,
   report_url TEXT,
   profit_probability TEXT,
+  insight_fortified INTEGER,
   updated_at TIMESTAMPTZ DEFAULT now()
 );

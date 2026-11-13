@@ -87,7 +87,7 @@ function StockCard({
         </div>
       </div>
 
-      {/* Bottom Footer: Profit Probability Tag & More Link */}
+      {/* Bottom Footer: Profit Probability Tag, Fortified Tag & More Link */}
       <div className="flex items-center justify-between gap-2 pt-3 border-t border-border/50">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">
@@ -96,6 +96,11 @@ function StockCard({
           <span className={`inline-flex items-center text-xs sm:text-sm font-semibold px-2.5 py-0.5 rounded-full border ${probBadge.className}`}>
             {probBadge.label}
           </span>
+          {typeof stock.insight_fortified === 'number' && stock.insight_fortified > 0 && (
+            <span className="inline-flex items-center text-xs sm:text-sm font-semibold px-2.5 py-0.5 rounded-full border bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 border-indigo-500/30">
+              Fortified-{stock.insight_fortified}
+            </span>
+          )}
         </div>
 
         {stock.report_url ? (
@@ -122,6 +127,7 @@ function processStockList(data: any[], variant: 'gainer' | 'loser' = 'gainer'): 
     changePercent: row.change_percent,
     report_url: row.report_url ?? null,
     profit_probability: row.profit_probability ?? null,
+    insight_fortified: typeof row.insight_fortified === 'number' ? row.insight_fortified : (row.insight_fortified != null ? parseInt(String(row.insight_fortified), 10) || null : null),
     updated_at: row.updated_at,
   }));
 

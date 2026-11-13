@@ -17,6 +17,7 @@ export interface StockInfo {
   changePercent: string;
   report_url?: string | null;
   profit_probability?: string | null;
+  insight_fortified?: number | null;
   updated_at?: string;
 }
 
